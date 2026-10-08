@@ -12,7 +12,7 @@
 # exten => _8331*.,n,AGI(agi-VDAD_RINGALL.agi,${EXTEN})
 # exten => _8331*.,n,Hangup
 #
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 110303-2325 - First build
@@ -24,6 +24,8 @@
 # 140421-1448 - Added code to halt ringing of other channels in ring_all NAC method
 # 240420-2241 - Added ConfBridge code
 # 240415-1702 - Fix for ConfBridge code
+# 250924-2157 - Added code for deprecation of "Monitor" application after Asterisk 20
+# 251006-0902 - If recording_dtmf_muting enabled, force use of MixMonitor for recording
 #
 
 $script = 'agi-VDAD_RINGALL.agi';
@@ -41,6 +43,7 @@ $now_date = "$year-$mon-$mday $hour:$min:$sec";
 $now_num = "$year$mon$mday$hour$min$sec";
 $CIDdate = "$mon$mday$hour$min$sec";
 $S='*';
+$recording_dtmf_muting=0;
 
 # default path to astguiclient configuration file:
 $PATHconf =		'/etc/astguiclient.conf';
@@ -90,6 +93,21 @@ $AGI = new Asterisk::AGI;
 
 $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
     or die "Couldn't connect to database: " . DBI->errstr;
+
+#############################################
+##### Gather system_settings #####
+$stmtA = "SELECT recording_dtmf_muting,recording_dtmf_detection FROM system_settings;";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+if ($sthArows > 0)
+	{
+	@aryA = $sthA->fetchrow_array;
+	$SSrecording_dtmf_muting =		$aryA[0];
+	$SSrecording_dtmf_detection =	$aryA[1];
+	}
+$sthA->finish();
+###########################################
 
 ### Grab Server values from the database
 $stmtA = "SELECT agi_output,ext_context,asterisk_version,conf_engine FROM servers where server_ip = '$VARserver_ip';";
@@ -307,7 +325,7 @@ if ($NAGcount > 0)
 							### get the recording settings for the campaign that this remote agent is logged into
 							if (length($VLAcampaign_id) > 0)
 								{
-								$stmtA = "SELECT campaign_recording,campaign_rec_filename FROM vicidial_campaigns where campaign_id='$VLAcampaign_id';";
+								$stmtA = "SELECT campaign_recording,campaign_rec_filename,recording_dtmf_muting FROM vicidial_campaigns where campaign_id='$VLAcampaign_id';";
 								$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 								$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 								$VCRcount=$sthA->rows;
@@ -316,6 +334,9 @@ if ($NAGcount > 0)
 									@aryA = $sthA->fetchrow_array;
 									$campaign_recording =		$aryA[0];
 									$campaign_rec_filename =	$aryA[1];
+									$recording_dtmf_muting =	$aryA[2];
+									if ( ($SSrecording_dtmf_detection < 1) || ($SSrecording_dtmf_muting < 1) )
+										{$recording_dtmf_muting=0;}
 									}
 								$sthA->finish();
 								}
@@ -387,13 +408,45 @@ if ($NAGcount > 0)
 									}
 								else
 									{
-									$AGI->exec("Monitor","wav,/var/spool/asterisk/monitor/MIX/$campaign_rec_filename"); 
+									if ( ($ast_ver_str{major} > 20) || ($SSrecording_dtmf_muting > 0) )
+										{
+										# Deprecation of "Monitor" application after Asterisk 20
+										$AGI->exec("MixMonitor",",r($PATHmonitor/MIX/$campaign_rec_filename-in.wav)t($PATHmonitor/MIX/$campaign_rec_filename-out.wav)");
+										}
+									else
+										{
+										$AGI->exec("Monitor","wav,/var/spool/asterisk/monitor/MIX/$campaign_rec_filename");
+										}
 									}
 
 								### insert record into recording_log table ###
 								$stmtA = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,length_in_sec,filename,lead_id,user,location,vicidial_id) values('$channel','$VARserver_ip','$VAC_phone_number','$now_date','$now_date_epoch','0','$campaign_rec_filename','$VAC_lead_id','$dial_user','$campaign_rec_filename','$uniqueid');";
 								$RLRAaffected_rows = $dbhA->do($stmtA);
-								if ($AGILOG) {$agi_string = "--    REMOTE RECORDING STARTED : |$RLRAaffected_rows|$campaign_rec_filename|$stmtA|";   &agi_output;}
+
+								$stmtB = "SELECT LAST_INSERT_ID() LIMIT 1;";
+								$sthA = $dbhA->prepare($stmtB) or die "preparing: ",$dbhA->errstr;
+								$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+								$sthArows=$sthA->rows;
+								if ($sthArows > 0)
+									{
+									@aryA = $sthA->fetchrow_array;
+									$recording_id = $aryA[0];
+									}
+								$sthA->finish();
+
+								if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+									{
+									if ($SSrecording_dtmf_muting > 1) 
+										{
+										$recording_dtmf_muting = $SSrecording_dtmf_muting;
+										}
+									}
+
+								### insert record into recording_live table ###
+								$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','MONO_LEGACY_REMOTE','$VARserver_ip','$now_date','$channel','$campaign_rec_filename','$VAC_lead_id','$dial_user','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
+								$rLIVEaffected_rows = $dbhA->do($stmtD);
+
+								if ($AGILOG) {$agi_string = "--    REMOTE RECORDING STARTED : |$RLRAaffected_rows|$rLIVEaffected_rows|$recording_id|$campaign_rec_filename|$stmtA|";   &agi_output;}
 								}
 							}
 						else

@@ -12,7 +12,7 @@
 #
 # Should only be run on one server in a multi-server Asterisk/VICIDIAL cluster
 #
-# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG:
 # 61115-1246 - First build, framework setup, non-functional
@@ -55,6 +55,7 @@
 # 230830-1056 - Changed outbound_calls_per_second max to allow up to 1000 CPS
 # 231116-0916 - Added hopper_hold_inserts option
 # 231129-0905 - Added vicidial_phone_number_call_daily_counts updates/inserts
+# 260515-1941 - Added internal logging
 #
 
 ### begin parsing run-time options ###
@@ -124,6 +125,7 @@ $US='__';
 $MT[0]='';
 $RECcount=''; ### leave blank for no REC count
 $RECprefix='7'; ### leave blank for no REC prefix
+$script_name = 'AST_VDauto_dial_FILL.pl';
 
 
 # default path to astguiclient configuration file:
@@ -179,6 +181,8 @@ use DBI;
 ### connect to MySQL database defined in the conf file
 $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
 or die "Couldn't connect to database: " . DBI->errstr;
+
+$action='start';   $stage='LOGGED INTO MYSQL SERVER';   &internal_logger;
 
 ### Grab Server values from the database
 $stmtA = "SELECT telnet_host,telnet_port,ASTmgrUSERNAME,ASTmgrSECRET,ASTmgrUSERNAMEupdate,ASTmgrUSERNAMElisten,ASTmgrUSERNAMEsend,max_vicidial_trunks,answer_transfer_agent,local_gmt,ext_context,vd_server_logs FROM servers where server_ip = '$server_ip';";
@@ -241,6 +245,7 @@ if ($non_latin > 0)
 	$sthA->finish();
 	}
 
+$iLog_ct=0;
 $one_day_interval = 12;		# 1 month loops for one year 
 while($one_day_interval > 0)
 	{
@@ -1612,6 +1617,16 @@ while($one_day_interval > 0)
 			&get_time_now;
 			}
 
+		# update internal process log
+		$iLog_ct++;
+		if ($iLog_ct =~ /00$/) 
+			{
+			$stmtA = "UPDATE vicidial_internal_log SET up_time=NOW(), action='running', stage='Loops: $iLog_ct' WHERE process='$script_name' and server_ip='$server_ip' order by db_time desc limit 1;";
+			if($DB){print STDERR "|$stmtA|";}
+			my $affected_rows = $dbhA->do($stmtA);
+			if($DB){print STDERR "$affected_rows|\n";}
+			}
+
 		$stat_count++;
 		}
 
@@ -1785,3 +1800,12 @@ sub parse_asterisk_version
 
         return ( %ast_ver_hash );
 }
+
+
+sub internal_logger
+	{
+	$stmtA = "INSERT INTO vicidial_internal_log SET db_time=NOW(), up_time=NOW(), process='$script_name', server_ip='$server_ip', action='$action', stage='$stage';";
+	if($DB){print STDERR "|$stmtA|";}
+	my $affected_rows = $dbhA->do($stmtA);
+	if($DB){print STDERR "$affected_rows|\n";}
+	}

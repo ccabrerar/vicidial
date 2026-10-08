@@ -1,7 +1,7 @@
 <?php
 # park_calls_display.php    version 2.14
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed purely to send the details on the parked calls on the server
 # This script depends on the server_ip being sent and also needs to have a valid user/pass from the vicidial_users table
@@ -35,10 +35,11 @@
 # 210616-2104 - Added optional CORS support, see options.php for details
 # 210825-0904 - Fix for XSS security issue
 # 220220-0902 - Added allow_web_debug system setting
+# 260302-1204 - Code updates for PHP8 compatibility
 # 
 
-$version = '2.14-17';
-$build = '220220-0902';
+$version = '2.14-18';
+$build = '260302-1204';
 $php_script = 'park_calls_display.php';
 $SSagent_debug_logging=0;
 $startMS = microtime();
@@ -49,18 +50,26 @@ require_once("functions.php");
 ### If you have globals turned off uncomment these lines
 if (isset($_GET["user"]))					{$user=$_GET["user"];}
 	elseif (isset($_POST["user"]))			{$user=$_POST["user"];}
+	else {$user="";}
 if (isset($_GET["pass"]))					{$pass=$_GET["pass"];}
 	elseif (isset($_POST["pass"]))			{$pass=$_POST["pass"];}
+	else {$pass="";}
 if (isset($_GET["server_ip"]))				{$server_ip=$_GET["server_ip"];}
 	elseif (isset($_POST["server_ip"]))		{$server_ip=$_POST["server_ip"];}
+	else {$server_ip="";}
 if (isset($_GET["session_name"]))			{$session_name=$_GET["session_name"];}
 	elseif (isset($_POST["session_name"]))	{$session_name=$_POST["session_name"];}
+	else {$session_name="";}
 if (isset($_GET["format"]))					{$format=$_GET["format"];}
 	elseif (isset($_POST["format"]))		{$format=$_POST["format"];}
 if (isset($_GET["exten"]))					{$exten=$_GET["exten"];}
 	elseif (isset($_POST["exten"]))			{$exten=$_POST["exten"];}
+	else {$exten="";}
 if (isset($_GET["protocol"]))				{$protocol=$_GET["protocol"];}
 	elseif (isset($_POST["protocol"]))		{$protocol=$_POST["protocol"];}
+	else {$protocol="";}
+if (isset($_GET["park_limit"]))			{$park_limit=$_GET["park_limit"];}
+	elseif (isset($_POST["park_limit"]))	{$park_limit=$_POST["park_limit"];}
 
 # variable filtering
 $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
@@ -98,7 +107,8 @@ if ($qm_conf_ct > 0)
 	$SSagent_debug_logging =	$row[3];
 	$SSallow_web_debug =		$row[4];
 	}
-if ($SSallow_web_debug < 1) {$DB=0;   $format="text";}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;  $format="text";}
+$DB=preg_replace("/[^0-9]/","",$DB);
 
 $VUselected_language = '';
 $stmt="SELECT selected_language from vicidial_users where user='$user';";
@@ -114,21 +124,28 @@ if ($sl_ct > 0)
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
-$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
-$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
+# $session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
+# $server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
 $exten = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$exten);
 $protocol = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$protocol);
-$format = preg_replace('/[^-_0-9a-zA-Z]/','',$format);
+# $format = preg_replace('/[^-_0-9a-zA-Z]/','',$format);
+$park_limit = preg_replace('/[^0-9]/', '', $park_limit);
 
 if ($non_latin < 1)
 	{
 	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
 	$pass=preg_replace("/[^-\.\+\/\=_0-9a-zA-Z]/","",$pass);
+	$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
+	$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
+	$format = preg_replace('/[^-_0-9a-zA-Z]/','',$format);
 	}
 else
 	{
 	$user = preg_replace('/[^-_0-9\p{L}]/u','',$user);
 	$pass = preg_replace('/[^-\.\+\/\=_0-9\p{L}]/u','',$pass);
+	$session_name = preg_replace('/[^-\.\:\_0-9\p{L}]/u','',$session_name);
+	$server_ip = preg_replace('/[^-\.\:\_0-9\p{L}]/u','',$server_ip);
+	$format = preg_replace('/[^-_0-9\p{L}]/u','',$format);
 	}
 
 if (strlen($SSagent_debug_logging) > 1)
@@ -224,7 +241,7 @@ if ($format=='debug')
 	echo "\n</body>\n</html>\n";
 	}
 
-if ($SSagent_debug_logging > 0) {vicidial_ajax_log($NOW_TIME,$startMS,$link,$ACTION,$php_script,$user,$stage,$lead_id,$session_name,$stmt);}
+if ($SSagent_debug_logging > 0) {vicidial_ajax_log($NOW_TIME,$startMS,$link,"",$php_script,$user,"",0,$session_name,$stmt);} # ACTION, stage, and lead_id are never used in this script
 exit; 
 
 ?>

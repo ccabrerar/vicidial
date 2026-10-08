@@ -6,6 +6,7 @@
 # CHANGELOG:
 # 220825-1604 - First build
 # 230106-1355 - Added auto-download limit and special status settings for outcomes report
+# 241118-1640 - added active agent toggle function
 #
 
 /*
@@ -125,6 +126,9 @@ if (mysqli_num_rows($options_rslt)>0)
 			
 			if ($setting_name=="show_full_agent_info" && $setting_value)
 				{$show_full_agent_info=$setting_value;}
+
+			if ($setting_name=="toggle_inactive_agents" && $setting_value)
+				{$toggle_inactive_agents=$setting_value;}
 
 			if ($setting_name=="auto_download_limit" && $setting_value)
 				{$auto_download_limit=$setting_value;}

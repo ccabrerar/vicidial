@@ -1,7 +1,7 @@
 <?php
 # dispo_change_status.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to be used in the "Dispo URL" field of a campaign
 # or in-group. It can update the status of a lead to a new status if the lead 
@@ -28,6 +28,7 @@
 # 210615-1035 - Default security fixes, CVE-2021-28854
 # 210616-2047 - Added optional CORS support, see options.php for details
 # 220219-2314 - Added allow_web_debug system setting
+# 260302-1356 - Code updates for PHP8 compatibility
 #
 
 $api_script = 'dispo_change_status';
@@ -41,34 +42,43 @@ $filetime = date("H:i:s");
 $IP = getenv ("REMOTE_ADDR");
 $BR = getenv ("HTTP_USER_AGENT");
 
-$PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
-$PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
+$PHP_AUTH_USER=(array_key_exists('PHP_AUTH_USER', $_SERVER) ? $_SERVER['PHP_AUTH_USER'] : "");
+$PHP_AUTH_PW=(array_key_exists('PHP_AUTH_PW', $_SERVER) ? $_SERVER['PHP_AUTH_PW'] : "");
 if (isset($_GET["logged_status"]))			{$logged_status=$_GET["logged_status"];}
 	elseif (isset($_POST["logged_status"]))	{$logged_status=$_POST["logged_status"];}
+	else {$logged_status="";}
 if (isset($_GET["logged_count"]))			{$logged_count=$_GET["logged_count"];}
 	elseif (isset($_POST["logged_count"]))	{$logged_count=$_POST["logged_count"];}
+	else {$logged_count=0;}
 if (isset($_GET["new_status"]))				{$new_status=$_GET["new_status"];}
 	elseif (isset($_POST["new_status"]))	{$new_status=$_POST["new_status"];}
+	else {$new_status="";}
 if (isset($_GET["days_search"]))			{$days_search=$_GET["days_search"];}
 	elseif (isset($_POST["days_search"]))	{$days_search=$_POST["days_search"];}
+	else {$days_search=0;}
 if (isset($_GET["archive_search"]))				{$archive_search=$_GET["archive_search"];}
 	elseif (isset($_POST["archive_search"]))	{$archive_search=$_POST["archive_search"];}
+	else {$archive_search='N';}
 if (isset($_GET["in_out_search"]))			{$in_out_search=$_GET["in_out_search"];}
 	elseif (isset($_POST["in_out_search"]))	{$in_out_search=$_POST["in_out_search"];}
+	else {$in_out_search='BOTH';}
 if (isset($_GET["lead_id"]))				{$lead_id=$_GET["lead_id"];}
 	elseif (isset($_POST["lead_id"]))		{$lead_id=$_POST["lead_id"];}
+	else {$lead_id=0;}
 if (isset($_GET["dispo"]))					{$dispo=$_GET["dispo"];}
 	elseif (isset($_POST["dispo"]))			{$dispo=$_POST["dispo"];}
+	else {$dispo="";}
 if (isset($_GET["user"]))					{$user=$_GET["user"];}
 	elseif (isset($_POST["user"]))			{$user=$_POST["user"];}
+	else {$user="";}
 if (isset($_GET["pass"]))					{$pass=$_GET["pass"];}
 	elseif (isset($_POST["pass"]))			{$pass=$_POST["pass"];}
+	else {$pass="";}
 if (isset($_GET["DB"]))						{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))			{$DB=$_POST["DB"];}
 if (isset($_GET["log_to_file"]))			{$log_to_file=$_GET["log_to_file"];}
 	elseif (isset($_POST["log_to_file"]))	{$log_to_file=$_POST["log_to_file"];}
-
-$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+	else {$log_to_file=0;}
 
 #$DB = '1';	# DEBUG override
 $US = '_';
@@ -85,8 +95,6 @@ $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
 
 # set defaults for variables not set
-if (strlen($days_search) < 1)
-	{$days_search = 0;}
 if ( ($archive_search != 'Y') and ($archive_search != 'N') )
 	{$archive_search = 'N';}
 if ( ($in_out_search != 'IN') and ($in_out_search != 'OUT') and ($in_out_search != 'BOTH') )
@@ -115,7 +123,8 @@ if ($qm_conf_ct > 0)
 	$SSlanguage_method =		$row[2];
 	$SSallow_web_debug =		$row[3];
 	}
-if ($SSallow_web_debug < 1) {$DB=0;}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;}
+$DB=preg_replace("/[^0-9]/","",$DB);
 
 $VUselected_language = '';
 $stmt="SELECT selected_language from vicidial_users where user='$user';";
@@ -133,9 +142,17 @@ if ($sl_ct > 0)
 $lead_id = preg_replace('/[^0-9]/','',$lead_id);
 $logged_count = preg_replace('/[^0-9]/','',$logged_count);
 $days_search = preg_replace('/[^0-9]/','',$days_search);
-$archive_search = preg_replace('/[^-_0-9a-zA-Z]/','',$archive_search);
-$in_out_search = preg_replace('/[^-_0-9a-zA-Z]/','',$in_out_search);
+# $archive_search = preg_replace('/[^-_0-9a-zA-Z]/','',$archive_search);
+# $in_out_search = preg_replace('/[^-_0-9a-zA-Z]/','',$in_out_search);
 $log_to_file = preg_replace('/[^0-9]/','',$log_to_file);
+
+if (strlen($days_search) < 1)
+	{$days_search = 0;}
+if (strlen($lead_id) < 1)
+	{$lead_id = 0;}
+if (strlen($logged_count) < 1)
+	{$logged_count = 0;}
+
 
 if ($non_latin < 1)
 	{
@@ -144,6 +161,8 @@ if ($non_latin < 1)
 	$logged_status = preg_replace('/[^-_0-9a-zA-Z]/','',$logged_status);
 	$new_status = preg_replace('/[^-_0-9a-zA-Z]/','',$new_status);
 	$dispo = preg_replace('/[^-_0-9a-zA-Z]/', '', $dispo);
+	$archive_search = preg_replace('/[^-_0-9a-zA-Z]/','',$archive_search);
+	$in_out_search = preg_replace('/[^-_0-9a-zA-Z]/','',$in_out_search);
 	}
 else
 	{
@@ -152,11 +171,13 @@ else
 	$logged_status = preg_replace('/[^-_0-9\p{L}]/u','',$logged_status);
 	$new_status = preg_replace('/[^-_0-9\p{L}]/u','',$new_status);
 	$dispo = preg_replace('/[^-_0-9\p{L}]/u', '', $dispo);
+	$archive_search = preg_replace('/[^-_0-9\p{L}]/u','',$archive_search);
+	$in_out_search = preg_replace('/[^-_0-9\p{L}]/u','',$in_out_search);
 	}
 
 if ($DB>0) {echo "$lead_id|$dispo|$logged_status|$logged_count|$new_status|$days_search|$archive_search|$in_out_search|$user|$pass|$DB|$log_to_file|\n";}
 
-if ( (strlen($logged_status) > 0) and (strlen($logged_count) > 0) and (strlen($new_status) > 0) )
+if ( (strlen($logged_status) > 0) and ($logged_count > 0) and (strlen($new_status) > 0) )
 	{$match_found=1;}
 
 if ($match_found > 0)
@@ -206,7 +227,7 @@ if ($match_found > 0)
 		exit;
 		}
 
-	if (strlen($lead_id) > 0)
+	if ($lead_id > 0)
 		{
 		$days_searchSQL='';
 		$days_search_date='';

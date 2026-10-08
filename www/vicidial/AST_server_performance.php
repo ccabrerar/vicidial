@@ -30,6 +30,7 @@
 # 180223-1541 - Fixed blank default date/time ranges
 # 191013-0842 - Fixes for PHP7
 # 220302-0841 - Added allow_web_debug system setting
+# 251001-1700 - Switched graph to Graph.js from ploticus, converted to HTML
 #
 
 $startMS = microtime();
@@ -271,6 +272,8 @@ while ($i < $servers_to_print)
 $NWB = "<IMG SRC=\"help.png\" onClick=\"FillAndShowHelpDiv(event, '";
 $NWE = "')\" WIDTH=20 HEIGHT=20 BORDER=0 ALT=\"HELP\" ALIGN=TOP>";
 
+require("screen_colors.php");
+
 ?>
 
 <HTML>
@@ -287,10 +290,17 @@ $NWE = "')\" WIDTH=20 HEIGHT=20 BORDER=0 ALT=\"HELP\" ALIGN=TOP>";
 <?php 
 echo "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=utf-8\">\n";
 echo "<TITLE>"._QXZ("$report_name")."</TITLE></HEAD><BODY BGCOLOR=WHITE marginheight=0 marginwidth=0 leftmargin=0 topmargin=0></TITLE>\n";
-echo "<link rel=\"stylesheet\" type=\"text/css\" href=\"vicidial_stylesheet.php\">\n";
-echo "<script language=\"JavaScript\" src=\"help.js\"></script>\n";
 
-echo "<div id='HelpDisplayDiv' class='help_info' style='display:none;'></div>";
+require("chart_button.php");
+# echo "<script type=\"text/javascript\" src='chart/Chart.js'></script>\n"; 
+echo "<script src=\"https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.bundle.js\"></script>";
+echo "<script src=\"https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.bundle.min.js\"></script>";
+echo "<script src=\"https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.js\"></script>";
+echo "<script src=\"https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.min.js\"></script>";
+echo "<script type=\"text/javascript\" src='chart/xlsx.full.min.js'></script>\n"; 
+echo "<script src=\"https://cdn.jsdelivr.net/npm/chartjs-plugin-datasource\"></script>\n";
+
+echo "<link rel=\"stylesheet\" type=\"text/css\" href=\"vicidial_stylesheet.php\">\n";
 echo "</head>";
 
 	$short_header=1;
@@ -299,7 +309,7 @@ echo "</head>";
 
 echo "<b>"._QXZ("$report_name")."</b> $NWB#serverperformance$NWE\n";
 
-echo "<TABLE CELLPADDING=4 CELLSPACING=0><TR><TD>";
+echo "<TABLE CELLPADDING=4 CELLSPACING=0><TR><TD colspan='2' align='left'><font class='standard'>";
 
 
 echo "<FORM ACTION=\"$PHP_SELF\" METHOD=GET>\n";
@@ -316,17 +326,14 @@ while ($servers_to_print > $o)
 	$o++;
 	}
 echo "</SELECT> \n";
-echo "<INPUT TYPE=SUBMIT NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'\n";
-echo "<FONT FACE=\"ARIAL,HELVETICA\" COLOR=BLACK SIZE=2> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a href=\"./admin.php?ADD=999999\">"._QXZ("REPORTS")."</a> </FONT>\n";
+echo "<INPUT TYPE=SUBMIT NAME=SUBMIT VALUE='"._QXZ("SUBMIT")."'>\n";
+echo " &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a href=\"./admin.php?ADD=999999\">"._QXZ("REPORTS")."</a>\n";
 echo "</FORM>\n\n";
-
-echo "<PRE><FONT SIZE=2>\n";
-
+echo "<BR></font></TD></TR>";
 
 if (!$group)
 	{
-	echo "\n";
-	echo _QXZ("PLEASE SELECT A SERVER AND DATE/TIME RANGE ABOVE AND CLICK SUBMIT")."\n";
+	echo "<tr><td colspan='2' align='left'><font class='standard'>"._QXZ("PLEASE SELECT A SERVER AND DATE/TIME RANGE ABOVE AND CLICK SUBMIT")."</td></tr>\n";
 	}
 
 else
@@ -334,11 +341,10 @@ else
 	$query_date_BEGIN = $begin_query_time;   
 	$query_date_END = $end_query_time;
 
+	echo "<tr bgcolor='#".$SSstd_row1_background."'><td align='right' width='280'><font class='standard'>"._QXZ("Server Performance Report").": </font></td><td align='left'><font class='standard_bold'>$NOW_TIME</font></td></tr>\n";
 
-	echo _QXZ("Server Performance Report",53)." $NOW_TIME\n";
-
-	echo _QXZ("Time range").": $query_date_BEGIN "._QXZ("to")." $query_date_END\n\n";
-	echo "---------- "._QXZ("TOTALS, PEAKS and AVERAGES")."\n";
+	echo "<tr bgcolor='#".$SSstd_row1_background."'><td align='right' width='280'><font class='standard'>"._QXZ("Time range").": </font></td><td align='left'><font class='standard_bold'>$query_date_BEGIN "._QXZ("to")." $query_date_END</font></td></tr>\n\n";
+	echo "<tr><td colspan='2' align='center'><font class='standard_bold'>"._QXZ("TOTALS, PEAKS and AVERAGES")."</font></td></tr>\n";
 
 	$stmt="select AVG(sysload),AVG(channels_total),MAX(sysload),MAX(channels_total),MAX(processes) from server_performance where start_time <= '" . mysqli_real_escape_string($link, $query_date_END) . "' and start_time >= '" . mysqli_real_escape_string($link, $query_date_BEGIN) . "' and server_ip='" . mysqli_real_escape_string($link, $group) . "';";
 	$rslt=mysql_to_mysqli($stmt, $link);
@@ -362,7 +368,7 @@ else
 	$AVGcpuSYSTEM =	sprintf("%10s", $row[1]);
 	$AVGcpuIDLE =	sprintf("%10s", $row[2]);
 
-	$stmt="select count(*),SUM(length_in_min) from call_log where extension NOT IN('8365','8366','8367') and  start_time <= '" . mysqli_real_escape_string($link, $query_date_END) . "' and start_time >= '" . mysqli_real_escape_string($link, $query_date_BEGIN) . "' and server_ip='" . mysqli_real_escape_string($link, $group) . "';";
+	$stmt="select count(*),if(SUM(length_in_min) is null, 0, SUM(length_in_min)) from call_log where extension NOT IN('8365','8366','8367') and  start_time <= '" . mysqli_real_escape_string($link, $query_date_END) . "' and start_time >= '" . mysqli_real_escape_string($link, $query_date_BEGIN) . "' and server_ip='" . mysqli_real_escape_string($link, $group) . "';";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	if ($DB) {echo "$stmt\n";}
 	$row=mysqli_fetch_row($rslt);
@@ -370,38 +376,91 @@ else
 	$OFFHOOKtime =	sprintf("%10s", $row[1]);
 
 
-	echo _QXZ("Total Calls in/out on this server:",42)."  $TOTALcalls\n";
-	echo _QXZ("Total Off-Hook time on this server (min):",42)." $OFFHOOKtime\n";
-	echo _QXZ("Average/Peak channels in use for server:",42)." $AVGchannels / $HIGHchannels\n";
-	echo _QXZ("Average/Peak load for server:",42)." $AVGload / $HIGHload\n";
-	echo _QXZ("Average USER process cpu percentage:",42)." $AVGcpuUSER %\n";
-	echo _QXZ("Average SYSTEM process cpu percentage:",42)." $AVGcpuSYSTEM %\n";
-	echo _QXZ("Average IDLE process cpu percentage:",42)." $AVGcpuIDLE %\n";
+	echo "<tr bgcolor='#".$SSstd_row2_background."'><td align='left' width='280'><font class='standard'>"._QXZ("Total Calls in/out on this server:")."</font></td><td align='left'><font class='standard_bold'>$TOTALcalls</font></td></tr>\n";
+	echo "<tr bgcolor='#".$SSstd_row3_background."'><td align='left' width='280'><font class='standard'>"._QXZ("Total Off-Hook time on this server (min):")."</font></td><td align='left'><font class='standard_bold'>$OFFHOOKtime</font></td></tr>\n";
+	echo "<tr bgcolor='#".$SSstd_row2_background."'><td align='left' width='280'><font class='standard'>"._QXZ("Average/Peak channels in use for server:")."</font></td><td align='left'><font class='standard_bold'>$AVGchannels / $HIGHchannels</font></td></tr>\n";
+	echo "<tr bgcolor='#".$SSstd_row3_background."'><td align='left' width='280'><font class='standard'>"._QXZ("Average/Peak load for server:")."</font></td><td align='left'><font class='standard_bold'>$AVGload / $HIGHload</font></td></tr>\n";
+	echo "<tr bgcolor='#".$SSstd_row2_background."'><td align='left' width='280'><font class='standard'>"._QXZ("Average USER process cpu percentage:")."</font></td><td align='left'><font class='standard_bold'>$AVGcpuUSER %</font></td></tr>\n";
+	echo "<tr bgcolor='#".$SSstd_row3_background."'><td align='left' width='280'><font class='standard'>"._QXZ("Average SYSTEM process cpu percentage:")."</font></td><td align='left'><font class='standard_bold'>$AVGcpuSYSTEM %</font></td></tr>\n";
+	echo "<tr bgcolor='#".$SSstd_row2_background."'><td align='left' width='280'><font class='standard'>"._QXZ("Average IDLE process cpu percentage:")."</font></td><td align='left'><font class='standard_bold'>$AVGcpuIDLE %</font></td></tr>\n";
 
-	echo "\n";
-	echo "---------- "._QXZ("LINE GRAPH").":\n";
-
-
-
-	##############################
-	#########  Graph stats
-
-	$DAT = '.dat';
-	$HTM = '.htm';
-	$PNG = '.png';
-	$filedate = date("Y-m-d_His");
-	$DATfile = "$group$query_date$shift$filedate$DAT";
-	$HTMfile = "$group$query_date$shift$filedate$HTM";
-	$PNGfile = "$group$query_date$shift$filedate$PNG";
-
-	$HTMfp = fopen ("$DOCroot/$HTMfile", "a");
-	$DATfp = fopen ("$DOCroot/$DATfile", "a");
-
-	$stmt="select DATE_FORMAT(start_time,'%Y-%m-%d.%H:%i:%s') as timex,sysload,processes,channels_total,live_recordings,cpu_user_percent,cpu_system_percent from server_performance where server_ip='" . mysqli_real_escape_string($link, $group) . "' and start_time <= '" . mysqli_real_escape_string($link, $query_date_END) . "' and start_time >= '" . mysqli_real_escape_string($link, $query_date_BEGIN) . "' order by timex limit 99999;";
+	$stmt="select DATE_FORMAT(start_time,'%Y-%m-%d %H:%i:%s') as timex,sysload,processes,channels_total,live_recordings,cpu_user_percent,cpu_system_percent, start_time from server_performance where server_ip='" . mysqli_real_escape_string($link, $group) . "' and start_time <= '" . mysqli_real_escape_string($link, $query_date_END) . "' and start_time >= '" . mysqli_real_escape_string($link, $query_date_BEGIN) . "' order by timex limit 99999;";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	if ($DB) {echo "$stmt\n";}
 	$rows_to_print = mysqli_num_rows($rslt);
 	$i=0;
+
+	$linewidth=1; $radius=1; $mod=1;
+	switch (true)
+		{
+		case ($rows_to_print <= 50):
+			$linewidth=3;
+			$radius=3;
+		case ($rows_to_print <= 100):
+			$linewidth=2;
+			$radius=2;
+		case ($rows_to_print <= 9999):
+			$mod=1;
+			break;
+		case ($rows_to_print <= 19999):
+			$mod=2;
+			break;
+		case ($rows_to_print <= 49999):
+			$mod=5;
+			break;
+		case ($rows_to_print <= 99999):
+			$mod=10;
+			break;
+		}
+	
+	$labels="\t\tlabels: [";
+	$datasets="\t\tdatasets: [\n";
+
+	$SYSLOAD_dataset.="\t\t\t{\n";
+	$SYSLOAD_dataset.="\t\t\t\tlabel: \"System load\",\n";
+	$SYSLOAD_dataset.="\t\t\t\tradius: $radius,\n";
+	$SYSLOAD_dataset.="\t\t\t\tborderWidth: \"$linewidth\",\n";
+	$SYSLOAD_dataset.="\t\t\t\tborderColor: \"#FF0000\",\n";
+	$SYSLOAD_dataset.="\t\t\t\tbackgroundColor: \"#FF0000\",\n";
+	$SYSLOAD_dataset.="\t\t\t\tfill: false,\n";
+	$SYSLOAD_dataset.="\t\t\t\tdata: [";
+
+	$PROCESSES_dataset.="\t\t\t{\n";
+	$PROCESSES_dataset.="\t\t\t\tlabel: \"Processes\",\n";
+	$PROCESSES_dataset.="\t\t\t\tradius: $radius,\n";
+	$PROCESSES_dataset.="\t\t\t\tborderWidth: \"$linewidth\",\n";
+	$PROCESSES_dataset.="\t\t\t\tfill: false,\n";
+	$PROCESSES_dataset.="\t\t\t\tborderColor: \"#0000FF\",\n";
+	$PROCESSES_dataset.="\t\t\t\tbackgroundColor: \"#0000FF\",\n";
+	$PROCESSES_dataset.="\t\t\t\tdata: [";
+
+	$CHANNELS_dataset.="\t\t\t{\n";
+	$CHANNELS_dataset.="\t\t\t\tlabel: \"Channels\",\n";
+	$CHANNELS_dataset.="\t\t\t\tradius: $radius,\n";
+	$CHANNELS_dataset.="\t\t\t\tborderWidth: \"$linewidth\",\n";
+	$CHANNELS_dataset.="\t\t\t\tfill: false,\n";
+	$CHANNELS_dataset.="\t\t\t\tborderColor: \"#FF9900\",\n";
+	$CHANNELS_dataset.="\t\t\t\tbackgroundColor: \"#FF9900\",\n";
+	$CHANNELS_dataset.="\t\t\t\tdata: [";
+
+	$CPU_USER_dataset.="\t\t\t{\n";
+	$CPU_USER_dataset.="\t\t\t\tlabel: \"CPU - User\",\n";
+	$CPU_USER_dataset.="\t\t\t\tradius: $radius,\n";
+	$CPU_USER_dataset.="\t\t\t\tborderWidth: \"$linewidth\",\n";
+	$CPU_USER_dataset.="\t\t\t\tfill: false,\n";
+	$CPU_USER_dataset.="\t\t\t\tborderColor: \"#00FF00\",\n";
+	$CPU_USER_dataset.="\t\t\t\tbackgroundColor: \"#00FF00\",\n";
+	$CPU_USER_dataset.="\t\t\t\tdata: [\n";
+
+	$CPU_SYS_dataset.="\t\t\t{\n";
+	$CPU_SYS_dataset.="\t\t\t\tlabel: \"CPU - System\",\n";
+	$CPU_SYS_dataset.="\t\t\t\tradius: $radius,\n";
+	$CPU_SYS_dataset.="\t\t\t\tborderWidth: \"$linewidth\",\n";
+	$CPU_SYS_dataset.="\t\t\t\tfill: false,\n";
+	$CPU_SYS_dataset.="\t\t\t\tborderColor: \"#FF00FF\",\n";
+	$CPU_SYS_dataset.="\t\t\t\tbackgroundColor: \"#FF00FF\",\n";
+	$CPU_SYS_dataset.="\t\t\t\tdata: [";
+
 	while ($i < $rows_to_print)
 		{
 		$row=mysqli_fetch_row($rslt);
@@ -409,157 +468,60 @@ else
 		$time_END = $row[0];
 		$row[5] = intval(($row[5] + $row[6]) * $HIGHmulti);
 		$row[6] = intval($row[6] * $HIGHmulti);
-		if ($rows_to_print > 9999)
+
+		if ($i%$mod==0)
 			{
-			if ($rows_to_print <= 19999)
-				{
-				if (preg_match("/0$|2$|4$|6$|8$/",$i))
-					{
-					fwrite ($DATfp, "$row[5]\t$row[6]\t$row[0]\t$row[1]\t$row[2]\t$row[3]\n");
-					}
-				}
-			if ( ($rows_to_print > 19999) and ($rows_to_print <= 49999) )
-				{
-				if (preg_match("/0$|5$/",$i))
-					{
-					fwrite ($DATfp, "$row[5]\t$row[6]\t$row[0]\t$row[1]\t$row[2]\t$row[3]\n");
-					}
-				}
-			if ( ($rows_to_print > 49999) and ($rows_to_print <= 99999) )
-				{
-				if (preg_match("/0$/",$i))
-					{
-					fwrite ($DATfp, "$row[5]\t$row[6]\t$row[0]\t$row[1]\t$row[2]\t$row[3]\n");
-					}
-				}
+			$labels.="\"$row[0]\",";
+			$SYSLOAD_dataset.="\"$row[1]\",";
+			$PROCESSES_dataset.="\"$row[2]\",";
+			$CHANNELS_dataset.="\"$row[3]\",";
+			$CPU_USER_dataset.="\"$row[5]\",";
+			$CPU_SYS_dataset.="\"$row[6]\",";
 			}
-		else
-			{
-			fwrite ($DATfp, "$row[5]\t$row[6]\t$row[0]\t$row[1]\t$row[2]\t$row[3]\n");
-			}
-		$i++;
+		$i++;	
 		}
-	fclose($DATfp);
 
-	$rows_to_max = ($rows_to_print + 100);
+	$labels=preg_replace('/,$/', "", $labels)."],\n";
+	$SYSLOAD_dataset=preg_replace('/,$/', "", $SYSLOAD_dataset)."]\n";
+	$PROCESSES_dataset=preg_replace('/,$/', "", $PROCESSES_dataset)."]\n";
+	$CHANNELS_dataset=preg_replace('/,$/', "", $CHANNELS_dataset)."]\n";
+	$CPU_USER_dataset=preg_replace('/,$/', "", $CPU_USER_dataset)."]\n";
+	$CPU_SYS_dataset=preg_replace('/,$/', "", $CPU_SYS_dataset)."]\n";
 
-	$time_scale_abb = '5 '._QXZ("minutes");
-	$time_scale_tick = '1 minute';
-	if ($i > 1000) {$time_scale_abb = '10 '._QXZ("minutes");   $time_scale_tick = '2 '._QXZ("minutes");}
-	if ($i > 1500) {$time_scale_abb = '15 '._QXZ("minutes");   $time_scale_tick = '3 '._QXZ("minutes");}
-	if ($i > 2000) {$time_scale_abb = '20 '._QXZ("minutes");   $time_scale_tick = '4 '._QXZ("minutes");}
-	if ($i > 3000) {$time_scale_abb = '30 '._QXZ("minutes");   $time_scale_tick = '5 '._QXZ("minutes");}
-	if ($i > 4000) {$time_scale_abb = '40 '._QXZ("minutes");   $time_scale_tick = '10 '._QXZ("minutes");}
-	if ($i > 5000) {$time_scale_abb = '60 '._QXZ("minutes");   $time_scale_tick = '15 '._QXZ("minutes");}
-	if ($i > 6000) {$time_scale_abb = '90 '._QXZ("minutes");   $time_scale_tick = '15 '._QXZ("minutes");}
-	if ($i > 7000) {$time_scale_abb = '120 '._QXZ("minutes");   $time_scale_tick = '30 '._QXZ("minutes");}
+	$SYSLOAD_dataset.="\t\t\t}\n";
+	$PROCESSES_dataset.="\t\t\t}\n";
+	$CHANNELS_dataset.="\t\t\t}\n";
+	$CPU_USER_dataset.="\t\t\t}\n";
+	$CPU_SYS_dataset.="\t\t\t}\n";
+?>
 
-	print _QXZ("rows").": $i   "._QXZ("tick").": $time_scale_abb   "._QXZ("scale").": $time_scale_tick\n";
+<tr>
+<td colspan='2'><BR>
+<canvas id="performanceChart"></canvas>
+<script language="Javascript">
+var pf_ctx = document.getElementById("performanceChart");
+var ctx = document.getElementById('performanceChart').getContext('2d');
+var performance_data = {
+<?php
+echo $labels;
+echo "\t\t\tdatasets: [\n";
+echo $SYSLOAD_dataset.",";
+echo $PROCESSES_dataset.",";
+echo $CHANNELS_dataset.",";
+echo $CPU_USER_dataset.",";
+echo $CPU_SYS_dataset;
+echo "\t\t\t]\n";
+?>
+}
 
-	$HTMcontent  = '';
-	$HTMcontent .= "#proc page\n";
-	$HTMcontent .= "#if @DEVICE in png,gif\n";
-	$HTMcontent .= "   scale: 0.6\n";
-	$HTMcontent .= "\n";
-	$HTMcontent .= "#endif\n";
-	$HTMcontent .= "#proc getdata\n";
-	$HTMcontent .= "file: $DOCroot/$DATfile\n";
-	$HTMcontent .= "fieldnames: userproc sysproc datetime load processes channels\n";
-	$HTMcontent .= "\n";
-	$HTMcontent .= "#proc areadef\n";
-	$HTMcontent .= "title: Server $group   $query_date_BEGIN to $query_date_END\n";
-	$HTMcontent .= "titledetails: size=14  align=C\n";
-	$HTMcontent .= "rectangle: 1 1 12 7\n";
-	$HTMcontent .= "xscaletype: datetime yyyy-mm-dd.hh:mm:ss\n";
-	$HTMcontent .= "xrange: $time_BEGIN $time_END\n";
-	$HTMcontent .= "yrange: 0 $HIGHlimit\n";
-	$HTMcontent .= "\n";
-	$HTMcontent .= "#proc xaxis\n";
-	$HTMcontent .= "stubs: inc $time_scale_abb\n";
-	$HTMcontent .= "minorticinc: $time_scale_tick\n";
-	$HTMcontent .= "stubformat: hh:mma\n";
-	$HTMcontent .= "\n";
-	$HTMcontent .= "#proc yaxis\n";
-	$HTMcontent .= "stubs: inc 50\n";
-	$HTMcontent .= "grid: color=yellow\n";
-	$HTMcontent .= "gridskip: min\n";
-	$HTMcontent .= "ticincrement: 100 1000\n";
-	$HTMcontent .= "\n";
-	$HTMcontent .= "#proc lineplot\n";
-	$HTMcontent .= "xfield: datetime\n";
-	$HTMcontent .= "yfield: userproc\n";
-	$HTMcontent .= "linedetails: color=purple width=.5\n";
-	$HTMcontent .= "fill: lavender\n";
-	$HTMcontent .= "legendlabel: user proc%\n";
-	$HTMcontent .= "maxinpoints: $rows_to_max\n";
-	$HTMcontent .= "\n";
-	$HTMcontent .= "#proc lineplot\n";
-	$HTMcontent .= "xfield: datetime\n";
-	$HTMcontent .= "yfield: sysproc\n";
-	$HTMcontent .= "linedetails: color=yelloworange width=.5\n";
-	$HTMcontent .= "fill: dullyellow\n";
-	$HTMcontent .= "legendlabel: system proc%\n";
-	$HTMcontent .= "maxinpoints: $rows_to_max\n";
-	$HTMcontent .= "\n";
-	$HTMcontent .= "#proc curvefit\n";
-	$HTMcontent .= "xfield: datetime\n";
-	$HTMcontent .= "yfield: load\n";
-	$HTMcontent .= "linedetails: color=blue width=.5\n";
-	$HTMcontent .= "legendlabel: load\n";
-	$HTMcontent .= "maxinpoints: $rows_to_max\n";
-	$HTMcontent .= "\n";
-	$HTMcontent .= "#proc curvefit\n";
-	$HTMcontent .= "xfield: datetime\n";
-	$HTMcontent .= "yfield: processes\n";
-	$HTMcontent .= "linedetails: color=red width=.5\n";
-	$HTMcontent .= "legendlabel: processes\n";
-	$HTMcontent .= "maxinpoints: $rows_to_max\n";
-	$HTMcontent .= "\n";
-	$HTMcontent .= "#proc curvefit\n";
-	$HTMcontent .= "xfield: datetime\n";
-	$HTMcontent .= "yfield: channels\n";
-	$HTMcontent .= "linedetails: color=green width=.5\n";
-	$HTMcontent .= "legendlabel: channels\n";
-	$HTMcontent .= "maxinpoints: $rows_to_max\n";
-	$HTMcontent .= "\n";
-	$HTMcontent .= "#proc legend\n";
-	$HTMcontent .= "location: max-1 max\n";
-	$HTMcontent .= "seglen: 0.2\n";
-	$HTMcontent .= "\n";
+var performance_chart = new Chart(pf_ctx, {type: 'line', options: { scales: { xAxes: [{ ticks: {maxRotation: 82, minRotation: 45}}] } }, data: performance_data});
 
-	fwrite ($HTMfp, "$HTMcontent");
-	fclose($HTMfp);
+    
+</script>
+</td>
+<tr><td colspan='2'>
 
-	if (file_exists("/usr/local/bin/pl"))
-		{
-		passthru("/usr/local/bin/pl -png $DOCroot/$HTMfile -o $DOCroot/$PNGfile");
-		}
-	else
-		{
-		if (file_exists("/usr/bin/pl"))
-			{
-			passthru("/usr/bin/pl -png $DOCroot/$HTMfile -o $DOCroot/$PNGfile");
-			}
-		else
-			{
-			if (file_exists("/usr/bin/ploticus"))
-				{
-				passthru("/usr/bin/ploticus -png $DOCroot/$HTMfile -o $DOCroot/$PNGfile");
-				}
-			else
-				{
-				echo "ERROR: ploticus not found\n";
-				}
-			}
-		}
-	sleep(1);
-
-	echo "</PRE>";
-	echo "\n";
-	echo "<IMG SRC=\"/$PLOTroot/$PNGfile\">\n";
-
-	#echo "<!-- /usr/local/bin/pl -png $DOCroot/$HTMfile -o $DOCroot/$PNGfile -->";
-	}
+<?php
 
 if ($db_source == 'S')
 	{
@@ -576,6 +538,8 @@ $runS = ($endMSary[0] - $startMSary[0]);
 $runM = ($endMSary[1] - $startMSary[1]);
 $TOTALrun = ($runS + $runM);
 
+echo "<BR><BR><font class='standard'>Total run time: </font><font class='standard_bold'>$TOTALrun seconds</font>";
+
 $stmt="UPDATE vicidial_report_log set run_time='$TOTALrun' where report_log_id='$report_log_id';";
 if ($DB) {echo "|$stmt|\n";}
 $rslt=mysql_to_mysqli($stmt, $link);
@@ -583,6 +547,9 @@ $rslt=mysql_to_mysqli($stmt, $link);
 ?>
 
 </TD></TR></TABLE>
-<BR>
-<?php echo "$db_source"; ?>
+<?php 
+echo "<BR><BR><font class='standard'>$db_source</font>";
+}
+?>
+
 </BODY></HTML>

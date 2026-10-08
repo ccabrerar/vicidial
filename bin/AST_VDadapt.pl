@@ -6,7 +6,7 @@
 # adjusts the auto_dial_level for vicidial adaptive-predictive campaigns. 
 # gather call stats for campaigns and in-groups
 #
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 # 60823-1302 - First build from AST_VDhopper.pl
@@ -61,9 +61,14 @@
 # 211122-1457 - Fix for logging bug and modification to drop percentage calculation
 # 230309-1009 - Added abandon_check_queue feature
 # 240219-1514 - Added vicidial_live_inbound_agents.daily_limit parameter
+# 250131-1624 - Modifications to fix cached hour counts for realtime report
+# 250218-1613 - Modified master loop to use microseconds instead of a counter to execute drop/dial level/shared dialing functions
+# 251205-0949 - Added adaptive_percentmax_percentage option and ADAPT_PERCENTMAX dial_method, fix for dropped cached counts
+# 260515-1938 - Added internal logging
 #
 
-$build='240219-1514';
+$build='260515-1938';
+$script_name = 'AST_VDadapt.pl';
 # constants
 $DB=0;  # Debug flag, set to 0 for no debug messages, On an active system this will generate lots of lines of output per minute
 $US='__';
@@ -308,7 +313,7 @@ foreach(@conf)
 
 if (!$VARDB_port) {$VARDB_port='3306';}
 
-use Time::HiRes ('gettimeofday','usleep','sleep');  # necessary to have perl sleep command of less than one second
+use Time::HiRes ('gettimeofday','usleep','sleep', 'time');  # necessary to have perl sleep command of less than one second
 use Time::Local;
 use DBI;	  
 
@@ -316,6 +321,8 @@ $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VA
  or die "Couldn't connect to database: " . DBI->errstr;
 $dbhB = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
  or die "Couldn't connect to database: " . DBI->errstr;
+
+$action='start';   $stage='LOGGED INTO MYSQL SERVER '.$build;   &internal_logger;
 
 if ($DBX) {print "CONNECTED TO DATABASE:  $VARDB_server|$VARDB_database\n";}
 
@@ -431,6 +438,7 @@ if ($run_check > 0)
 	}
 
 $master_loop=0;
+$iLog_ct=0;
 
 ### Start master loop ###
 while ($master_loop < $CLIloops) 
@@ -455,7 +463,7 @@ while ($master_loop < $CLIloops)
 		}
 	$sthA->finish();
 
-	$secX = time();
+	$secX = int(time());
 	($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($secX);
 	$LOCAL_GMT_OFF = $SERVER_GMT;
 	$LOCAL_GMT_OFF_STD = $SERVER_GMT;
@@ -471,7 +479,9 @@ while ($master_loop < $CLIloops)
 	if ($min < 10) {$min = "0$min";}
 	if ($sec < 10) {$sec = "0$sec";}
 
-	if ($DBXXX) {print "TIME DEBUG: $master_loop   $LOCAL_GMT_OFF_STD|$LOCAL_GMT_OFF|$isdst|   GMT: $hour:$min\n";}
+	if ($DBXXX) {print "TIME DEBUG: $master_loop|$iLog_ct   $LOCAL_GMT_OFF_STD|$LOCAL_GMT_OFF|$isdst|   GMT: $hour:$min\n";}
+
+	if (!$prev_iteration_ms) {$prev_iteration_ms=time();}
 
 	@campaign_id=@MT; 
 	@lead_order=@MT;
@@ -487,6 +497,7 @@ while ($master_loop < $CLIloops)
 	@adaptive_latest_server_time=@MT;
 	@adaptive_intensity=@MT;
 	@adaptive_dl_diff_target=@MT;
+	@adaptive_percentmax_percentage=@MT;
 	@campaign_changedate=@MT;
 	@campaign_stats_refresh=@MT;
 	@campaign_allow_inbound=@MT;
@@ -499,11 +510,11 @@ while ($master_loop < $CLIloops)
 
 	if ($CLIcampaign)
 		{
-		$stmtA = "SELECT campaign_id,lead_order,hopper_level,auto_dial_level,local_call_time,lead_filter_id,use_internal_dnc,dial_method,available_only_ratio_tally,adaptive_dropped_percentage,adaptive_maximum_level,adaptive_latest_server_time,adaptive_intensity,adaptive_dl_diff_target,UNIX_TIMESTAMP(campaign_changedate),campaign_stats_refresh,campaign_allow_inbound,drop_rate_group,UNIX_TIMESTAMP(campaign_calldate),realtime_agent_time_stats,available_only_tally_threshold,available_only_tally_threshold_agents,dial_level_threshold,dial_level_threshold_agents,ofcom_uk_drop_calc,drop_call_seconds,drop_action,drop_inbound_group,incall_tally_threshold_seconds from vicidial_campaigns where campaign_id='$CLIcampaign'";
+		$stmtA = "SELECT campaign_id,lead_order,hopper_level,auto_dial_level,local_call_time,lead_filter_id,use_internal_dnc,dial_method,available_only_ratio_tally,adaptive_dropped_percentage,adaptive_maximum_level,adaptive_latest_server_time,adaptive_intensity,adaptive_dl_diff_target,UNIX_TIMESTAMP(campaign_changedate),campaign_stats_refresh,campaign_allow_inbound,drop_rate_group,UNIX_TIMESTAMP(campaign_calldate),realtime_agent_time_stats,available_only_tally_threshold,available_only_tally_threshold_agents,dial_level_threshold,dial_level_threshold_agents,ofcom_uk_drop_calc,drop_call_seconds,drop_action,drop_inbound_group,incall_tally_threshold_seconds,adaptive_percentmax_percentage from vicidial_campaigns where campaign_id='$CLIcampaign'";
 		}
 	else
 		{
-		$stmtA = "SELECT campaign_id,lead_order,hopper_level,auto_dial_level,local_call_time,lead_filter_id,use_internal_dnc,dial_method,available_only_ratio_tally,adaptive_dropped_percentage,adaptive_maximum_level,adaptive_latest_server_time,adaptive_intensity,adaptive_dl_diff_target,UNIX_TIMESTAMP(campaign_changedate),campaign_stats_refresh,campaign_allow_inbound,drop_rate_group,UNIX_TIMESTAMP(campaign_calldate),realtime_agent_time_stats,available_only_tally_threshold,available_only_tally_threshold_agents,dial_level_threshold,dial_level_threshold_agents,ofcom_uk_drop_calc,drop_call_seconds,drop_action,drop_inbound_group,incall_tally_threshold_seconds from vicidial_campaigns where ( (active='Y') or (campaign_stats_refresh='Y') )";
+		$stmtA = "SELECT campaign_id,lead_order,hopper_level,auto_dial_level,local_call_time,lead_filter_id,use_internal_dnc,dial_method,available_only_ratio_tally,adaptive_dropped_percentage,adaptive_maximum_level,adaptive_latest_server_time,adaptive_intensity,adaptive_dl_diff_target,UNIX_TIMESTAMP(campaign_changedate),campaign_stats_refresh,campaign_allow_inbound,drop_rate_group,UNIX_TIMESTAMP(campaign_calldate),realtime_agent_time_stats,available_only_tally_threshold,available_only_tally_threshold_agents,dial_level_threshold,dial_level_threshold_agents,ofcom_uk_drop_calc,drop_call_seconds,drop_action,drop_inbound_group,incall_tally_threshold_seconds,adaptive_percentmax_percentage from vicidial_campaigns where ( (active='Y') or (campaign_stats_refresh='Y') )";
 		}
 	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -544,13 +555,14 @@ while ($master_loop < $CLIloops)
 		$drop_action[$rec_count] =					$aryA[26];
 		$drop_inbound_group[$rec_count] =			$aryA[27];
 		$incall_tally_threshold_seconds[$rec_count] =	$aryA[28];
+		$adaptive_percentmax_percentage[$rec_count] =	$aryA[29];
 
 		$rec_count++;
 		}
 	$sthA->finish();
 	if ($DB) {print "$now_date CAMPAIGNS TO PROCESSES ADAPT FOR:  $rec_count|$#campaign_id       IT: $master_loop\n";}
 
-	$five_min_ago = time();
+	$five_min_ago = int(time());
 	$five_min_ago = ($five_min_ago - 300);
 	$ten_min_ago = ($five_min_ago - 3600*6);
 
@@ -768,14 +780,26 @@ while ($master_loop < $CLIloops)
 			}
 		}
 
+
+
+	$current_iteration_ms=time();
+	# CLIupdaterdelay is actual time elapsed per iteration in microseconds, which is more accurate than the set '1'
+	$CLIupdaterdelay=($current_iteration_ms-$prev_iteration_ms);
+	$prev_iteration_ms=$current_iteration_ms;
+#	$updater_str="Current drop_count_updater: $drop_count_updater|Run calculate_drops? $run_calculate_drops|"; 
+
 	if ($RESETdiff_ratio_updater > 0) {$RESETdiff_ratio_updater=0;   $diff_ratio_updater=0;}
 	if ($RESETdrop_count_updater > 0) {$RESETdrop_count_updater=0;   $drop_count_updater=0;}
 	if ($RESETshared_agent_count_updater > 0) {$RESETshared_agent_count_updater=0;   $shared_agent_count_updater=0;}
-	$diff_ratio_updater = ($diff_ratio_updater + $CLIdelay);
-	$drop_count_updater = ($drop_count_updater + $CLIdelay);
-	$shared_agent_count_updater = ($shared_agent_count_updater + $CLIdelay);
+	$diff_ratio_updater = ($diff_ratio_updater + $CLIupdaterdelay);
+	$drop_count_updater = ($drop_count_updater + $CLIupdaterdelay);
+	$shared_agent_count_updater = ($shared_agent_count_updater + $CLIupdaterdelay);
 
-
+#	$updater_str.="CLIupdaterdelays: ".substr($CLIupdaterdelay, 0, 7)."|New drop_count_updater: ".substr($drop_count_updater, 0, 7);
+#	$sacu_stmt="INSERT INTO sacu_log(message) VALUES('$updater_str')";
+#	$sacu_rslt = $dbhA->prepare($sacu_stmt) or die "preparing: ",$dbhA->errstr;
+#	$sacu_rslt->execute or die "executing: $sacu_stmt ", $dbhA->errstr;
+#	$sacu_rslt->finish();
 
 	##########################################################
 	##### BEGIN check for inbound callback queue entries #####
@@ -810,7 +834,7 @@ while ($master_loop < $CLIloops)
 			}
 		$sthA->finish();
 
-		$now_epoch = time();
+		$now_epoch = int(time());
 		$BDtarget = ($now_epoch - 7);
 		($Bsec,$Bmin,$Bhour,$Bmday,$Bmon,$Byear,$Bwday,$Byday,$Bisdst) = localtime($BDtarget);
 		$Byear = ($Byear + 1900);
@@ -1340,7 +1364,7 @@ while ($master_loop < $CLIloops)
 
 				### BEGIN check of call time dialable for this record
 				$dialable=0;
-				$now_epoch = time();
+				$now_epoch = int(time());
 				$GMT_now = ($now_epoch - (($LOCAL_GMT_OFF - $ICBQgmt_offset_now[$r]) * 3600));
 				($Gsec,$Gmin,$Ghour,$Gmday,$Gmon,$Gyear,$Gwday,$Gyday,$Gisdst) = localtime($GMT_now);
 				$Gmon++;
@@ -1629,7 +1653,7 @@ while ($master_loop < $CLIloops)
 	##########################################################
 	if ( ($stat_count =~ /00$|10$|20$|30$|40$|50$|60$|70$|80$|90$/) || ($stat_count==1) )
 		{
-		$now_epoch = time();
+		$now_epoch = int(time());
 		$BDtarget = ($now_epoch - 10);
 		($Bsec,$Bmin,$Bhour,$Bmday,$Bmon,$Byear,$Bwday,$Byday,$Bisdst) = localtime($BDtarget);
 		$Byear = ($Byear + 1900);
@@ -1865,7 +1889,7 @@ while ($master_loop < $CLIloops)
 		$updated_dial_log_no_uid=0;
 		$count_dial_log_no_uid=0;
 
-		$now_epoch = time();
+		$now_epoch = int(time());
 		$NBtarget = ($now_epoch - 420);
 		($Nsec,$Nmin,$Nhour,$Nmday,$Nmon,$Nyear,$Nwday,$Nyday,$Nisdst) = localtime($NBtarget);
 		$Nyear = ($Nyear + 1900);
@@ -2106,7 +2130,7 @@ while ($master_loop < $CLIloops)
 		$acq_active_call=0;
 		$hopper_insert_sent=0;
 
-		$now_date_epoch = time();
+		$now_date_epoch = int(time());
 		$epochTWENTYFOURhoursAGO = ($now_date_epoch - 86400);
 		($Ssec,$Smin,$Shour,$Smday,$Smon,$Syear,$Swday,$Syday,$Sisdst) = localtime($epochTWENTYFOURhoursAGO);
 		$Smon++;	$Syear = ($Syear + 1900);
@@ -2367,11 +2391,11 @@ while ($master_loop < $CLIloops)
 												$url =~ s/'/\\'/gi;
 												$url =~ s/"/\\"/gi;
 
-												$secW = time();
+												$secW = int(time());
 
 												`$wgetbin --no-check-certificate --output-document=/tmp/ASUBtmpD$US$url_id$US$secX --output-file=/tmp/ASUBtmpF$US$url_id$US$secX $url `;
 
-												$secY = time();
+												$secY = int(time());
 												$response_sec = ($secY - $secW);
 
 												open(Wdoc, "/tmp/ASUBtmpD$US$url_id$US$secX") || die "can't open /tmp/ASUBtmpD$US$url_id$US$secX: $!\n";
@@ -2468,6 +2492,15 @@ while ($master_loop < $CLIloops)
 
 	$stat_count++;
 	$master_loop++;
+	# update internal process log
+	$iLog_ct++;
+	if ($iLog_ct =~ /00$/) 
+		{
+		$stmtA = "UPDATE vicidial_internal_log SET up_time=NOW(), action='running', stage='Loops: $iLog_ct' WHERE process='$script_name' and server_ip='$VARserver_ip' order by db_time desc limit 1;";
+		if($DB){print STDERR "|$stmtA|";}
+		my $affected_rows = $dbhA->do($stmtA);
+		if($DB){print STDERR "$affected_rows|\n";}
+		}
 	}
 
 $dbhA->disconnect();
@@ -2475,7 +2508,7 @@ $dbhA->disconnect();
 if($DB)
 	{
 	### calculate time to run script ###
-	$secY = time();
+	$secY = int(time());
 	$secZ = ($secY - $secT);
 
 	if (!$q) {print "DONE. Script execution time in seconds: $secZ\n";}
@@ -2547,8 +2580,8 @@ sub callback_logger
 
 sub get_time_now
 	{
-	$secX = time();
-	($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+	$secX = int(time());
+	($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(int(time));
 	$year = ($year + 1900);
 	$mon++;
 	if ($mon < 10) {$mon = "0$mon";}
@@ -2761,7 +2794,7 @@ sub shared_agent_process
 		$camp_SHARED_SQL='';
 		$drop_SHARED_SQL='';
 		# Get list of active SHARED_ campaigns
-		$stmtA = "SELECT campaign_id,drop_inbound_group from vicidial_campaigns where active='Y' and dial_method IN('SHARED_RATIO','SHARED_ADAPT_HARD_LIMIT','SHARED_ADAPT_TAPERED','SHARED_ADAPT_AVERAGE');";
+		$stmtA = "SELECT campaign_id,drop_inbound_group from vicidial_campaigns where active='Y' and dial_method IN('SHARED_RATIO','SHARED_ADAPT_HARD_LIMIT','SHARED_ADAPT_TAPERED','SHARED_ADAPT_AVERAGE','SHARED_ADAPT_PERCENTMAX');";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		$sthArows=$sthA->rows;
@@ -2792,7 +2825,7 @@ sub shared_agent_process
 			{$drop_SHARED_SQL="closer_campaigns='----------'";}
 		$drop_SHARED_SQL = "and ($drop_SHARED_SQL)";
 
-		$now_epoch = time();
+		$now_epoch = int(time());
 		$BDtarget = ($now_epoch - 10);
 		($Bsec,$Bmin,$Bhour,$Bmday,$Bmon,$Byear,$Bwday,$Byday,$Bisdst) = localtime($BDtarget);
 		$Byear = ($Byear + 1900);
@@ -3114,9 +3147,9 @@ sub calculate_drops
 	## BEGIN CACHED HOURLY ANALYSIS: CALLS
 	if ($VLhour_counts > 0) 
 		{
-		$secH = time();
-		($HRsec,$HRmin,$HRhour,$HRmday,$HRmon,$HRyear,$HRwday,$HRyday,$HRisdst) = localtime(time);
-		($HRsec_prev,$HRmin_prev,$HRhour_prev,$HRmday_prev,$HRmon_prev,$HRyear_prev,$HRwday_prev,$HRyday_prev,$HRisdst_prev) = localtime(time-3600);
+		$secH = int(time());
+		($HRsec,$HRmin,$HRhour,$HRmday,$HRmon,$HRyear,$HRwday,$HRyday,$HRisdst) = localtime(int(time));
+		($HRsec_prev,$HRmin_prev,$HRhour_prev,$HRmday_prev,$HRmon_prev,$HRyear_prev,$HRwday_prev,$HRyday_prev,$HRisdst_prev) = localtime(int(time-3600));
 		$HRyear = ($HRyear + 1900);
 		$HRmon++;
 		$HRhour_test = $HRhour;
@@ -3294,7 +3327,7 @@ sub calculate_drops
 			{
 			$VL_current_hour_calls=0;
 			# $stmtA = "SELECT count(*) from $vicidial_log where campaign_id='$campaign_id[$i]' and call_date >= '$VL_previous_hour_date' and status IN($camp_ANS_STAT_SQL);";
-			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, count(*), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_log where campaign_id='$campaign_id[$i]' and call_date >= '$VL_previous_hour_date' and status IN($camp_ANS_STAT_SQL) group by hour_int, next_hour order by hour_int;";
+			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, count(*), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_log where campaign_id='$campaign_id[$i]' and call_date >= '$VL_current_hour_date' and status IN($camp_ANS_STAT_SQL) group by hour_int, next_hour order by hour_int;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
@@ -3309,7 +3342,7 @@ sub calculate_drops
 					$VL_next_hour_date_int =	$aryA[2];
 					if ($DBX) {print "VCHC CURRENT HOUR CALLS ANSWERS: |$sthArows|$VL_current_hour_date_int|$VL_current_hour_calls|$stmtA|\n";}
 
-					$stmtB="INSERT IGNORE INTO vicidial_campaign_hour_counts SET campaign_id='$campaign_id[$i]',date_hour='$VL_current_hour_date_int',type='ANSWERS',next_hour='$VL_next_hour_date_int',last_update=NOW(),calls='$VL_current_hour_calls',hr='$current_hr' ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VL_current_hour_calls';";
+					$stmtB="INSERT IGNORE INTO vicidial_campaign_hour_counts SET campaign_id='$campaign_id[$i]',date_hour='$VL_current_hour_date_int',type='ANSWERS',next_hour='$VL_next_hour_date_int',last_update=NOW(),calls='$VL_current_hour_calls',hr=hour('$VL_current_hour_date_int') ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VL_current_hour_calls';";
 					$affected_rows = $dbhB->do($stmtB);
 					if ($DBX) {print "VCHC STATS INSERT/UPDATE    TOTAL|$affected_rows|$stmtB|\n";}
 					}				
@@ -3406,7 +3439,7 @@ sub calculate_drops
 							$sthA->finish();
 							if ($DBX) {print "VCHC CACHED HOUR QUERY: |$sthArows|$VL_this_hour_calls|$stmtA|\n";}
 
-							$stmtA="INSERT IGNORE INTO vicidial_campaign_hour_counts SET campaign_id='$campaign_id[$i]',date_hour='$VL_today $j:00:00',type='ANSWERS',next_hour='$VL_today $j_next:00:00',last_update=NOW(),calls='$VL_this_hour_calls',hr='$j' ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VL_this_hour_calls';";
+							$stmtA="INSERT IGNORE INTO vicidial_campaign_hour_counts SET campaign_id='$campaign_id[$i]',date_hour='$VL_today $j:00:00',type='ANSWERS',next_hour='$VL_today $j_next:00:00',last_update=NOW(),calls='$VL_this_hour_calls',hr=hour('$VL_today $j:00:00') ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VL_this_hour_calls';";
 							$affected_rows = $dbhA->do($stmtA);
 							if ($DBX) {print "VCHC STATS INSERT/UPDATE    HOUR|$j|$affected_rows|$stmtA|\n";}
 							}
@@ -3443,7 +3476,7 @@ sub calculate_drops
 			{
 			$VL_current_hour_calls=0;
 			# $stmtA = "SELECT count(*) from $vicidial_log where campaign_id='$campaign_id[$i]' and call_date >= '$VL_current_hour_date' and status IN($camp_AM_STAT_SQL) and user != 'VDAD';";
-			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, count(*), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_log where campaign_id='$campaign_id[$i]' and call_date >= '$VL_previous_hour_date' and status IN($camp_AM_STAT_SQL) and user != 'VDAD' group by hour_int, next_hour order by hour_int;";
+			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, count(*), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_log where campaign_id='$campaign_id[$i]' and call_date >= '$VL_current_hour_date' and status IN($camp_AM_STAT_SQL) and user != 'VDAD' group by hour_int, next_hour order by hour_int;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
@@ -3592,7 +3625,7 @@ sub calculate_drops
 			{
 			$VL_current_hour_calls=0;
 			# $stmtA = "SELECT count(*) from $vicidial_log where campaign_id='$campaign_id[$i]' and call_date >= '$VL_current_hour_date' and status IN($camp_ANS_STAT_SQL) and user != 'VDAD';";
-			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, count(*), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_log where campaign_id='$campaign_id[$i]' and call_date >= '$VL_previous_hour_date' and status IN($camp_ANS_STAT_SQL) and user != 'VDAD' group by hour_int, next_hour order by hour_int;";
+			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, count(*), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_log where campaign_id='$campaign_id[$i]' and call_date >= '$VL_current_hour_date' and status IN($camp_ANS_STAT_SQL) and user != 'VDAD' group by hour_int, next_hour order by hour_int;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
@@ -3741,7 +3774,7 @@ sub calculate_drops
 			{
 			$VL_current_hour_calls=0;
 			# $stmtA = "SELECT count(*) from $vicidial_log where campaign_id='$campaign_id[$i]' and call_date >= '$VL_current_hour_date' and status IN('DROP','XDROP');";
-			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, count(*), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_log where campaign_id='$campaign_id[$i]' and call_date >= '$VL_previous_hour_date' and status IN('DROP','XDROP') group by hour_int, next_hour order by hour_int;";
+			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, count(*), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_log where campaign_id='$campaign_id[$i]' and call_date >= '$VL_current_hour_date' and status IN('DROP','XDROP') group by hour_int, next_hour order by hour_int;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
@@ -3848,6 +3881,7 @@ sub calculate_drops
 								{
 								@aryA = $sthA->fetchrow_array;
 								$VL_this_hour_calls =	$aryA[0];
+								$VCSdrops_today[$i] = ($VCSdrops_today[$i] + $VL_this_hour_calls);
 								}
 							$sthA->finish();
 							if ($DBX) {print "VCHC CACHED HOUR QUERY: |$sthArows|$VL_this_hour_calls|$stmtA|\n";}
@@ -4568,7 +4602,7 @@ sub launch_carrier_stats_gather
 	$ONEminute_total=0; @ONEminute_status=@MT; @ONEminute_count=@MT;
 
 	### BEGIN calculate times needed for queries ###
-	$secC = time();
+	$secC = int(time());
 	$epochONEminuteAGO = ($secC - 60);
 	$epochFIVEminutesAGO = ($secC - 300);
 	$epochFIFTEENminutesAGO = ($secC - 900);
@@ -4659,8 +4693,8 @@ sub launch_carrier_stats_gather
 	## BEGIN CACHED HOURLY ANALYSIS: CARRIER LOG - 24 hours
 	if ($VLhour_counts > 0) 
 		{
-		$secH = time();
-		($HRsec,$HRmin,$HRhour,$HRmday,$HRmon,$HRyear,$HRwday,$HRyday,$HRisdst) = localtime(time);
+		$secH = int(time());
+		($HRsec,$HRmin,$HRhour,$HRmday,$HRmon,$HRyear,$HRwday,$HRyday,$HRisdst) = localtime(int(time));
 		$HRyear = ($HRyear + 1900);
 		$HRmon++;
 		$HRhour_test = $HRhour;
@@ -4802,7 +4836,7 @@ sub launch_carrier_stats_gather
 				}
 			}
 		### get date-time of start of next hour ###
-		$secH = time();
+		$secH = int(time());
 		$CL_next_hour = ($secH + (60 * 60));
 		($NHsec,$NHmin,$NHhour,$NHmday,$NHmon,$NHyear,$NHwday,$NHyday,$NHisdst) = localtime($CL_next_hour);
 		$NHyear = ($NHyear + 1900);
@@ -4870,7 +4904,7 @@ sub launch_carrier_stats_gather
 			if ($DBX > 1) {print "STARTING CARRIER CACHED HOURLY TOTAL CALLS:  |$CL_current_hour_date|$CL_next_hour_date|\n";}
 
 			### get date-time of start of 6 hours ago ###
-			$secH = time();
+			$secH = int(time());
 			$temp_sub_sec = (6 * 3600);
 			$temp_24_sec = ($secH - $temp_sub_sec);
 			($cSHsec,$cSHmin,$cSHhour,$cSHmday,$cSHmon,$cSHyear,$cSHwday,$cSHyday,$cSHisdst) = localtime($temp_24_sec);
@@ -5237,9 +5271,9 @@ sub calculate_drops_inbound
 	## BEGIN CACHED HOURLY ANALYSIS: INBOUND CALLS
 	if ($VCLhour_counts > 0) 
 		{
-		$secH = time();
-		($HRsec,$HRmin,$HRhour,$HRmday,$HRmon,$HRyear,$HRwday,$HRyday,$HRisdst) = localtime(time);
-		($HRsec_prev,$HRmin_prev,$HRhour_prev,$HRmday_prev,$HRmon_prev,$HRyear_prev,$HRwday_prev,$HRyday_prev,$HRisdst_prev) = localtime(time-3600);
+		$secH = int(time());
+		($HRsec,$HRmin,$HRhour,$HRmday,$HRmon,$HRyear,$HRwday,$HRyday,$HRisdst) = localtime(int(time));
+		($HRsec_prev,$HRmin_prev,$HRhour_prev,$HRmday_prev,$HRmon_prev,$HRyear_prev,$HRwday_prev,$HRyday_prev,$HRisdst_prev) = localtime(int(time-3600));
 		$HRyear = ($HRyear + 1900);
 		$HRmon++;
 		$HRhour_test = $HRhour;
@@ -5416,7 +5450,7 @@ sub calculate_drops_inbound
 			{
 			$VCL_current_hour_calls=0;
 			# $stmtA = "SELECT count(*) from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_current_hour_date' and status NOT IN('DROP','XDROP','HXFER','QVMAIL','HOLDTO','LIVE','QUEUE','TIMEOT','AFTHRS','NANQUE','INBND','MAXCAL');";
-			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, count(*), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_previous_hour_date' and status NOT IN('DROP','XDROP','HXFER','QVMAIL','HOLDTO','LIVE','QUEUE','TIMEOT','AFTHRS','NANQUE','IQNANQ','INBND','MAXCAL') group by hour_int, next_hour order by hour_int;";
+			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, count(*), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_current_hour_date' and status NOT IN('DROP','XDROP','HXFER','QVMAIL','HOLDTO','LIVE','QUEUE','TIMEOT','AFTHRS','NANQUE','IQNANQ','INBND','MAXCAL') group by hour_int, next_hour order by hour_int;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
@@ -5431,7 +5465,8 @@ sub calculate_drops_inbound
 					$VCL_next_hour_date_int =	$aryA[2];
 					if ($DBX) {print "VCHC CURRENT HOUR CALLS ANSWERS: |$sthArows|$VL_current_hour_date_int|$VL_current_hour_calls|$stmtA|\n";}
 
-					$stmtB="INSERT IGNORE INTO vicidial_ingroup_hour_counts SET group_id='$group_id[$p]',date_hour='$VCL_current_hour_date_int',type='ANSWERS',next_hour='$VCL_next_hour_date_int',last_update=NOW(),calls='$VCL_current_hour_calls',hr='$current_hr' ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VCL_current_hour_calls';";
+					# 1/28/25 - Changed hr='$current_hr' to $HRhour_test 
+					$stmtB="INSERT IGNORE INTO vicidial_ingroup_hour_counts SET group_id='$group_id[$p]',date_hour='$VCL_current_hour_date_int',type='ANSWERS',next_hour='$VCL_next_hour_date_int',last_update=NOW(),calls='$VCL_current_hour_calls',hr=hour('$VCL_current_hour_date_int') ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VCL_current_hour_calls',hr='$HRhour_test';";
 					$affected_rows = $dbhB->do($stmtB);
 					if ($DBX) {print "VCHC STATS INSERT/UPDATE    TOTAL|$affected_rows|$stmtB|\n";}
 					}				
@@ -5528,7 +5563,7 @@ sub calculate_drops_inbound
 							$sthA->finish();
 							if ($DBX) {print "VCLHC CACHED HOUR QUERY: |$sthArows|$VCL_this_hour_calls|$stmtA|\n";}
 
-							$stmtA="INSERT IGNORE INTO vicidial_ingroup_hour_counts SET group_id='$group_id[$p]',date_hour='$VCL_today $j:00:00',type='ANSWERS',next_hour='$VCL_today $j_next:00:00',last_update=NOW(),calls='$VCL_this_hour_calls',hr='$j' ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VCL_this_hour_calls';";
+							$stmtA="INSERT IGNORE INTO vicidial_ingroup_hour_counts SET group_id='$group_id[$p]',date_hour='$VCL_today $j:00:00',type='ANSWERS',next_hour='$VCL_today $j_next:00:00',last_update=NOW(),calls='$VCL_this_hour_calls',hr=hour('$VCL_today $j:00:00') ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VCL_this_hour_calls', hr='$j';";
 							$affected_rows = $dbhA->do($stmtA);
 							if ($DBX) {print "VCLHC STATS INSERT/UPDATE    HOUR|$j|$affected_rows|$stmtA|\n";}
 							}
@@ -5565,7 +5600,7 @@ sub calculate_drops_inbound
 			{
 			$VCL_current_hour_calls=0;
 			# $stmtA = "SELECT count(*) from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_current_hour_date' and status IN('DROP','XDROP');";
-			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, count(*), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_previous_hour_date'  and status IN('DROP','XDROP') group by hour_int, next_hour order by hour_int;";
+			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, count(*), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_current_hour_date'  and status IN('DROP','XDROP') group by hour_int, next_hour order by hour_int;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
@@ -5580,7 +5615,8 @@ sub calculate_drops_inbound
 					$VCL_next_hour_date_int =	$aryA[2];
 					if ($DBX) {print "VCLHC CURRENT HOUR CALLS DROPS: |$sthArows|$VCL_current_hour_calls|$stmtA|\n";}
 
-					$stmtB="INSERT IGNORE INTO vicidial_ingroup_hour_counts SET group_id='$group_id[$p]',date_hour='$VCL_current_hour_date_int',type='DROPS',next_hour='$VCL_next_hour_date_int',last_update=NOW(),calls='$VCL_current_hour_calls',hr='$current_hr' ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VCL_current_hour_calls';";
+					# 1/28/25 - changed hr='$current_hr' to $HRhour_test
+					$stmtB="INSERT IGNORE INTO vicidial_ingroup_hour_counts SET group_id='$group_id[$p]',date_hour='$VCL_current_hour_date_int',type='DROPS',next_hour='$VCL_next_hour_date_int',last_update=NOW(),calls='$VCL_current_hour_calls',hr='$HRhour_test' ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VCL_current_hour_calls';";
 					$affected_rows = $dbhB->do($stmtB);
 					if ($DBX) {print "VCLHC STATS INSERT/UPDATE    TOTAL|$affected_rows|$stmtB|\n";}
 					}				
@@ -5731,7 +5767,7 @@ sub calculate_drops_inbound
 			{
 			$VCL_current_hour_calls=0;
 			# $stmtA = "SELECT count(*) from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_current_hour_date' and queue_seconds <= $answer_sec_pct_rt_stat_one and status NOT IN('DROP','XDROP','HXFER','QVMAIL','HOLDTO','LIVE','QUEUE','TIMEOT','AFTHRS','NANQUE','INBND','MAXCAL');";
-			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, count(*), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_previous_hour_date' and queue_seconds <= $answer_sec_pct_rt_stat_one and status NOT IN('DROP','XDROP','HXFER','QVMAIL','HOLDTO','LIVE','QUEUE','TIMEOT','AFTHRS','NANQUE','IQNANQ','INBND','MAXCAL') group by hour_int, next_hour order by hour_int;";
+			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, count(*), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_current_hour_date' and queue_seconds <= $answer_sec_pct_rt_stat_one and status NOT IN('DROP','XDROP','HXFER','QVMAIL','HOLDTO','LIVE','QUEUE','TIMEOT','AFTHRS','NANQUE','IQNANQ','INBND','MAXCAL') group by hour_int, next_hour order by hour_int;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
@@ -5878,7 +5914,7 @@ sub calculate_drops_inbound
 			{
 			$VCL_current_hour_calls=0;
 			# $stmtA = "SELECT count(*) from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_current_hour_date' and queue_seconds <= $answer_sec_pct_rt_stat_two and status NOT IN('DROP','XDROP','HXFER','QVMAIL','HOLDTO','LIVE','QUEUE','TIMEOT','AFTHRS','NANQUE','INBND','MAXCAL');";
-			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, count(*), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_previous_hour_date' and queue_seconds <= $answer_sec_pct_rt_stat_two and status NOT IN('DROP','XDROP','HXFER','QVMAIL','HOLDTO','LIVE','QUEUE','TIMEOT','AFTHRS','NANQUE','IQNANQ','INBND','MAXCAL') group by hour_int, next_hour order by hour_int;";
+			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, count(*), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_current_hour_date' and queue_seconds <= $answer_sec_pct_rt_stat_two and status NOT IN('DROP','XDROP','HXFER','QVMAIL','HOLDTO','LIVE','QUEUE','TIMEOT','AFTHRS','NANQUE','IQNANQ','INBND','MAXCAL') group by hour_int, next_hour order by hour_int;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
@@ -5892,7 +5928,7 @@ sub calculate_drops_inbound
 					$VCL_next_hour_date_int =	$aryA[2];
 					if ($DBX) {print "VCLHC CURRENT HOUR CALLS HOLD SECONDS 2: |$sthArows|$VCL_current_hour_calls|$stmtA|\n";}
 
-					$stmtB="INSERT IGNORE INTO vicidial_ingroup_hour_counts SET group_id='$group_id[$p]',date_hour='$VCL_current_hour_date_int',type='ANSWERS',next_hour='$VCL_next_hour_date_int',last_update=NOW(),calls='$VCL_current_hour_calls',hr='$HRhour_test' ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VCL_current_hour_calls';";
+					$stmtB="INSERT IGNORE INTO vicidial_ingroup_hour_counts SET group_id='$group_id[$p]',date_hour='$VCL_current_hour_date_int',type='HOLDSEC2',next_hour='$VCL_next_hour_date_int',last_update=NOW(),calls='$VCL_current_hour_calls',hr='$HRhour_test' ON DUPLICATE KEY UPDATE last_update=NOW(),calls='$VCL_current_hour_calls';";
 					$affected_rows = $dbhB->do($stmtB);
 					if ($DBX) {print "VCHC STATS INSERT/UPDATE    TOTAL|$affected_rows|$stmtB|\n";}
 					}				
@@ -6026,7 +6062,7 @@ sub calculate_drops_inbound
 			{
 			$VCL_current_hour_calls=0;
 			# $stmtA = "SELECT sum(queue_seconds) from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_current_hour_date' and status NOT IN('DROP','XDROP','HXFER','QVMAIL','HOLDTO','LIVE','QUEUE','TIMEOT','AFTHRS','NANQUE','INBND','MAXCAL');";
-			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, sum(queue_seconds), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_previous_hour_date' and status NOT IN('DROP','XDROP','HXFER','QVMAIL','HOLDTO','LIVE','QUEUE','TIMEOT','AFTHRS','NANQUE','IQNANQ','INBND','MAXCAL') group by hour_int, next_hour order by hour_int;";
+			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, sum(queue_seconds), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_current_hour_date' and status NOT IN('DROP','XDROP','HXFER','QVMAIL','HOLDTO','LIVE','QUEUE','TIMEOT','AFTHRS','NANQUE','IQNANQ','INBND','MAXCAL') group by hour_int, next_hour order by hour_int;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
@@ -6175,7 +6211,7 @@ sub calculate_drops_inbound
 			{
 			$VCL_current_hour_calls=0;
 			# $stmtA = "SELECT sum(queue_seconds) from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_current_hour_date' and status IN('DROP','XDROP');";
-			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, sum(queue_seconds), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_previous_hour_date' and status IN('DROP','XDROP') group by hour_int, next_hour order by hour_int;";
+			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, sum(queue_seconds), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_current_hour_date' and status IN('DROP','XDROP') group by hour_int, next_hour order by hour_int;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
@@ -6324,7 +6360,7 @@ sub calculate_drops_inbound
 			{
 			$VCL_current_hour_calls=0;
 			# $stmtA = "SELECT sum(queue_seconds) from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_current_hour_date';";
-			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, sum(queue_seconds), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_previous_hour_date' group by hour_int, next_hour order by hour_int;";
+			$stmtA = "SELECT CONCAT(substr(call_date, 1, 13), ':00:00') as hour_int, sum(queue_seconds), CONCAT(substr(call_date+INTERVAL 1 HOUR, 1, 13), ':00:00') as next_hour from $vicidial_closer_log where campaign_id='$group_id[$p]' and call_date >= '$VCL_current_hour_date' group by hour_int, next_hour order by hour_int;";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			$sthArows=$sthA->rows;
@@ -6883,7 +6919,7 @@ sub calculate_dial_level
 		$differential_onemin[$i] =		$stat_differential[$i];
 		}
 
-	if ( ($dial_method[$i] =~ /ADAPT_HARD_LIMIT|ADAPT_AVERAGE|ADAPT_TAPERED/) || ($force_test>0) )
+	if ( ($dial_method[$i] =~ /ADAPT_HARD_LIMIT|ADAPT_AVERAGE|ADAPT_TAPERED|ADAPT_PERCENTMAX/) || ($force_test>0) )
 		{
 		# Calculate the optimal dial_level differential for the past minute
 		$differential_target[$i] = ($differential_onemin[$i] + $adaptive_dl_diff_target[$i]);
@@ -6937,6 +6973,7 @@ sub calculate_dial_level
 		$adaptive_string .= "   SERVER TIME:   $current_hourmin\n";
 		$adaptive_string .= "   LATE TARGET:   $last_target_hour_final[$i]     ($tapered_hours_left[$i] left|$tapered_rate[$i])\n";
 		$adaptive_string .= "   INTENSITY:     $adaptive_intensity[$i]\n";
+		$adaptive_string .= "   PCT-MAX PCT:   $adaptive_percentmax_percentage[$i]\n";
 		$adaptive_string .= "   DLDIFF TARGET: $adaptive_dl_diff_target[$i]\n";
 		$adaptive_string .= "CURRENT STATS-\n";
 		$adaptive_string .= "   AVG AGENTS:      $agents_average_onemin[$i]\n";
@@ -6994,6 +7031,27 @@ sub calculate_dial_level
 					{
 					$intensity_dial_level[$i] = ($intensity_dial_level[$i] * $tapered_rate[$i]);
 					$adaptive_string .= "      DROP RATE OVER LIMIT FOR TODAY! TAPERING DIAL LEVEL TO: $intensity_dial_level[$i]\n";
+					}
+				}
+			if ($dial_method[$i] =~ /ADAPT_PERCENTMAX/) 
+				{
+				$temp_new_dial_level = sprintf("%.3f", ( ($adaptive_percentmax_percentage[$i] * $adaptive_maximum_level[$i]) / 100));
+				if ($temp_new_dial_level > $intensity_dial_level[$i])
+					{
+					$adaptive_string .= "      DROP RATE OVER LAST HOUR LIMIT FOR TODAY! PERCENT-MAX DIAL LEVEL GREATER THAN CURRENT DIAL LEVEL, DOING NOTHING ($temp_new_dial_level > $intensity_dial_level[$i]  |$adaptive_percentmax_percentage[$i]|$adaptive_maximum_level[$i])\n";
+					}
+				else
+					{
+					if ($temp_new_dial_level < 1) 
+						{
+						$intensity_dial_level[$i] = "1.0";
+						$adaptive_string .= "      DROP RATE OVER LAST HOUR LIMIT FOR TODAY! PERCENT-MAX LESS THAN 1, DIAL LEVEL TO: 1.0 ($temp_new_dial_level|$adaptive_percentmax_percentage[$i]|$adaptive_maximum_level[$i])\n";
+						}
+					else
+						{
+						$adaptive_string .= "      DROP RATE OVER LIMIT FOR TODAY! PERCENT-MAX DIAL LEVEL TO: $temp_new_dial_level ($adaptive_percentmax_percentage[$i]|$adaptive_maximum_level[$i]) from $intensity_dial_level[$i]\n";
+						$intensity_dial_level[$i] = $temp_new_dial_level;
+						}
 					}
 				}
 			}
@@ -7212,7 +7270,7 @@ sub call_quota_logging
 				}
 			$sthA->finish();
 
-			$secX = time();
+			$secX = int(time());
 			$CQtarget = ($secX - 14400);	# look back 4 hours
 			($CQsec,$CQmin,$CQhour,$CQmday,$CQmon,$CQyear,$CQwday,$CQyday,$CQisdst) = localtime($CQtarget);
 			$CQyear = ($CQyear + 1900);
@@ -7356,6 +7414,14 @@ sub call_quota_logging
 	}
 ##### END Call Quota Lead Ranking logging #####
 
+
+sub internal_logger
+	{
+	$stmtA = "INSERT INTO vicidial_internal_log SET db_time=NOW(), up_time=NOW(), process='$script_name', server_ip='$VARserver_ip', action='$action', stage='$stage';";
+	if($DB){print STDERR "|$stmtA|";}
+	my $affected_rows = $dbhA->do($stmtA);
+	if($DB){print STDERR "$affected_rows|\n";}
+	}
 
 ##### BEGIN math divisor sub #####
 sub MathZDC

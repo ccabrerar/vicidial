@@ -6,10 +6,12 @@
 # connects to the Asterisk Manager Interface version 2 and inserts records into 
 # the vicidial_sip_log for SIPInvite and SIPResponse events.
 # 
-# Copyright (C) 2019  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 190528-1304 - Copied AST_manager_listen_AMI2.pl to make the initial version
+# 260327-1509 - Added support for PJSIP (requires patched Asterisk 18+)
+# 260515-1934 - Added internal logging
 #
 
 # constants
@@ -20,6 +22,7 @@ $run_check=1; # concurrency check
 $last_keepalive_epoch = time();
 $keepalive_skips=0;
 $ami_user='sipcron';
+$script_name = 'AST_manager_sip_AMI2.pl';
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -111,6 +114,8 @@ if (try_load($module))
 
 $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
 or die "Couldn't connect to database: " . DBI->errstr;
+
+$action='start';   $stage='LOGGED INTO MYSQL SERVER';   &internal_logger;
 
 ### Grab Server values from the database
 $stmtA = "SELECT telnet_host,telnet_port,ASTmgrUSERNAME,ASTmgrSECRET,ASTmgrUSERNAMEupdate,ASTmgrUSERNAMElisten,ASTmgrUSERNAMEsend,max_vicidial_trunks,answer_transfer_agent,local_gmt,ext_context,vd_server_logs,asterisk_version FROM servers where server_ip = '$server_ip';";
@@ -224,6 +229,8 @@ $keep_alive_sec = 30;
 $keep_alive_skips = 0;
 $keep_alive_response = 1;
 $keep_alive_no_responses = 0;
+$iLog_ct=0;
+$iLog_calls=0;
 
 %ast_ver_str = parse_asterisk_version($asterisk_version);
 if (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 13))
@@ -426,6 +433,7 @@ else
 			# handle the event
 			$retcode = handle_event( %event_hash );
 			$last_event_epoch = time();
+			$iLog_calls++;
 			}
 		elsif ( ( exists($event_hash{"Response"}) ) && ( exists($event_hash{"Ping"}) ) )
 			{
@@ -442,6 +450,16 @@ else
 			print "\nAsterisk server shutting down, PROCESS KILLED... EXITING\n\n";
 			$event_string="Asterisk server shutting down, PROCESS KILLED... EXITING|ONE DAY INTERVAL:$one_day_interval|";
 			&event_logger;
+			}
+
+		# update internal process log
+		$iLog_ct++;
+		if ($iLog_ct =~ /00$/) 
+			{
+			$stmtA = "UPDATE vicidial_internal_log SET up_time=NOW(), action='running', stage='Loops: $iLog_ct   Events: $iLog_calls' WHERE process='$script_name' and server_ip='$server_ip' order by db_time desc limit 1;";
+			if($DB){print STDERR "|$stmtA|";}
+			my $affected_rows = $dbhA->do($stmtA);
+			if($DB){print STDERR "$affected_rows|\n";}
 			}
 		}
 
@@ -528,15 +546,17 @@ sub handle_event
 		# Asterisk is shutting down so should we
 		case "Shutdown" { return 0; }
 
-		# DTMF event
-		case "DTMFBegin" { return handle_dtmf_begin_event( %event_hash ); }
-		case "DTMFEnd" { return handle_dtmf_end_event( %event_hash ); }		
-
 		# SIPInvite event
 		case "SIPInvite" { return handle_sip_invite ( %event_hash ); }
 
+		# PJSIPInvite event
+		case "PJSIPInvite" { return handle_sip_invite ( %event_hash ); }
+
 		# SIPResponse event
 		case "SIPResponse" { return handle_sip_response ( %event_hash ); }
+
+		# PJSIPResponse event
+		case "PJSIPResponse" { return handle_sip_response ( %event_hash ); }
 
 		else { return 2; }
 		}
@@ -707,6 +727,15 @@ sub manager_output_logger
 		print MOout "$now_date|$manager_string|\n";
 		close(MOout);
 		}
+	}
+
+
+sub internal_logger
+	{
+	$stmtA = "INSERT INTO vicidial_internal_log SET db_time=NOW(), up_time=NOW(), process='$script_name', server_ip='$server_ip', action='$action', stage='$stage';";
+	if($DB){print STDERR "|$stmtA|";}
+	my $affected_rows = $dbhA->do($stmtA);
+	if($DB){print STDERR "$affected_rows|\n";}
 	}
 
 

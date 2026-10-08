@@ -527,6 +527,14 @@ $EQdate_ARY =	explode(' ',$query_date_END);
 $EQday_ARY =	explode('-',$EQdate_ARY[0]);
 $EQtime_ARY =	explode(':',$EQdate_ARY[1]);
 
+$SQday_ARY[0] = intval($SQday_ARY[0]);
+$SQday_ARY[1] = intval($SQday_ARY[1]);
+$SQday_ARY[2] = intval($SQday_ARY[2]);
+
+$EQday_ARY[0] = intval($EQday_ARY[0]);
+$EQday_ARY[1] = intval($EQday_ARY[1]);
+$EQday_ARY[2] = intval($EQday_ARY[2]);
+
 $SQepochDAY = mktime(0, 0, 0, $SQday_ARY[1], $SQday_ARY[2], $SQday_ARY[0]);
 $SQepoch = mktime($SQtime_ARY[0], $SQtime_ARY[1], $SQtime_ARY[2], $SQday_ARY[1], $SQday_ARY[2], $SQday_ARY[0]);
 $EQepoch = mktime($EQtime_ARY[0], $EQtime_ARY[1], $EQtime_ARY[2], $EQday_ARY[1], $EQday_ARY[2], $EQday_ARY[0]);

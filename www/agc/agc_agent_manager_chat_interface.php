@@ -1,7 +1,7 @@
 <?php
 # agc_agent_manager_chat_interface.php
-#
-# Copyright (C) 2022  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# 
+# Copyright (C) 2026  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This page is for agents to chat with managers via the agent interface.
 #
@@ -20,13 +20,14 @@
 # 220220-0855 - Added allow_web_debug system setting
 # 220518-2210 - Small fix for encrypted auth
 # 220922-1027 - Added BLANK action for first agent screen page load
+# 260303-0714 - Code updates for PHP8 compatibility
 #
 
-$admin_version = '2.14-13';
-$build = '220922-1027';
+$admin_version = '2.14-14';
+$build = '260303-0714';
 $php_script = 'agc_agent_manager_chat_interface.php';
 
-$sh="managerchats";
+$sh="managerchats"; 
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -35,19 +36,20 @@ if (isset($_GET["DB"]))							{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))				{$DB=$_POST["DB"];}
 if (isset($_GET["action"]))						{$action=$_GET["action"];}
 	elseif (isset($_POST["action"]))			{$action=$_POST["action"];}
+	else {$action="";}
 if (isset($_GET["SUBMIT"]))						{$SUBMIT=$_GET["SUBMIT"];}
 	elseif (isset($_POST["SUBMIT"]))			{$SUBMIT=$_POST["SUBMIT"];}
+	else {$SUBMIT="";}
 if (isset($_GET["manager_chat_id"]))			{$manager_chat_id=$_GET["manager_chat_id"];}
 	elseif (isset($_POST["manager_chat_id"]))	{$manager_chat_id=$_POST["manager_chat_id"];}
+	else {$manager_chat_id="";}
 if (isset($_GET["user"]))						{$user=$_GET["user"];}
 	elseif (isset($_POST["user"]))				{$user=$_POST["user"];}
+	else {$user="";}
 if (isset($_GET["pass"]))						{$pass=$_GET["pass"];}
 	elseif (isset($_POST["pass"]))				{$pass=$_POST["pass"];}
-if (!$user) {echo "Page should only be viewed through the agent interface."; die;}
-
-$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
-$user=preg_replace("/\'|\"|\\\\|;| /","",$user);
-$pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
+	else {$pass="";}
+# if (!$user) {echo "Page should only be viewed through the agent interface."; die;}
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
@@ -68,10 +70,13 @@ if ($qm_conf_ct > 0)
 	$SSallow_web_debug =	$row[5];
 	}
 $VUselected_language = $SSdefault_language;
-if ($SSallow_web_debug < 1) {$DB=0;}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;}
+$DB=preg_replace("/[^0-9]/","",$DB);
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
+$user=preg_replace("/\'|\"|\\\\|;| /","",$user);
+$pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
 $action = preg_replace('/[^-\_0-9a-zA-Z]/','',$action);
 $SUBMIT = preg_replace('/[^-\_0-9a-zA-Z]/','',$SUBMIT);
 
@@ -88,10 +93,14 @@ else
 	$manager_chat_id = preg_replace("/[^- \_\.0-9\p{L}]/u","",$user);
 	}
 
-# Load hard coded variables and then load then from options.php
-$manager_chat_refresh_seconds = 1;
+$manager_chat_refresh_seconds=1;
 
+# if options file exists, use the override values for the above variables
+#   see the options-example.php file for more information
 if (file_exists('options.php'))
+	{
+	require('options.php');
+	}
 
 $manager_chat_refresh_milliseconds = ($manager_chat_refresh_seconds ? $manager_chat_refresh_seconds*1000 : 1000);
 
@@ -115,7 +124,7 @@ if( (strlen($user)<2) or (strlen($pass)<2) or ($auth==0))
 $user_stmt="select full_name,user_level,selected_language from vicidial_users where user='$user'";
 $user_level=0;
 $user_rslt=mysql_to_mysqli($user_stmt, $link);
-if (mysqli_num_rows($user_rslt)>0)
+if (mysqli_num_rows($user_rslt)>0) 
 	{
 	$user_row=mysqli_fetch_row($user_rslt);
 	$full_name =			$user_row[0];
@@ -151,6 +160,7 @@ $chat_start_date_array=array();
 $agents_managers_array=array(); // for override
 $priority_chat="";
 $priority_chat_subid="";
+$agent_manager_override="0";
 while ($row=mysqli_fetch_row($rslt)) {
 	if ($row[0]!="") {
 		if (!$priority_chat) {$priority_chat=$row[0];} # The priority_chat is the most recent chat that has not been viewed.
@@ -267,25 +277,25 @@ function CreateAgentToAgentChat() {
 		{
 		xmlhttp = new XMLHttpRequest();
 		}
-	if (xmlhttp)
-		{
+	if (xmlhttp) 
+		{ 
 		var chat_SQL_query = "action=CreateAgentToAgentChat&agent_manager="+user+"&pass="+pass+"&agent_user="+agent+"&manager_message="+agent_message+"&user="+user;
-		xmlhttp.open('POST', 'chat_db_query.php');
+		xmlhttp.open('POST', 'chat_db_query.php'); 
 		xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
-		xmlhttp.send(chat_SQL_query);
-		xmlhttp.onreadystatechange = function()
-			{
-			if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
+		xmlhttp.send(chat_SQL_query); 
+		xmlhttp.onreadystatechange = function() 
+			{ 
+			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) 
 				{
 				var ChatText = null;
 				ChatText = xmlhttp.responseText;
 				var ChatText_array=ChatText.split("|");
 
-				if (ChatText.match(/^Error/))
+				if (ChatText.match(/^Error/)) 
 					{
 					chat_alert_box(ChatText);
 					}
-				else
+				else 
 					{
 					document.getElementById("agent_message").value="";
 					document.getElementById("AgentNewChatSpan").style.display='none';
@@ -307,8 +317,8 @@ function DisplayMgrAgentChat(manager_chat_id, manager_chat_subid) {
 		{
 		document.getElementById("CurrentActiveChat").value=manager_chat_id;
 		document.getElementById("CurrentActiveChatSubID").value=manager_chat_subid;
-		}
-	else
+		} 
+	else 
 		{
 		var manager_chat_id=document.getElementById("CurrentActiveChat").value;
 		var manager_chat_subid=document.getElementById("CurrentActiveChatSubID").value;
@@ -331,7 +341,7 @@ function DisplayMgrAgentChat(manager_chat_id, manager_chat_subid) {
 	//	{
 		document.getElementById("AgentEndChatSpan").style.display = 'block';
 	//	}
-	// else
+	// else 
 	//	{
 	//	document.getElementById("AgentEndChatSpan").style.display = 'none';
 	//	}
@@ -355,15 +365,15 @@ function DisplayMgrAgentChat(manager_chat_id, manager_chat_subid) {
 		{
 		xmlhttp = new XMLHttpRequest();
 		}
-	if (xmlhttp)
-		{
+	if (xmlhttp) 
+		{ 
 		var chat_SQL_query = "action=DisplayMgrAgentChat&user="+user+"&pass="+pass+"&manager_chat_id="+manager_chat_id+"&manager_chat_subid="+manager_chat_subid;
-		xmlhttp.open('POST', 'chat_db_query.php');
+		xmlhttp.open('POST', 'chat_db_query.php'); 
 		xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
-		xmlhttp.send(chat_SQL_query);
-		xmlhttp.onreadystatechange = function()
-			{
-			if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
+		xmlhttp.send(chat_SQL_query); 
+		xmlhttp.onreadystatechange = function() 
+			{ 
+			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) 
 				{
 				var ChatText = null;
 				ChatText = xmlhttp.responseText;
@@ -376,24 +386,24 @@ function DisplayMgrAgentChat(manager_chat_id, manager_chat_subid) {
 				if (allow_agent_replies=="Y")
 					{
 					document.getElementById("AllowAgentReplies").style.display = 'block';
-					}
-				else
+					} 
+				else 
 					{
 					document.getElementById("AllowAgentReplies").style.display = 'none';
 					}
 
-				if (ChatText_array[1].match(/^CHAT ENDED/))
+				if (ChatText_array[1].match(/^CHAT ENDED/)) 
 					{
 					document.getElementById("AgentAddChatSpan").style.display = 'none';
 					document.getElementById("AllLiveNonChatAgents").style.display = 'none';
 					}
-				else
+				else 
 					{
 						if (internal_chat_type=="AGENT")
 							{
 							document.getElementById("AgentAddChatSpan").style.display = 'block';
 							}
-						else
+						else 
 							{
 							document.getElementById("AgentAddChatSpan").style.display = 'none';
 							}
@@ -442,15 +452,15 @@ function EndAgentToAgentChat() {
 		{
 		xmlhttp = new XMLHttpRequest();
 		}
-	if (xmlhttp)
-		{
+	if (xmlhttp) 
+		{ 
 		var chat_SQL_query = "action=EndAgentToAgentChat&user="+user+"&pass="+pass+"&manager_chat_id="+manager_chat_id+"&manager_chat_subid="+manager_chat_subid;
-		xmlhttp.open('POST', 'chat_db_query.php');
+		xmlhttp.open('POST', 'chat_db_query.php'); 
 		xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
-		xmlhttp.send(chat_SQL_query);
-		xmlhttp.onreadystatechange = function()
-			{
-			if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
+		xmlhttp.send(chat_SQL_query); 
+		xmlhttp.onreadystatechange = function() 
+			{ 
+			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) 
 				{
 				var ChatText = null;
 				ChatText = xmlhttp.responseText; // echoes number of lines affected - should be greater than zero.
@@ -459,7 +469,7 @@ function EndAgentToAgentChat() {
 					{
 					document.getElementById("AllowAgentReplies").style.display = 'none';
 					document.getElementById("AgentEndChatSpan").style.display = 'none';
-					document.getElementById("ActiveManagerChatTranscript").innerHTML='';
+					document.getElementById("ActiveManagerChatTranscript").innerHTML='';	
 					document.getElementById("AgentManagerOverride").value='';
 					document.getElementById("ActiveChatStartDate").innerHTML='';
 					document.getElementById("ActiveChatManager").innerHTML='';
@@ -497,19 +507,19 @@ function RefreshActiveChatView() {
 		{
 		xmlhttp = new XMLHttpRequest();
 		}
-	if (xmlhttp)
-		{
+	if (xmlhttp) 
+		{ 
 		var chat_SQL_query = "action=RefreshActiveChatView&user="+user+"&pass="+pass+"&ChatReloadIDNumber="+ChatReloadIDNumber+"&manager_chat_id="+manager_chat_id+"&manager_chat_subid="+manager_chat_subid;
-		xmlhttp.open('POST', 'chat_db_query.php');
+		xmlhttp.open('POST', 'chat_db_query.php'); 
 		xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
-		xmlhttp.send(chat_SQL_query);
-		xmlhttp.onreadystatechange = function()
-			{
-			if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
+		xmlhttp.send(chat_SQL_query); 
+		xmlhttp.onreadystatechange = function() 
+			{ 
+			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) 
 				{
 				var ActiveChatText = null;
 				ActiveChatText = xmlhttp.responseText;
-				if(ActiveChatText!="")
+				if(ActiveChatText!="") 
 					{
 					var ActiveChatText_array=ActiveChatText.split("|");
 					document.getElementById("ChatReloadIDNumber").value=ActiveChatText_array[0];
@@ -542,15 +552,15 @@ function ReloadAgentNewChatSpan(user) {
 		{
 		xmlhttp = new XMLHttpRequest();
 		}
-	if (xmlhttp)
-		{
+	if (xmlhttp) 
+		{ 
 		var chat_SQL_query = "action=ReloadAgentNewChatSpan&user="+user+"&pass="+pass;
-		xmlhttp.open('POST', 'chat_db_query.php');
+		xmlhttp.open('POST', 'chat_db_query.php'); 
 		xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
-		xmlhttp.send(chat_SQL_query);
-		xmlhttp.onreadystatechange = function()
-			{
-			if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
+		xmlhttp.send(chat_SQL_query); 
+		xmlhttp.onreadystatechange = function() 
+			{ 
+			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) 
 				{
 				var Agent2AgentText = xmlhttp.responseText;
 				document.getElementById("AgentNewChatSpan").innerHTML=Agent2AgentText;
@@ -566,8 +576,8 @@ function SendMgrChatMessage(manager_chat_id, manager_chat_subid) {
 		{
 		document.getElementById("CurrentActiveChat").value=manager_chat_id;
 		document.getElementById("CurrentActiveChatSubID").value=manager_chat_subid;
-		}
-	else
+		} 
+	else 
 		{
 		var manager_chat_id=document.getElementById("CurrentActiveChat").value;
 		var manager_chat_subid=document.getElementById("CurrentActiveChatSubID").value;
@@ -599,24 +609,24 @@ function SendMgrChatMessage(manager_chat_id, manager_chat_subid) {
 		{
 		xmlhttp = new XMLHttpRequest();
 		}
-	if (xmlhttp)
-		{
+	if (xmlhttp) 
+		{ 
 		var chat_SQL_query = "action=SendMgrChatMessage&user="+user+"&pass="+pass+"&manager_chat_id="+manager_chat_id+"&manager_chat_subid="+manager_chat_subid+"&chat_message="+chat_message+"&agent_override="+agent_override;
-		xmlhttp.open('POST', 'chat_db_query.php');
+		xmlhttp.open('POST', 'chat_db_query.php'); 
 		xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
-		xmlhttp.send(chat_SQL_query);
-		xmlhttp.onreadystatechange = function()
-			{
-			if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
+		xmlhttp.send(chat_SQL_query); 
+		xmlhttp.onreadystatechange = function() 
+			{ 
+			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) 
 				{
 				var ChatText = null;
 				ChatText = xmlhttp.responseText;
 
-				if (ChatText.length>0 && ChatText.match(/^Error/))
+				if (ChatText.length>0 && ChatText.match(/^Error/)) 
 					{
 					chat_alert_box(ChatText);
 					}
-				else
+				else 
 					{
 					document.getElementById("manager_message").value="";
 					}
@@ -650,24 +660,24 @@ function LoadAvailableAgentsForChat(destinationId, field_name) {
 		{
 		xmlhttp = new XMLHttpRequest();
 		}
-	if (xmlhttp)
-		{
+	if (xmlhttp) 
+		{ 
 		var chat_SQL_query = "action=load_available_agents_for_chat&user="+user+"&pass="+pass+"&manager_chat_id="+manager_chat_id+"&manager_chat_subid="+manager_chat_subid+"&field_name="+field_name;
-		xmlhttp.open('POST', 'chat_db_query.php');
+		xmlhttp.open('POST', 'chat_db_query.php'); 
 		xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
-		xmlhttp.send(chat_SQL_query);
-		xmlhttp.onreadystatechange = function()
-			{
-			if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
+		xmlhttp.send(chat_SQL_query); 
+		xmlhttp.onreadystatechange = function() 
+			{ 
+			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) 
 				{
 				var ChatText = null;
 				ChatText = xmlhttp.responseText;
 
-				if (ChatText.length>0 && ChatText.match(/^Error/))
+				if (ChatText.length>0 && ChatText.match(/^Error/)) 
 					{
 					chat_alert_box(ChatText);
 					}
-				else
+				else 
 					{
 					document.getElementById(destinationId).innerHTML=ChatText;
 					}
@@ -702,24 +712,24 @@ function AddAgentToExistingChat() {
 		{
 		xmlhttp = new XMLHttpRequest();
 		}
-	if (xmlhttp)
-		{
+	if (xmlhttp) 
+		{ 
 		var chat_SQL_query = "action=add_agent_to_existing_chat&user="+user+"&pass="+pass+"&manager_chat_id="+manager_chat_id+"&manager_chat_subid="+manager_chat_subid+"&agent_to_add="+agent_to_add;
-		xmlhttp.open('POST', 'chat_db_query.php');
+		xmlhttp.open('POST', 'chat_db_query.php'); 
 		xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
-		xmlhttp.send(chat_SQL_query);
-		xmlhttp.onreadystatechange = function()
-			{
-			if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
+		xmlhttp.send(chat_SQL_query); 
+		xmlhttp.onreadystatechange = function() 
+			{ 
+			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) 
 				{
 				var ChatText = null;
 				ChatText = xmlhttp.responseText;
 
-				if (ChatText.length>0 && ChatText.match(/^Error/))
+				if (ChatText.length>0 && ChatText.match(/^Error/)) 
 					{
 					chat_alert_box(ChatText);
 					}
-				else
+				else 
 					{
 					// document.getElementById(destinationId).innerHTML=ChatText;
 					}
@@ -748,8 +758,8 @@ function MgrAgentAutoRefresh() {
 echo "<form name='agent_manager_chat_form' id='agent_manager_chat_form'>";
 echo "<table width='620' border='0' cellpadding='5' cellspacing='0'>";
 echo "<TR BGCOLOR='#E6E6E6'>\n";
-echo "<td align='left' width='190' valign='top'><font class='arial'>"._QXZ("Chatting with").": </font><BR><span class='arial_bold' id='ActiveChatManager'>".$chat_managers_array[$priority_chat]."</span></td>";
-echo "<td align='right' width='190' valign='top'><font class='arial'>"._QXZ("Chat started").": </font><BR><span class='arial_bold' id='ActiveChatStartDate'>".$chat_start_date_array[$priority_chat]."</span></td>";
+echo "<td align='left' width='190' valign='top'><font class='arial'>"._QXZ("Chatting with").": </font><BR><span class='arial_bold' id='ActiveChatManager'>".(isset($chat_managers_array[$priority_chat]) ? $chat_managers_array[$priority_chat] : "")."</span></td>";
+echo "<td align='right' width='190' valign='top'><font class='arial'>"._QXZ("Chat started").": </font><BR><span class='arial_bold' id='ActiveChatStartDate'>".(isset($chat_start_date_array[$priority_chat]) ? $chat_start_date_array[$priority_chat] : "")."</span></td>";
 echo "<td align='left' width='*' valign='bottom'><font class='arial'>"._QXZ("Your active chats").":</font></td>";
 echo "</TR>";
 
@@ -763,6 +773,7 @@ echo "</TD>\n";
 echo "<TD align='left' rowspan='2' valign='top' width='210'>\n";
 echo "<div class='scrolling_chat_display' id='AllActiveChats'>\n";
 	echo "<ul class='chatview'>";
+	$sid=0;
 	if (empty($chat_managers_array)) {
 		echo "\t<li class='arial_bold'>"._QXZ("NO OPEN CHATS")."</li>\n";
 	} else {

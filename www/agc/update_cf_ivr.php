@@ -1,7 +1,7 @@
 <?php
 # update_cf_ivr.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is part of the API group and any modifications of data are
 # logged to the vicidial_api_log table.
@@ -14,6 +14,7 @@
 # 210615-1030 - Default security fixes, CVE-2021-28854
 # 210616-2041 - Added optional CORS support, see options.php for details
 # 220219-2238 - Added allow_web_debug system setting
+# 260302-1157 - Code updates for PHP8 compatibility
 #
 
 $api_script = 'update_cf_ivr';
@@ -29,33 +30,42 @@ $filetime = date("H:i:s");
 $IP = getenv ("REMOTE_ADDR");
 $BR = getenv ("HTTP_USER_AGENT");
 
-$PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
-$PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
+$PHP_AUTH_USER=(array_key_exists('PHP_AUTH_USER', $_SERVER) ? $_SERVER['PHP_AUTH_USER'] : "");
+$PHP_AUTH_PW=(array_key_exists('PHP_AUTH_PW', $_SERVER) ? $_SERVER['PHP_AUTH_PW'] : "");
 if (isset($_GET["caller_id"]))				{$caller_id=$_GET["caller_id"];}
 	elseif (isset($_POST["caller_id"]))		{$caller_id=$_POST["caller_id"];}
+	else {$caller_id="";}
 if (isset($_GET["lead_id"]))				{$lead_id=$_GET["lead_id"];}
 	elseif (isset($_POST["lead_id"]))		{$lead_id=$_POST["lead_id"];}
+	else {$lead_id=0;}
 if (isset($_GET["list_id"]))				{$list_id=$_GET["list_id"];}
 	elseif (isset($_POST["list_id"]))		{$list_id=$_POST["list_id"];}
+	else {$list_id=0;}
 if (isset($_GET["field"]))					{$field=$_GET["field"];}
 	elseif (isset($_POST["field"]))			{$field=$_POST["field"];}
+	else {$field="";}
 if (isset($_GET["value"]))					{$value=$_GET["value"];}
 	elseif (isset($_POST["value"]))			{$value=$_POST["value"];}
+	else {$value="";}
 if (isset($_GET["user"]))					{$user=$_GET["user"];}
 	elseif (isset($_POST["user"]))			{$user=$_POST["user"];}
+	else {$user="";}
+if (isset($_GET["pass"]))					{$pass=$_GET["pass"];}
+	elseif (isset($_POST["pass"]))			{$pass=$_POST["pass"];}
+	else {$pass="";}
 if (isset($_GET["DB"]))						{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))			{$DB=$_POST["DB"];}
 if (isset($_GET["log_to_file"]))			{$log_to_file=$_GET["log_to_file"];}
 	elseif (isset($_POST["log_to_file"]))	{$log_to_file=$_POST["log_to_file"];}
-
-$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+	else {$log_to_file=0;}
 
 #$DB = '1';	# DEBUG override
 $US = '_';
 $TD = '---';
 $STARTtime = date("U");
 $NOW_TIME = date("Y-m-d H:i:s");
-$sale_status = "$TD$sale_status$TD";
+# Removed 3/14 - not used
+# $sale_status = "$TD$sale_status$TD";
 $search_value='';
 $match_found=0;
 $k=0;
@@ -80,7 +90,8 @@ if ($qm_conf_ct > 0)
 	$active_modules =			$row[3];
 	$SSallow_web_debug =		$row[4];
 	}
-if ($SSallow_web_debug < 1) {$DB=0;}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;}
+$DB=preg_replace("/[^0-9]/","",$DB);
 
 $VUselected_language = '';
 $stmt="SELECT selected_language from vicidial_users where user='$user';";
@@ -96,22 +107,26 @@ if ($sl_ct > 0)
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
-$caller_id = preg_replace('/[^-_0-9a-zA-Z]/', '', $caller_id);
+# $caller_id = preg_replace('/[^-_0-9a-zA-Z]/', '', $caller_id);
 $lead_id = preg_replace('/[^_0-9]/', '', $lead_id);
-$list_id = preg_replace('/[^_0-9]/', '', $list_id);
-$field = preg_replace('/[^-_0-9a-zA-Z]/', '', $field);
+$list_id = preg_replace('/[^0-9]/', '', $list_id);
+# $field = preg_replace('/[^-_0-9a-zA-Z]/', '', $field);
 $value = preg_replace("/\'|\"|\\\\|;| /","",$value);
-$log_to_file = preg_replace('/[^-_0-9a-zA-Z]/', '', $log_to_file);
+$log_to_file = preg_replace('/[^0-9]/', '', $log_to_file);
 
 if ($non_latin < 1)
 	{
 	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
 	$pass=preg_replace("/[^-\.\+\/\=_0-9a-zA-Z]/","",$pass);
+	$caller_id = preg_replace('/[^-_0-9a-zA-Z]/', '', $caller_id);
+	$field = preg_replace('/[^-_0-9a-zA-Z]/', '', $field);
 	}
 else
 	{
 	$user=preg_replace("/[^-_0-9\p{L}]/u","",$user);
 	$pass = preg_replace('/[^-\.\+\/\=_0-9\p{L}]/u','',$pass);
+	$caller_id = preg_replace('/[^-_0-9\p{L}]/u', '', $caller_id);
+	$field = preg_replace('/[^-_0-9\p{L}]/u', '', $field);
 	}
 
 # if options file exists, use the override values for the above variables

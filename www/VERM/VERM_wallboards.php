@@ -5,8 +5,9 @@
 # 
 # CHANGELOG:
 # 220825-1600 - First build
+# 250623-1714 - Changed $report_name variable to work with slave database setting
 #
-$report_name="VERM reports";
+$report_name="VERM Reports";
 
 $startMS = microtime();
 

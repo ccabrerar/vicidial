@@ -1,4 +1,4 @@
-INBOUND CALLBACK QUEUE		Started: 2018-01-15	Updated: 2023-03-12
+INBOUND CALLBACK QUEUE		Started: 2018-01-15	Updated: 2024-11-01
 
 
 The purpose of this feature is to allow for callers to leave the queue and be called back when their place in line is reached. Included in this new set of features are the new Closed Time features to In-Groups that allow all callers in queue to be presented with a press-1 option when the in-group closing time for the day has been reached. Also, an in-group feature was added to manually force the end of all queueing of calls for an in-group for the rest of the day.
@@ -19,6 +19,9 @@ The agi-VDAD_ALL_inbound.agi inbound call routing process has also been modified
 The ADMIN_keepalive_ALL.pl now has an added process to take care of archiving once per day the old inbound callback queue records that are of SENT, EXPIRED and ORPHAN status. This process will also reset the Closing-Time-Now-Trigger if it has been used during the previous day.
 
 The Real-Time report also has a new "Callback Queue Calls" top header in HTML view mode, so you can see how many LIVE entries there are in the inbound callback queue. If you want to see what in-groups those LIVE records are in, you can click on the "SHOW IN-GROUP STATS" link at the top of the Real-Time report.
+
+
+NOTE: ORPHAN status callback-queue records were queued up to a specific available agent for the outbound call to be placed, but an error happened on the agent screen(like the agent closing their web browser) and it never changed from the SENDING status, but it is possible that the dial was initiated, so it is flagged as ORPHAN so at least you can look into it if you need to.
 
 
 
@@ -58,6 +61,8 @@ Closing Time Option Voicemail - If Closing Time Option is set to VOICEMAIL, this
 Closing Time Option Transfer In-Group - If Closing Time Option is set to IN_GROUP, this is the inbound group that the call will be sent to if the Closing Time is reached.
 
 Closing Time Option Callback List ID - If Closing Time Option is set to CALLERID_CALLBACK, this is the List ID the call is added to as a new lead if the Closing Time is reached.
+
+
 
 
 

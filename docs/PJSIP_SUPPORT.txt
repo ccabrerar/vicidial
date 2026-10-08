@@ -1,9 +1,9 @@
-PJSIP SUPPORT IN ASTERISK		Started: 2021-01-12	Updated: 2022-01-03
+PJSIP SUPPORT IN ASTERISK		Started: 2021-01-12	Updated: 2025-01-20
 
 * NOTE: Full PJSIP support was added to VICIdial in svn/trunk revision 3511.
 
 
-This document will go over how to enable support for PJSIP within Asterisk 16 on a VICIbox 10 system.
+This document will go over how to enable support for PJSIP within Asterisk 18 on a VICIbox 12 system.
 
 
 
@@ -45,7 +45,13 @@ If websocket_enabled is not there add it and set it to false
      bind		= 0.0.0.0:5061 
      to 
      bind		= 0.0.0.0:5060 
-      
+
+     ALSO, change "SERVER_EXTERNAL_IP" to your server's external IP address:
+
+     external_media_address          = SERVER_EXTERNAL_IP
+     external_signaling_address      = SERVER_EXTERNAL_IP
+
+
 3. Reboot the dialer
 4. Go to Admin -> System Settings and change Allowed SIP Stacks from: 
      "SIP" 

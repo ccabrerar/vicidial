@@ -1,4 +1,4 @@
-AGENT API DOCUMENT		Started: 2008-07-03	Updated: 2024-06-24
+AGENT API DOCUMENT		Started: 2008-07-03	Updated: 2025-08-30
 
 This document describes the functions of an API(Application Programming Interface)
 for the VICIDIAL Agent screen. This functionality will be rather limited at first
@@ -30,6 +30,7 @@ transfer_conference - sends several commands related to the agent transfer-conf 
 park_call - sends command to park customer or grab customer from park or ivr
 logout - logs the agent out of the agent interface
 recording - sends a recording start/stop signal or status of agent recording
+stereo_recording - send a start or stop stereo agent recording signal to agent screen
 webserver - display webserver information, very useful for load balanced setups
 webphone_url - display the webphone url for the current agent's session
 call_agent - send a call to connect the agent to their session
@@ -772,7 +773,7 @@ VALUES:
    START - sends a "start recording" signal to the agent screen
             (you can have multiple recordings going at the same time)
    STOP - sends a "stop recording" signal to the agent screen
-            (this will stop all active recordings onthe agent screen)
+            (this will stop all active recordings on the agent screen)
    STATUS - displays results of active recording and agent session information
             (returns: user|recording_id|filename|server|start_time|agent_server|session|agent_status)
   stage - 
@@ -793,6 +794,44 @@ SUCCESS: recording function sent - 6666|START||||192.168.1.5|8600051|PAUSED
 SUCCESS: recording function sent - 6666|START_MIDCALL||||192.168.1.5|8600051|PAUSED 
 NOTICE: not recording - 6666|||||192.168.1.5|8600051|PAUSED
 NOTICE: recording active - 6666|121242|20120810-012008__6666_|192.168.1.5|2012-08-10 01:20:10|192.168.1.5|8600051|PAUSED
+
+
+
+
+
+--------------------------------------------------------------------------------
+stereo_recording - 
+
+DESCRIPTION:
+sends a stereo_recording start/stop signal or status of agent-controlled stereo recording
+
+VALUES:
+ value - 
+  REQUIRED, choices are below
+   BEGIN - sends a "start stereo_recording" signal to the agent screen
+            (you cannot have multiple agent-controlled stereo_recordings going at the same time)
+   END - sends a "stop stereo_recording" signal to the agent screen
+            (this will stop all active agent-controlled stereo_recordings on the agent screen)
+   STATUS - displays results of active stereo_recording and agent session information (Only AGENT-CONTROLLED recordings)
+            (returns: user|recording_id|filename|server|start_time|agent_server|session|agent_status)
+  stage - 
+    OPTIONAL, value to append to the stereo_recording filename, limited to 14 characters, if more it will truncate. Only works with BEGIN value
+
+EXAMPLE URLS:
+http://server/agc/api.php?source=test&user=6666&pass=1234&agent_user=1000&function=stereo_recording&value=BEGIN
+http://server/agc/api.php?source=test&user=6666&pass=1234&agent_user=1000&function=stereo_recording&value=END
+http://server/agc/api.php?source=test&user=6666&pass=1234&agent_user=1000&function=stereo_recording&value=STATUS
+http://server/agc/api.php?source=test&user=6666&pass=1234&agent_user=1000&function=stereo_recording&value=BEGIN&stage=_MIDCALL
+
+RESPONSES:
+ERROR: no user found - 6666
+ERROR: agent_user is not logged in - 6666 
+ERROR: stop stereo_recording error - 6666|||||192.168.1.5|8600051|PAUSED 
+SUCCESS: stereo_recording function sent - 6666|END||||192.168.1.5|8600051|PAUSED
+SUCCESS: stereo_recording function sent - 6666|BEGIN||||192.168.1.5|8600051|PAUSED 
+SUCCESS: stereo_recording function sent - 6666|BEGIN_MIDCALL||||192.168.1.5|8600051|PAUSED 
+NOTICE: not stereo_recording - 6666|||||192.168.1.5|8600051|PAUSED
+NOTICE: stereo_recording active - 6666|121242|20120810-012008__6666_|192.168.1.5|2012-08-10 01:20:10|192.168.1.5|8600051|PAUSED
 
 
 

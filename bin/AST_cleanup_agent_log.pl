@@ -10,7 +10,7 @@
 #
 # This program only needs to be run by one server
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 60711-0945 - Changed to DBI by Marin Blu
@@ -47,11 +47,15 @@
 # 201106-2146 - Added EXITEMPTY verb for queue_log cleanup section
 # 210523-2321 - Added optional check for qa_data duplicates, -qm-qa-duplicate-check
 # 220206-0714 - Added new -roll-back-preview-skips function to roll back the last_local_call_time and called_count for leads that were previewed and not dialed
+# 250625-2329 - Added --wait-pause-code-swap option
+# 260515-2216 - Added internal logging
 #
 
 # constants
 $US='__';
 $MT[0]='';
+$script_name = 'AST_cleanup_agent_log.pl';
+$start_sec = time();
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -87,6 +91,7 @@ if (length($ARGV[0])>1)
 		print "  [-only-check-vicidial-log-agent] = will check for missing agent log entries\n";
 		print "  [-only-hold-cleanup] = will look for hold entries and correct agent log wait/talk times\n";
 		print "  [-roll-back-preview-skips] = roll back the last_local_call_time and called_count for leads that were previewed and not dialed\n";
+		print "  [-wait-pause-code-swap] = search for log wait times with 0-1 second of pause time and swap the wait time to pause\n";
 		print "  [-run-check] = concurrency check, die if another instance is running\n";
 		print "  [-quiet] = quiet, no output\n";
 		print "  [-test] = test\n";
@@ -221,6 +226,11 @@ if (length($ARGV[0])>1)
 			{
 			$roll_back_preview_skips=1;
 			if ($Q < 1) {print "\n----- ROLL BACK PREVIEW SKIPS: $roll_back_preview_skips -----\n\n";}
+			}
+		if ($args =~ /-wait-pause-code-swap/i)
+			{
+			$wait_pause_code_swap=1;
+			if ($Q < 1) {print "\n----- WAIT PAUSE CODE SWAP: $wait_pause_code_swap -----\n\n";}
 			}
 		if ($args =~ /-run-check/i)
 			{
@@ -464,6 +474,8 @@ use DBI;
 
 $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
 or die "Couldn't connect to database: " . DBI->errstr;
+
+$action='start';   $stage='LOGGED INTO MYSQL SERVER';   &internal_logger;
 
 #############################################
 ##### START QUEUEMETRICS LOGGING LOOKUP #####
@@ -832,6 +844,60 @@ if ($roll_back_preview_skips > 0)
 	exit;
 	}
 ### END roll back the last_local_call_time and called_count for leads that were previewed and not dialed
+
+
+
+
+
+
+### BEGIN check for pause code entries with 0-1 seconds of pause time and long wait time to swap
+if ($wait_pause_code_swap > 0) 
+	{
+	if ($DB) {print " - check for pause code entries with 0-1 seconds of pause time and long wait time to swap \n";}
+	$stmtA = "SELECT user,agent_log_id,pause_epoch,wait_epoch,talk_epoch,UNIX_TIMESTAMP(event_time),pause_sec,wait_sec,sub_status,event_time from vicidial_agent_log where sub_status NOT IN ('BLANK','ADDIAL','ANDIAL','LAGGED','LOGIN','NXDIAL') and sub_status IS NOT NULL and pause_sec=0 and wait_sec > 10 $VDAD_SQL_time;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if($DBX){print STDERR "\n$sthArows|$stmtA|\n";}
+	$i=0;
+	while ($sthArows > $i)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$swap_user[$i] =			$aryA[0];
+		$swap_agent_log_id[$i] =	$aryA[1];
+		$swap_pause_epoch[$i] =		$aryA[2];
+		$swap_wait_epoch[$i] =		$aryA[3];
+		$swap_talk_epoch[$i] =		$aryA[4];
+		$swap_event_epoch[$i] =		$aryA[5];
+		$swap_pause_sec[$i] =		$aryA[6];
+		$swap_wait_sec[$i] =		$aryA[7];
+		$swap_sub_status[$i] =		$aryA[8];
+		$swap_call_date[$i] =		$aryA[9];
+
+		if ($DBX) {print "$i $swap_user[$i] $swap_agent_log_id[$i] $swap_pause_epoch[$i] $swap_wait_epoch[$i] $swap_talk_epoch[$i] $swap_event_epoch[$i] $swap_pause_sec[$i] $swap_wait_sec[$i] $swap_sub_status[$i] $swap_call_date[$i] \n";}
+		$i++;
+		}
+	$sthA->finish();
+
+	$i=0;
+	while ($sthArows > $i)
+		{
+		$NEWwait_epoch = ($swap_pause_epoch[$i] + $swap_wait_sec[$i]);
+		##### update vicidial_agent_log record
+		$stmtAX = "UPDATE vicidial_agent_log SET pause_sec='$swap_wait_sec[$i]',wait_sec='0',wait_epoch='$NEWwait_epoch' WHERE agent_log_id='$swap_agent_log_id[$i]';";
+		if ($TEST < 1)
+			{$VALaffected_rows = $dbhA->do($stmtAX);}
+		if ($DB) {print "          SWAP record updated: $VALaffected_rows|$stmtAX|\n";}
+		$i++;
+		}
+	if ($DB > 0) 
+		{
+		print "DONE:     SWAPPED: $i \n";
+		}
+
+	exit;
+	}
+### END check for pause code entries with 0-1 seconds of pause time and long wait time to swap
 
 
 
@@ -3027,10 +3093,18 @@ if ($enable_queuemetrics_logging > 0)
 
 
 
+# update internal process log
+$now_sec = time();
+$run_sec = ($now_sec - $start_sec);
+$stmtA = "UPDATE vicidial_internal_log SET up_time=NOW(), action='finished', stage='Run seconds: $run_sec' WHERE process='$script_name' and server_ip='$server_ip' order by db_time desc limit 1;";
+if($DB){print STDERR "|$stmtA|";}
+my $affected_rows = $dbhA->do($stmtA);
+if($DB){print STDERR "$affected_rows|\n";}
 
 
 
-	if ($DB) {print STDERR "\nDONE\n";}
+
+if ($DB) {print STDERR "\nDONE\n";}
 
 
 
@@ -3052,4 +3126,13 @@ sub event_logger
 	print Lout "$HDSQLdate|$event_string|\n";
 	close(Lout);
 	$event_string='';
+	}
+
+
+sub internal_logger
+	{
+	$stmtA = "INSERT INTO vicidial_internal_log SET db_time=NOW(), up_time=NOW(), process='$script_name', server_ip='$server_ip', action='$action', stage='$stage';";
+	if($DB){print STDERR "|$stmtA|";}
+	my $affected_rows = $dbhA->do($stmtA);
+	if($DB){print STDERR "$affected_rows|\n";}
 	}

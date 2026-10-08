@@ -1,4 +1,4 @@
-CALLER ID NAME CODES DOC	Started: 2013-07-15	Updated: 2023-11-18
+CALLER ID NAME CODES DOC	Started: 2013-07-15	Updated: 2025-09-08
 
 
 This document is meant for reference only, and it does not contain all CID name codes possible, but more will be added over time.
@@ -24,7 +24,8 @@ XLvdc - Agent Local Closer or ReQueue Call (XLvdcW13739431946666) [epoch + user.
 XBvdc - Agent blind transfer (XBvdcW14528875091001100110011001) [epoch + user...]
 AGMON - Remote Agent Monitor (AGMON715224918000001)
 HLvdcW - Hangup of customer call from agent screen (HLvdcW1475524272tluc)
-CH123456 - Hangup of all non-agent channels in meetme session(CH1234614755246080)
+CH123456 - Hangup of all non-agent channels in meetme session(CH12345614755246080)
+SH1234567 - Stop recording on customer channel(SH12345671475524608)
 ULGC - Hangup of lone channel in left 3way session (ULGC0010420221616133)
 ULGH - Clearing of left 3way session after server rec limit (ULGH0010420221618178)
 ULAL - Clearing of agent session by AST_agent_logout.pl script
@@ -35,6 +36,7 @@ ULVC - Clearing of agent session in userLOGout agent screen function
 BM - Real-time screen blind monitor (BM149425456200006666)
 BB - Real-time screen blind barge (BB149425456200006666)
 BW - Real-time screen blind whisper (BW149425456200006666)
+BE - Real-time screen enhanced monitor (BE149425456200006666)
 E - Inbound Email, tracking only (E0001797980001237995)
 ACagcW - Noone in session call agent phone (ACagcW15167259066666)
 AM - Agent mute of recording (AM273955W0001922575W)

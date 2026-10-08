@@ -3,7 +3,7 @@
 # 
 # Pulls all timeclock records for an agent
 #
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 90602-2244 - First build
@@ -31,6 +31,7 @@
 # 191013-0833 - Fixes for PHP7
 # 220227-0927 - Added allow_web_debug system setting
 # 240801-1130 - Code updates for PHP8 compatibility
+# 260501-1643 - More code updates for PHP8 compatibility
 #
 
 $startMS = microtime();
@@ -38,8 +39,8 @@ $startMS = microtime();
 require("dbconnect_mysqli.php");
 require("functions.php");
 
-$PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
-$PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
+$PHP_AUTH_USER=(array_key_exists('PHP_AUTH_USER', $_SERVER) ? $_SERVER['PHP_AUTH_USER'] : "");
+$PHP_AUTH_PW=(array_key_exists('PHP_AUTH_PW', $_SERVER) ? $_SERVER['PHP_AUTH_PW'] : "");
 $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
 if (isset($_GET["query_date"]))				{$query_date=$_GET["query_date"];}
@@ -48,22 +49,24 @@ if (isset($_GET["end_date"]))				{$end_date=$_GET["end_date"];}
 	elseif (isset($_POST["end_date"]))		{$end_date=$_POST["end_date"];}
 if (isset($_GET["group"]))					{$group=$_GET["group"];}
 	elseif (isset($_POST["group"]))			{$group=$_POST["group"];}
+	else {$group="";}
 if (isset($_GET["user_group"]))				{$user_group=$_GET["user_group"];}
 	elseif (isset($_POST["user_group"]))	{$user_group=$_POST["user_group"];}
+	else {$user_group="";}
 if (isset($_GET["shift"]))					{$shift=$_GET["shift"];}
 	elseif (isset($_POST["shift"]))			{$shift=$_POST["shift"];}
+	else {$shift="";}
 if (isset($_GET["stage"]))					{$stage=$_GET["stage"];}
 	elseif (isset($_POST["stage"]))			{$stage=$_POST["stage"];}
+	else {$stage="";}
 if (isset($_GET["file_download"]))			{$file_download=$_GET["file_download"];}
 	elseif (isset($_POST["file_download"]))	{$file_download=$_POST["file_download"];}
+	else {$file_download=0;}
 if (isset($_GET["DB"]))						{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))			{$DB=$_POST["DB"];}
-if (isset($_GET["submit"]))					{$submit=$_GET["submit"];}
-	elseif (isset($_POST["submit"]))		{$submit=$_POST["submit"];}
-if (isset($_GET["SUBMIT"]))					{$SUBMIT=$_GET["SUBMIT"];}
-	elseif (isset($_POST["SUBMIT"]))		{$SUBMIT=$_POST["SUBMIT"];}
 if (isset($_GET["report_display_type"]))			{$report_display_type=$_GET["report_display_type"];}
 	elseif (isset($_POST["report_display_type"]))	{$report_display_type=$_POST["report_display_type"];}
+	else {$report_display_type="";}
 
 $MT[0]='';
 $NOW_DATE = date("Y-m-d");
@@ -75,7 +78,8 @@ if (!isset($query_date)) {$query_date = "$NOW_DATE 00:00:00";}
 if (!isset($end_date)) {$end_date = "$NOW_DATE 23:59:59";}
 if (strlen($shift)<2) {$shift='ALL';}
 if (strlen($stage)<2) {$stage='ID';}
-$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+$ASCII_text=''; $graph_id=0; $GRAPH_text='';
+$file_output="";
 
 require("screen_colors.php");
 
@@ -100,18 +104,15 @@ if ($qm_conf_ct > 0)
 	$SSreport_default_format =		$row[6];
 	$SSallow_web_debug =			$row[7];
 	}
-if ($SSallow_web_debug < 1) {$DB=0;}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;}
+$DB=preg_replace("/[^0-9]/","",$DB);
 if (strlen($report_display_type)<2) {$report_display_type = $SSreport_default_format;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
-$query_date = preg_replace('/[^- \:\_0-9a-zA-Z]/',"",$query_date);
-$end_date = preg_replace('/[^- \:\_0-9a-zA-Z]/',"",$end_date);
-$submit = preg_replace('/[^-_0-9a-zA-Z]/',"",$submit);
-$SUBMIT = preg_replace('/[^-_0-9a-zA-Z]/',"",$SUBMIT);
-$file_download = preg_replace('/[^-_0-9a-zA-Z]/',"",$file_download);
-$stage = preg_replace('/[^-_0-9a-zA-Z]/',"",$stage);
-$report_display_type = preg_replace('/[^-_0-9a-zA-Z]/',"",$report_display_type);
+$query_date = preg_replace('/[^- \:0-9]/',"",$query_date);
+$end_date = preg_replace('/[^- \:0-9]/',"",$end_date);
+$file_download = preg_replace('/[^0-9]/',"",$file_download);
 
 # Variables filter further down in the code
 # $user_group
@@ -122,6 +123,8 @@ if ($non_latin < 1)
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9a-zA-Z]/', '', $PHP_AUTH_PW);
 	$group = preg_replace('/[^-_0-9a-zA-Z]/', '', $group);
 	$shift = preg_replace('/[^-_0-9a-zA-Z]/',"",$shift);
+	$stage = preg_replace('/[^-_0-9a-zA-Z]/',"",$stage);
+	$report_display_type = preg_replace('/[^-_0-9a-zA-Z]/',"",$report_display_type);
 	}
 else
 	{
@@ -129,6 +132,8 @@ else
 	$PHP_AUTH_PW = preg_replace('/[^-_0-9\p{L}]/u', '', $PHP_AUTH_PW);
 	$group = preg_replace('/[^-_0-9\p{L}]/u', '', $group);
 	$shift = preg_replace('/[^-_0-9\p{L}]/u',"",$shift);
+	$stage = preg_replace('/[^-_0-9\p{L}]/u',"",$stage);
+	$report_display_type = preg_replace('/[^-_0-9\p{L}]/u',"",$report_display_type);
 	}
 
 $stmt="SELECT selected_language from vicidial_users where user='$PHP_AUTH_USER';";
@@ -344,6 +349,8 @@ while ($i < $user_groups_to_print)
 
 $i=0;
 $group_string='|';
+$group_SQL='';
+$groupQS='';
 $group_ct = count($group);
 while($i < $group_ct)
 	{
@@ -362,6 +369,9 @@ else
 
 $i=0;
 $user_group_string='|';
+$user_group_SQL='';
+$user_groupQS='';
+$TCuser_group_SQL='';
 $user_group_ct = count($user_group);
 while($i < $user_group_ct)
 	{
@@ -567,7 +577,7 @@ window.open(url,"",'width=620,height=300,scrollbars=yes,menubar=yes,address=yes'
 	echo "<PRE><FONT SIZE=2>\n";
 	}
 
-if (strlen($user_group[0]) < 1)
+if (!isset($user_group[0]) || strlen($user_group[0]) < 1)
 	{
 	echo "\n";
 	echo _QXZ("PLEASE SELECT A CAMPAIGN OR USER GROUP AND DATE-TIME ABOVE AND CLICK SUBMIT")."\n";
@@ -576,6 +586,8 @@ if (strlen($user_group[0]) < 1)
 
 else
 	{
+	$time_BEGIN = "00:00:00";  
+	$time_END = "23:59:59";
 	if ($shift == 'TEST') 
 		{
 		$time_BEGIN = "09:45:00";  
@@ -647,6 +659,7 @@ else
 	if ($DB) {echo "$stmt\n";}
 	$punches_to_print = mysqli_num_rows($rslt);
 	$i=0;
+	$uc=0;
 	$TCuser=array();
 	$TCtime=array();
 	while ($i < $punches_to_print)
@@ -695,6 +708,7 @@ else
 	$max_time=1;
 	$graph_stats=array();
 	$q=0;
+	$TOTtimeTC=0;
 	$Suser=array();
 	$Stime=array();
 	$Sname=array();
@@ -704,6 +718,7 @@ else
 	$TOPsortTALLY=array();
 	$TOPsorted_output=array();
 	$TOPsorted_outputFILE=array();
+	$TOPsortMAX=0;
 	while ( ($m < $uc) and ($m < 50000) )
 		{
 		$TCdetail='';
@@ -786,7 +801,7 @@ else
 		if ($TC_results > 0)
 			{$rawTCdetail = preg_replace('/,$/','',$rawTCdetail);}
 
-		$Stime[$m] =	sprintf("%10s", $Stime[$m]); 
+		# $Stime[$m] =	sprintf("%10s", $Stime[$m]); 
 		$SORTname =	sprintf("%-20s", $Sname[$m]);
 		$SORTgroup =	sprintf("%-20s", $Sgroup[$m]);
 		$Sgroup[$m] =	sprintf("%-20s", $Sgroup[$m]); 
@@ -809,6 +824,8 @@ else
 			}
 
 
+		$fileToutput='';
+		$Toutput='';
 		if ($file_download < 1)
 			{
 			$Toutput = "| $Sname[$m] | <a href=\"./user_stats.php?user=$RAWuser&begin_date=$query_date_D&end_date=$end_date_D\">$Suser[$m]</a> | $Sgroup[$m] | $StimeTC[$m]$TCuserAUTOLOGOUT| $TCdetail\n";
@@ -829,12 +846,12 @@ else
 		if ($stage == 'NAME')
 			{
 			$TOPsort[$m] =	'' . sprintf("%020s", $SORTname) . '-----' . $m . '-----' . sprintf("%020s", $RAWuser);
-			$TOPsortTALLY[$m]=$RAWcalls;
+			$TOPsortTALLY[$m]=$SORTname;
 			}
 		if ($stage == 'ID')
 			{
 			$TOPsort[$m] =	'' . sprintf("%08s", $RAWuser) . '-----' . $m . '-----' . sprintf("%020s", $RAWuser);
-			$TOPsortTALLY[$m]=$RAWcalls;
+			$TOPsortTALLY[$m]=$RAWuser;
 			}
 		if ($stage == 'TCLOCK')
 			{
@@ -894,7 +911,8 @@ else
 			for ($d=0; $d<count($graph_stats); $d++) {
 				$labels.="\"".$graph_stats[$d][0]." ".$graph_stats[$d][2]."\",";
 				$data.="\"".$graph_stats[$d][1]."\","; 
-				$current_graph_total+=$graph_stats[$d][1];
+				$current_graph_total+=(!($graph_stats[$d][1]) ? 0 : $graph_stats[$d][1]);
+				# $current_graph_total+=$graph_stats[$d][1];
 				$bgcolor=$backgroundColor[($d%count($backgroundColor))];
 				$hbgcolor=$hoverBackgroundColor[($d%count($hoverBackgroundColor))];
 				$hbcolor=$hoverBorderColor[($d%count($hoverBorderColor))];
@@ -1045,7 +1063,7 @@ else
 if ($file_download > 0)
 	{
 	$FILE_TIME = date("Ymd-His");
-	$CSVfilename = "AGENT_TIME$US$FILE_TIME.csv";
+	$CSVfilename = "AGENT_TIME_$FILE_TIME.csv";
 
 	// We'll be outputting a TXT file
 	header('Content-type: application/octet-stream');

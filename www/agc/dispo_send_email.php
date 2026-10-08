@@ -1,7 +1,7 @@
 <?php
 # dispo_send_email.php
 # 
-# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed to be used in the "Dispo URL" field of a campaign
 # or in-group. It will send out an email to a fixed email address as defined
@@ -52,6 +52,7 @@
 # 230113-0839 - Added dialed_number & dialed_label to allowed variables in email subject and body
 # 230420-1620 - Added email_display_name as a container option for the email sender
 # 230518-1035 - Added in-group and campaign custom fields 1-5, for script/webform/dispo-call-url use
+# 260302-1214 - Code updates for PHP8 compatibility
 #
 
 $api_script = 'send_email';
@@ -65,96 +66,136 @@ $filetime = date("H:i:s");
 $IP = getenv ("REMOTE_ADDR");
 $BR = getenv ("HTTP_USER_AGENT");
 
-$PHP_AUTH_USER=$_SERVER['PHP_AUTH_USER'];
-$PHP_AUTH_PW=$_SERVER['PHP_AUTH_PW'];
+$PHP_AUTH_USER=(array_key_exists('PHP_AUTH_USER', $_SERVER) ? $_SERVER['PHP_AUTH_USER'] : "");
+$PHP_AUTH_PW=(array_key_exists('PHP_AUTH_PW', $_SERVER) ? $_SERVER['PHP_AUTH_PW'] : "");
 if (isset($_GET["call_id"]))				{$call_id=$_GET["call_id"];}
 	elseif (isset($_POST["call_id"]))		{$call_id=$_POST["call_id"];}
+	else {$call_id="";}
 if (isset($_GET["lead_id"]))				{$lead_id=$_GET["lead_id"];}
 	elseif (isset($_POST["lead_id"]))		{$lead_id=$_POST["lead_id"];}
+	else {$lead_id="";}
 if (isset($_GET["sale_status"]))			{$sale_status=$_GET["sale_status"];}
 	elseif (isset($_POST["sale_status"]))	{$sale_status=$_POST["sale_status"];}
+	else {$sale_status="";}
 if (isset($_GET["dispo"]))					{$dispo=$_GET["dispo"];}
 	elseif (isset($_POST["dispo"]))			{$dispo=$_POST["dispo"];}
+	else {$dispo="";}
 if (isset($_GET["container_id"]))			{$container_id=$_GET["container_id"];}
 	elseif (isset($_POST["container_id"]))	{$container_id=$_POST["container_id"];}
+	else {$container_id="";}
 if (isset($_GET["user"]))					{$user=$_GET["user"];}
 	elseif (isset($_POST["user"]))			{$user=$_POST["user"];}
+	else {$user="";}
 if (isset($_GET["pass"]))					{$pass=$_GET["pass"];}
 	elseif (isset($_POST["pass"]))			{$pass=$_POST["pass"];}
+	else {$pass="";}
 if (isset($_GET["stage"]))					{$stage=$_GET["stage"];}
 	elseif (isset($_POST["stage"]))			{$stage=$_POST["stage"];}
+	else {$stage="";}
 if (isset($_GET["DB"]))						{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))			{$DB=$_POST["DB"];}
 if (isset($_GET["call_notes"]))				{$call_notes=$_GET["call_notes"];}
 	elseif (isset($_POST["call_notes"]))	{$call_notes=$_POST["call_notes"];}
+	else {$call_notes="";}
 if (isset($_GET["additional_notes"]))			{$additional_notes=$_GET["additional_notes"];}
 	elseif (isset($_POST["additional_notes"]))	{$additional_notes=$_POST["additional_notes"];}
+	else {$additional_notes="";}
 if (isset($_GET["log_to_file"]))			{$log_to_file=$_GET["log_to_file"];}
 	elseif (isset($_POST["log_to_file"]))	{$log_to_file=$_POST["log_to_file"];}
+	else {$log_to_file=0;}
 if (isset($_GET["called_count"]))				{$called_count=$_GET["called_count"];}
 	elseif (isset($_POST["called_count"]))		{$called_count=$_POST["called_count"];}
+	else {$called_count=0;}
 if (isset($_GET["called_count_trigger"]))			{$called_count_trigger=$_GET["called_count_trigger"];}
 	elseif (isset($_POST["called_count_trigger"]))	{$called_count_trigger=$_POST["called_count_trigger"];}
+	else {$called_count_trigger=0;}
 if (isset($_GET["email_to"]))				{$email_to=$_GET["email_to"];}
 	elseif (isset($_POST["email_to"]))		{$email_to=$_POST["email_to"];}
+	else {$email_to="";}
 if (isset($_GET["channel_group"]))			{$channel_group=$_GET["channel_group"];}
 	elseif (isset($_POST["channel_group"]))	{$channel_group=$_POST["channel_group"];}
+	else {$channel_group="";}
 if (isset($_GET["email_attachment_1"]))				{$email_attachment_1=$_GET["email_attachment_1"];}
 	elseif (isset($_POST["email_attachment_1"]))	{$email_attachment_1=$_POST["email_attachment_1"];}
+	else {$email_attachment_1="";}
 if (isset($_GET["email_attachment_2"]))				{$email_attachment_2=$_GET["email_attachment_2"];}
 	elseif (isset($_POST["email_attachment_2"]))	{$email_attachment_2=$_POST["email_attachment_2"];}
+	else {$email_attachment_2="";}
 if (isset($_GET["email_attachment_3"]))				{$email_attachment_3=$_GET["email_attachment_3"];}
 	elseif (isset($_POST["email_attachment_3"]))	{$email_attachment_3=$_POST["email_attachment_3"];}
+	else {$email_attachment_3="";}
 if (isset($_GET["email_attachment_4"]))				{$email_attachment_4=$_GET["email_attachment_4"];}
 	elseif (isset($_POST["email_attachment_4"]))	{$email_attachment_4=$_POST["email_attachment_4"];}
+	else {$email_attachment_4="";}
 if (isset($_GET["email_attachment_5"]))				{$email_attachment_5=$_GET["email_attachment_5"];}
 	elseif (isset($_POST["email_attachment_5"]))	{$email_attachment_5=$_POST["email_attachment_5"];}
+	else {$email_attachment_5="";}
 if (isset($_GET["email_attachment_6"]))				{$email_attachment_6=$_GET["email_attachment_6"];}
 	elseif (isset($_POST["email_attachment_6"]))	{$email_attachment_6=$_POST["email_attachment_6"];}
+	else {$email_attachment_6="";}
 if (isset($_GET["email_attachment_7"]))				{$email_attachment_7=$_GET["email_attachment_7"];}
 	elseif (isset($_POST["email_attachment_7"]))	{$email_attachment_7=$_POST["email_attachment_7"];}
+	else {$email_attachment_7="";}
 if (isset($_GET["email_attachment_8"]))				{$email_attachment_8=$_GET["email_attachment_8"];}
 	elseif (isset($_POST["email_attachment_8"]))	{$email_attachment_8=$_POST["email_attachment_8"];}
+	else {$email_attachment_8="";}
 if (isset($_GET["email_attachment_9"]))				{$email_attachment_9=$_GET["email_attachment_9"];}
 	elseif (isset($_POST["email_attachment_9"]))	{$email_attachment_9=$_POST["email_attachment_9"];}
+	else {$email_attachment_9="";}
 if (isset($_GET["email_attachment_10"]))			{$email_attachment_10=$_GET["email_attachment_10"];}
 	elseif (isset($_POST["email_attachment_10"]))	{$email_attachment_10=$_POST["email_attachment_10"];}
+	else {$email_attachment_10="";}
 if (isset($_GET["email_attachment_11"]))			{$email_attachment_11=$_GET["email_attachment_11"];}
 	elseif (isset($_POST["email_attachment_11"]))	{$email_attachment_11=$_POST["email_attachment_11"];}
+	else {$email_attachment_11="";}
 if (isset($_GET["email_attachment_12"]))			{$email_attachment_12=$_GET["email_attachment_12"];}
 	elseif (isset($_POST["email_attachment_12"]))	{$email_attachment_12=$_POST["email_attachment_12"];}
+	else {$email_attachment_12="";}
 if (isset($_GET["email_attachment_13"]))			{$email_attachment_13=$_GET["email_attachment_13"];}
 	elseif (isset($_POST["email_attachment_13"]))	{$email_attachment_13=$_POST["email_attachment_13"];}
+	else {$email_attachment_13="";}
 if (isset($_GET["email_attachment_14"]))			{$email_attachment_14=$_GET["email_attachment_14"];}
 	elseif (isset($_POST["email_attachment_14"]))	{$email_attachment_14=$_POST["email_attachment_14"];}
+	else {$email_attachment_14="";}
 if (isset($_GET["email_attachment_15"]))			{$email_attachment_15=$_GET["email_attachment_15"];}
 	elseif (isset($_POST["email_attachment_15"]))	{$email_attachment_15=$_POST["email_attachment_15"];}
+	else {$email_attachment_15="";}
 if (isset($_GET["email_attachment_16"]))			{$email_attachment_16=$_GET["email_attachment_16"];}
 	elseif (isset($_POST["email_attachment_16"]))	{$email_attachment_16=$_POST["email_attachment_16"];}
+	else {$email_attachment_16="";}
 if (isset($_GET["email_attachment_17"]))			{$email_attachment_17=$_GET["email_attachment_17"];}
 	elseif (isset($_POST["email_attachment_17"]))	{$email_attachment_17=$_POST["email_attachment_17"];}
+	else {$email_attachment_17="";}
 if (isset($_GET["email_attachment_18"]))			{$email_attachment_18=$_GET["email_attachment_18"];}
 	elseif (isset($_POST["email_attachment_18"]))	{$email_attachment_18=$_POST["email_attachment_18"];}
+	else {$email_attachment_18="";}
 if (isset($_GET["email_attachment_19"]))			{$email_attachment_19=$_GET["email_attachment_19"];}
 	elseif (isset($_POST["email_attachment_19"]))	{$email_attachment_19=$_POST["email_attachment_19"];}
+	else {$email_attachment_19="";}
 if (isset($_GET["email_attachment_20"]))			{$email_attachment_20=$_GET["email_attachment_20"];}
 	elseif (isset($_POST["email_attachment_20"]))	{$email_attachment_20=$_POST["email_attachment_20"];}
+	else {$email_attachment_20="";}
 if (isset($_GET["dialed_number"]))			{$dialed_number=$_GET["dialed_number"];}
 	elseif (isset($_POST["dialed_number"]))	{$dialed_number=$_POST["dialed_number"];}
+	else {$dialed_number="";}
 if (isset($_GET["dialed_label"]))			{$dialed_label=$_GET["dialed_label"];}
 	elseif (isset($_POST["dialed_label"]))	{$dialed_label=$_POST["dialed_label"];}
+	else {$dialed_label="";}
 if (isset($_GET["camp_custom_one"]))			{$camp_custom_one=$_GET["camp_custom_one"];}
 	elseif (isset($_POST["camp_custom_one"]))	{$camp_custom_one=$_POST["camp_custom_one"];}
+	else {$camp_custom_one="";}
 if (isset($_GET["camp_custom_two"]))			{$camp_custom_two=$_GET["camp_custom_two"];}
 	elseif (isset($_POST["camp_custom_two"]))	{$camp_custom_two=$_POST["camp_custom_two"];}
+	else {$camp_custom_two="";}
 if (isset($_GET["camp_custom_three"]))			{$camp_custom_three=$_GET["camp_custom_three"];}
 	elseif (isset($_POST["camp_custom_three"]))	{$camp_custom_three=$_POST["camp_custom_three"];}
+	else {$camp_custom_three="";}
 if (isset($_GET["camp_custom_four"]))			{$camp_custom_four=$_GET["camp_custom_four"];}
 	elseif (isset($_POST["camp_custom_four"]))	{$camp_custom_four=$_POST["camp_custom_four"];}
+	else {$camp_custom_four="";}
 if (isset($_GET["camp_custom_five"]))			{$camp_custom_five=$_GET["camp_custom_five"];}
 	elseif (isset($_POST["camp_custom_five"]))	{$camp_custom_five=$_POST["camp_custom_five"];}
-
-$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+	else {$camp_custom_five="";}
 
 #$DB = '1';	# DEBUG override
 $US = '_';
@@ -175,6 +216,7 @@ $email_attachment_path_legacy = '.';
 $email_header_attach='0';
 $sendmail_bypass=0;
 $allow_sendmail_bypass='';
+$epoch=date("U");
 
 # filter variables
 $user=preg_replace("/\'|\"|\\\\|;| |\|/","",$user);
@@ -207,7 +249,8 @@ if ($qm_conf_ct > 0)
 	$SSlanguage_method =		$row[2];
 	$SSallow_web_debug =		$row[3];
 	}
-if ($SSallow_web_debug < 1) {$DB=0;}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;}
+$DB=preg_replace("/[^0-9]/","",$DB);
 
 $VUselected_language = '';
 $stmt="SELECT selected_language from vicidial_users where user='$user';";
@@ -223,10 +266,10 @@ if ($sl_ct > 0)
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
-$call_id = preg_replace('/[^-_0-9a-zA-Z]/', '', $call_id);
-$lead_id = preg_replace('/[^_0-9a-zA-Z]/', '', $lead_id);
+# $call_id = preg_replace('/[^-_0-9a-zA-Z]/', '', $call_id);
+# $lead_id = preg_replace('/[^_0-9a-zA-Z]/', '', $lead_id);
 $call_notes=preg_replace("/\\\\/","",$call_notes);
-$stage = preg_replace('/[^-_0-9a-zA-Z]/', '', $stage);
+# $stage = preg_replace('/[^-_0-9a-zA-Z]/', '', $stage);
 $additional_notes=preg_replace("/\\\\/","",$additional_notes);
 
 $email_attachment_1=preg_replace("/\\\\|^\/|\.+\/|;/","",$email_attachment_1);
@@ -271,12 +314,12 @@ $email_attachment_18=preg_replace("/etc\//","",$email_attachment_18);
 $email_attachment_19=preg_replace("/etc\//","",$email_attachment_19);
 $email_attachment_20=preg_replace("/etc\//","",$email_attachment_20);
 
-$email_to = preg_replace('/[^-\.\:\/\@\_0-9\p{L}]/u','',$email_to);
-$log_to_file = preg_replace('/[^-_0-9a-zA-Z]/', '', $log_to_file);
-$called_count = preg_replace('/[^-_0-9a-zA-Z]/', '', $called_count);
-$called_count_trigger = preg_replace('/[^-_0-9a-zA-Z]/', '', $called_count_trigger);
-$dialed_number = preg_replace('/[^-_0-9a-zA-Z]/', '', $dialed_number);
-$dialed_label = preg_replace('/[^-_0-9a-zA-Z]/', '', $dialed_label);
+# $email_to = preg_replace('/[^-\.\:\/\@\_0-9\p{L}]/u','',$email_to);
+$log_to_file = preg_replace('/[^0-9]/', '', $log_to_file);
+# $called_count = preg_replace('/[^-_0-9a-zA-Z]/', '', $called_count);
+$called_count_trigger = preg_replace('/[^-0-9]/', '', $called_count_trigger);
+# $dialed_number = preg_replace('/[^-_0-9a-zA-Z]/', '', $dialed_number);
+# $dialed_label = preg_replace('/[^-_0-9a-zA-Z]/', '', $dialed_label);
 
 if ($non_latin < 1)
 	{
@@ -291,6 +334,13 @@ if ($non_latin < 1)
 	$camp_custom_three = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$camp_custom_three);
 	$camp_custom_four = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$camp_custom_four);
 	$camp_custom_five  = preg_replace('/[^- \.\:\/\@\_0-9a-zA-Z]/','-',$camp_custom_five );
+	$call_id = preg_replace('/[^-_0-9a-zA-Z]/', '', $call_id);
+	$lead_id = preg_replace('/[^_0-9a-zA-Z]/', '', $lead_id);
+	$stage = preg_replace('/[^-_0-9a-zA-Z]/', '', $stage);
+	$email_to = preg_replace('/[^-\.\:\/\@\_0-9a-zA-Z]/','',$email_to);
+	$called_count = preg_replace('/[^-_0-9a-zA-Z]/', '', $called_count);
+	$dialed_number = preg_replace('/[^-_0-9a-zA-Z]/', '', $dialed_number);
+	$dialed_label = preg_replace('/[^-_0-9a-zA-Z]/', '', $dialed_label);
 	}
 else
 	{
@@ -305,6 +355,13 @@ else
 	$camp_custom_three = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$camp_custom_three);
 	$camp_custom_four = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$camp_custom_four);
 	$camp_custom_five  = preg_replace('/[^- \.\:\/\@\_0-9\p{L}]/u','-',$camp_custom_five );
+	$call_id = preg_replace('/[^-_0-9\p{L}]/u', '', $call_id);
+	$lead_id = preg_replace('/[^_0-9\p{L}]/u', '', $lead_id);
+	$stage = preg_replace('/[^-_0-9\p{L}]/u', '', $stage);
+	$email_to = preg_replace('/[^-\.\:\/\@\_0-9\p{L}]/u','',$email_to);
+	$called_count = preg_replace('/[^-_0-9\p{L}]/u', '', $called_count);
+	$dialed_number = preg_replace('/[^-_0-9\p{L}]/u', '', $dialed_number);
+	$dialed_label = preg_replace('/[^-_0-9\p{L}]/u', '', $dialed_label);
 	}
 
 
@@ -396,6 +453,7 @@ if ($match_found > 0)
 			$authlive=$row[0];
 			}
 		}
+	if (!isset($authlive)) {$authlive=0;}
 
 	if ( (strlen($user)<2) or (strlen($pass)<2) or ($auth==0) or ($authlive==0))
 		{
@@ -430,9 +488,16 @@ if ($match_found > 0)
 				$container_entry =	$row[0];
 				$container_ARY = explode("\n",$container_entry);
 				$email_body_gather=0;
+				$email_from="";
+				$email_display_name="";
+				$email_subject="";
+				$email_format="";
+				$email_charset="";
+				$email_body="";
+				$sendmail_bypass=0;
 				$p=0;
 				$container_ct = count($container_ARY);
-				while ($p <= $container_ct)
+				while ($p < $container_ct)
 					{
 					$line = $container_ARY[$p];
 					if ($email_body_gather < 1)
@@ -470,6 +535,7 @@ if ($match_found > 0)
 
 				if ( (strlen($email_to) > 5) and (strlen($email_from) > 5) and (strlen($email_subject) > 1) and (strlen($email_body) > 1) )
 					{
+					$affected_rows='';
 					if ( (preg_match('/--A--/i',$email_subject)) or (preg_match('/--A--/i',$email_body)) or (preg_match('/--A--/i',$email_to)) or (preg_match('/--A--/i',$email_from)) or (preg_match('/--A--/i',$email_display_name)) )
 						{
 						##### grab the data from vicidial_list for the lead_id
@@ -514,7 +580,44 @@ if ($match_found > 0)
 							$owner			= urlencode(trim($row[33]));
 							$entry_list_id	= urlencode(trim($row[34]));
 							}
+						else
+							{
+							$entry_date		= '';
+							$dispo			= '';
+							$tsr			= '';
+							$vendor_id		= '';
+							$vendor_lead_code	= '';
+							$source_id		= '';
+							$list_id		= '';
+							$gmt_offset_now	= '';
+							$phone_code		= '';
+							$phone_number	= '';
+							$title			= '';
+							$first_name		= '';
+							$middle_initial	= '';
+							$last_name		= '';
+							$address1		= '';
+							$address2		= '';
+							$address3		= '';
+							$city			= '';
+							$state			= '';
+							$province		= '';
+							$postal_code	= '';
+							$country_code	= '';
+							$gender			= '';
+							$date_of_birth	= '';
+							$alt_phone		= '';
+							$email			= '';
+							$security_phrase	= '';
+							$comments		= '';
+							$called_count	= '';
+							$rank			= '';
+							$owner			= '';
+							$entry_list_id	= '';
+							}
 
+						$list_name='';
+						$list_description='';
 						if ( (preg_match('/list_name--B--|list_description--B--/i',$email_subject)) or (preg_match('/list_name--B--|list_description--B--/i',$email_body)) )
 							{
 							$stmt = "SELECT list_name,list_description from vicidial_lists where list_id='$list_id' limit 1;";
@@ -530,9 +633,9 @@ if ($match_found > 0)
 								}
 							}
 
+						$uniqueid='';
 						if ( (preg_match('/--A--did_|--A--uniqueid/i',$email_subject)) or (preg_match('/--A--did_|--A--uniqueid/i',$email_body)) )
 							{
-							$uniqueid='';
 
 							$stmt = "SELECT uniqueid from vicidial_log_extended where caller_code='$call_id' order by call_date desc limit 1;";
 							if ($DB) {echo "$stmt\n";}
@@ -546,19 +649,18 @@ if ($match_found > 0)
 								}
 							}
 
+						$DID_id='';
+						$DID_extension='';
+						$DID_pattern='';
+						$DID_description='';
+						$DID_carrier_description='';
+						$DID_custom_one='';
+						$DID_custom_two='';
+						$DID_custom_three='';
+						$DID_custom_four='';
+						$DID_custom_five='';
 						if ( (preg_match('/--A--did_/i',$email_subject)) or (preg_match('/--A--did_/i',$email_body)) )
 							{
-							$DID_id='';
-							$DID_extension='';
-							$DID_pattern='';
-							$DID_description='';
-							$DID_carrier_description='';
-							$DID_custom_one='';
-							$DID_custom_two='';
-							$DID_custom_three='';
-							$DID_custom_four='';
-							$DID_custom_five='';
-
 							$stmt = "SELECT did_id,extension from vicidial_did_log where uniqueid='$uniqueid' order by call_date desc limit 1;";
 							if ($DB) {echo "$stmt\n";}
 							$rslt=mysql_to_mysqli($stmt, $link);
@@ -590,6 +692,7 @@ if ($match_found > 0)
 								}
 							}
 
+						$campaign='';
 						if ( (preg_match('/--A--camp_custom_|--A--campaign/i',$email_subject)) or (preg_match('/--A--camp_custom_|--A--campaign/i',$email_body)) or (preg_match('/--A--camp_custom_/i',$email_from)) or (preg_match('/--A--camp_custom_/i',$email_to)) or (preg_match('/--A--camp_custom_/i',$email_display_name)) )
 							{
 							$camp_custom_one='';
@@ -640,14 +743,14 @@ if ($match_found > 0)
 								}
 							}
 
+						$ig_custom_one='';
+						$ig_custom_two='';
+						$ig_custom_three='';
+						$ig_custom_four='';
+						$ig_custom_five='';
+						$temp_group_id='';
 						if ( (preg_match('/--A--ig_custom_|--A--group_id/i',$email_subject)) or (preg_match('/--A--ig_custom_|--A--group_id/i',$email_body)) or (preg_match('/--A--ig_custom_/i',$email_from)) or (preg_match('/--A--ig_custom_/i',$email_to)) or (preg_match('/--A--ig_custom_/i',$email_display_name)) )
 							{
-							$ig_custom_one='';
-							$ig_custom_two='';
-							$ig_custom_three='';
-							$ig_custom_four='';
-							$ig_custom_five='';
-
 							$stmt = "SELECT campaign_id from vicidial_closer_log where uniqueid='$uniqueid' order by call_date desc limit 1;";
 							if ($DB) {echo "$stmt\n";}
 							$rslt=mysql_to_mysqli($stmt, $link);
@@ -769,10 +872,10 @@ if ($match_found > 0)
 						$email_subject = preg_replace('/--A--security_phrase--B--/i',"$security_phrase",$email_subject);
 						$email_subject = preg_replace('/--A--comments--B--/i',"$comments",$email_subject);
 						$email_subject = preg_replace('/--A--user--B--/i',"$user",$email_subject);
-						$email_subject = preg_replace('/--A--pass--B--/i',"$orig_pass",$email_subject);
-						$email_subject = preg_replace('/--A--original_phone_login--B--/i',"$original_phone_login",$email_subject);
-						$email_subject = preg_replace('/--A--phone_pass--B--/i',"$phone_pass",$email_subject);
-						$email_subject = preg_replace('/--A--fronter--B--/i',"$fronter",$email_subject);
+						# $email_subject = preg_replace('/--A--pass--B--/i',"$orig_pass",$email_subject);
+						# $email_subject = preg_replace('/--A--original_phone_login--B--/i',"$original_phone_login",$email_subject);
+						# $email_subject = preg_replace('/--A--phone_pass--B--/i',"$phone_pass",$email_subject);
+						# $email_subject = preg_replace('/--A--fronter--B--/i',"$fronter",$email_subject);
 						$email_subject = preg_replace('/--A--closer--B--/i',"$user",$email_subject);
 						$email_subject = preg_replace('/--A--SQLdate--B--/i',"$NOW_TIME",$email_subject);
 						$email_subject = preg_replace('/--A--epoch--B--/i',"$epoch",$email_subject);
@@ -820,26 +923,27 @@ if ($match_found > 0)
 						$email_subject = preg_replace('/--A--group_id--B--/i',"$temp_group_id",$email_subject);
 
 						# not currently active
-						$email_subject = preg_replace('/--A--phone_login--B--/i',"$phone_login",$email_subject);
-						$email_subject = preg_replace('/--A--customer_zap_channel--B--/i',"$customer_zap_channel",$email_subject);
-						$email_subject = preg_replace('/--A--customer_server_ip--B--/i',"$customer_server_ip",$email_subject);
+						# Commented out starting with PHP8 due to warnings
+						# $email_subject = preg_replace('/--A--phone_login--B--/i',"$phone_login",$email_subject);
+						# $email_subject = preg_replace('/--A--customer_zap_channel--B--/i',"$customer_zap_channel",$email_subject);
+						# $email_subject = preg_replace('/--A--customer_server_ip--B--/i',"$customer_server_ip",$email_subject);
 						$email_subject = preg_replace('/--A--server_ip--B--/i',"$server_ip",$email_subject);
-						$email_subject = preg_replace('/--A--SIPexten--B--/i',"$SIPexten",$email_subject);
-						$email_subject = preg_replace('/--A--session_id--B--/i',"$session_id",$email_subject);
-						$email_subject = preg_replace('/--A--phone--B--/i',"$phone",$email_subject);
-						$email_subject = preg_replace('/--A--parked_by--B--/i',"$parked_by",$email_subject);
-						$email_subject = preg_replace('/--A--camp_script--B--/i',"$camp_script",$email_subject);
-						$email_subject = preg_replace('/--A--in_script--B--/i',"$in_script",$email_subject);
-						$email_subject = preg_replace('/--A--dispo--B--/i',"$dispo",$email_subject);
-						$email_subject = preg_replace('/--A--dispo_name--B--/i',"$dispo_name",$email_subject);
-						$email_subject = preg_replace('/--A--talk_time--B--/i',"$talk_time",$email_subject);
-						$email_subject = preg_replace('/--A--talk_time_ms--B--/i',"$talk_time_ms",$email_subject);
-						$email_subject = preg_replace('/--A--talk_time_min--B--/i',"$talk_time_min",$email_subject);
-						$email_subject = preg_replace('/--A--agent_log_id--B--/i',"$CALL_agent_log_id",$email_subject);
-						$email_subject = preg_replace('/--A--closecallid--B--/i',urlencode(trim($INclosecallid)),$email_subject);
-						$email_subject = preg_replace('/--A--xfercallid--B--/i',urlencode(trim($INxfercallid)),$email_subject);
-						$email_subject = preg_replace('/--A--recording_id--B--/i',"$recording_id",$email_subject);
-						$email_subject = preg_replace('/--A--recording_filename--B--/i',"$recording_filename",$email_subject);
+						# $email_subject = preg_replace('/--A--SIPexten--B--/i',"$SIPexten",$email_subject);
+						# $email_subject = preg_replace('/--A--session_id--B--/i',"$session_id",$email_subject);
+						# $email_subject = preg_replace('/--A--phone--B--/i',"$phone",$email_subject);
+						# $email_subject = preg_replace('/--A--parked_by--B--/i',"$parked_by",$email_subject);
+						# $email_subject = preg_replace('/--A--camp_script--B--/i',"$camp_script",$email_subject);
+						# $email_subject = preg_replace('/--A--in_script--B--/i',"$in_script",$email_subject);
+						# $email_subject = preg_replace('/--A--dispo--B--/i',"$dispo",$email_subject);
+						# $email_subject = preg_replace('/--A--dispo_name--B--/i',"$dispo_name",$email_subject);
+						# $email_subject = preg_replace('/--A--talk_time--B--/i',"$talk_time",$email_subject);
+						# $email_subject = preg_replace('/--A--talk_time_ms--B--/i',"$talk_time_ms",$email_subject);
+						# $email_subject = preg_replace('/--A--talk_time_min--B--/i',"$talk_time_min",$email_subject);
+						# $email_subject = preg_replace('/--A--agent_log_id--B--/i',"$CALL_agent_log_id",$email_subject);
+						# $email_subject = preg_replace('/--A--closecallid--B--/i',urlencode(trim($INclosecallid)),$email_subject);
+						# $email_subject = preg_replace('/--A--xfercallid--B--/i',urlencode(trim($INxfercallid)),$email_subject);
+						# $email_subject = preg_replace('/--A--recording_id--B--/i',"$recording_id",$email_subject);
+						# $email_subject = preg_replace('/--A--recording_filename--B--/i',"$recording_filename",$email_subject);
 						$email_subject = urldecode($email_subject);
 						}
 
@@ -849,7 +953,8 @@ if ($match_found > 0)
 						$email_body = preg_replace('/^VAR|--A--CF_uses_custom_fields--B--/','',$email_body);
 						$email_body = preg_replace('/--A--lead_id--B--/i',"$lead_id",$email_body);
 						$email_body = preg_replace('/--A--dispo--B--/i',"$dispo",$email_body);
-						$email_body = preg_replace('/--A--dispo_name--B--/i',"$dispo_name",$email_body);
+						# Commented out starting with PHP8 due to warnings
+						# $email_body = preg_replace('/--A--dispo_name--B--/i',"$dispo_name",$email_body);
 						$email_body = preg_replace('/--A--vendor_id--B--/i',"$vendor_id",$email_body);
 						$email_body = preg_replace('/--A--vendor_lead_code--B--/i',"$vendor_lead_code",$email_body);
 						$email_body = preg_replace('/--A--list_id--B--/i',"$list_id",$email_body);
@@ -877,10 +982,10 @@ if ($match_found > 0)
 						$email_body = preg_replace('/--A--security_phrase--B--/i',"$security_phrase",$email_body);
 						$email_body = preg_replace('/--A--comments--B--/i',"$comments",$email_body);
 						$email_body = preg_replace('/--A--user--B--/i',"$user",$email_body);
-						$email_body = preg_replace('/--A--pass--B--/i',"$orig_pass",$email_body);
-						$email_body = preg_replace('/--A--original_phone_login--B--/i',"$original_phone_login",$email_body);
-						$email_body = preg_replace('/--A--phone_pass--B--/i',"$phone_pass",$email_body);
-						$email_body = preg_replace('/--A--fronter--B--/i',"$fronter",$email_body);
+						# $email_body = preg_replace('/--A--pass--B--/i',"$orig_pass",$email_body);
+						# $email_body = preg_replace('/--A--original_phone_login--B--/i',"$original_phone_login",$email_body);
+						# $email_body = preg_replace('/--A--phone_pass--B--/i',"$phone_pass",$email_body);
+						# $email_body = preg_replace('/--A--fronter--B--/i',"$fronter",$email_body);
 						$email_body = preg_replace('/--A--closer--B--/i',"$user",$email_body);
 						$email_body = preg_replace('/--A--SQLdate--B--/i',"$NOW_TIME",$email_body);
 						$email_body = preg_replace('/--A--epoch--B--/i',"$epoch",$email_body);
@@ -1905,15 +2010,17 @@ if ($match_found > 0)
 							$result = passthru("/usr/bin/cat /tmp/$temp_mail_file | $allow_sendmail_bypass -t -i");
 
 							echo "Sent |$result|";
+							$affected_rows='$result';
 						#	echo "Sent |$result| /usr/bin/cat /tmp/$temp_mail_file | $allow_sendmail_bypass -t -i";
 							}
 						else
 							{
 							if (mail($email_to, $email_subject, $email_body, $header)) 
-								{echo "Sent";} 
+								{echo "Sent";  $affected_rows='Sent';} 
 							else 
 								{
 								echo "Error";
+								$affected_rows='Error';
 								if ($DB) 
 									{
 									echo "\n";
@@ -1948,7 +2055,7 @@ if ($match_found > 0)
 						mail("$email_to","$email_subject","$email_body", $header, "-f $email_from");
 						}
 
-					$SQL_log = "$stmt|$stmtB|$CBaffected_rows|$email_from|$email_to|$email_subject|";
+					$SQL_log = "$stmt|$email_from|$email_to|$email_subject|"; # $stmtB|$CBaffected_rows removed 3/14/25 - never declared
 					$SQL_log = preg_replace('/;/','',$SQL_log);
 					$SQL_log = addslashes($SQL_log);
 					$stmt="INSERT INTO vicidial_api_log set user='$user',agent_user='$user',function='dispo_send_email',value='$call_id',result='$affected_rows',result_reason='$container_id   $attach_messages',source='vdc',data='$SQL_log',api_date='$NOW_TIME',api_script='$api_script';";

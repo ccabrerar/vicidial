@@ -1,7 +1,7 @@
 <?php
 # vdc_soundboard_display.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed display the contents of an audio soundboard in the system
 #
@@ -15,10 +15,11 @@
 # 191013-2122 - Fixes for PHP7
 # 210616-2032 - Added optional CORS support, see options.php for details
 # 220219-0143 - Added allow_web_debug system setting
+# 260302-1408 - Code updates for PHP8 compatibility
 #
 
-$version = '2.14-9';
-$build = '220219-0143';
+$version = '2.14-10';
+$build = '260302-1408';
 $php_script = 'vdc_soundboard_display.php';
 
 require_once("dbconnect_mysqli.php");
@@ -30,29 +31,40 @@ if (isset($_GET["DB"]))					{$DB=$_GET["DB"];}
 	elseif (isset($_POST["DB"]))		{$DB=$_POST["DB"];}
 if (isset($_GET["soundboard_id"]))			{$soundboard_id=$_GET["soundboard_id"];}
 	elseif (isset($_POST["soundboard_id"]))	{$soundboard_id=$_POST["soundboard_id"];}
+	else {$soundboard_id="";}
 if (isset($_GET["avatar_id"]))			{$avatar_id=$_GET["avatar_id"];}
 	elseif (isset($_POST["avatar_id"]))	{$avatar_id=$_POST["avatar_id"];}
+	else {$avatar_id="";}
 if (isset($_GET["user"]))				{$user=$_GET["user"];}
 	elseif (isset($_POST["user"]))		{$user=$_POST["user"];}
+	else {$user="";}
 if (isset($_GET["pass"]))				{$pass=$_GET["pass"];}
 	elseif (isset($_POST["pass"]))		{$pass=$_POST["pass"];}
+	else {$pass="";}
 if (isset($_GET["server_ip"]))			{$server_ip=$_GET["server_ip"];}
 	elseif (isset($_POST["server_ip"]))	{$server_ip=$_POST["server_ip"];}
 if (isset($_GET["session_id"]))				{$session_id=$_GET["session_id"];}
 	elseif (isset($_POST["session_id"]))	{$session_id=$_POST["session_id"];}
+	else {$session_id="";}
 if (isset($_GET["session_name"]))			{$session_name=$_GET["session_name"];}
 	elseif (isset($_POST["session_name"]))	{$session_name=$_POST["session_name"];}
 if (isset($_GET["stage"]))				{$stage=$_GET["stage"];}
 	elseif (isset($_POST["stage"]))		{$stage=$_POST["stage"];}
+	else {$stage="";}
 if (isset($_GET["submit_button"]))			{$submit_button=$_GET["submit_button"];}
 	elseif (isset($_POST["submit_button"]))	{$submit_button=$_POST["submit_button"];}
+	else {$submit_button="";}
 if (isset($_GET["admin_submit"]))			{$admin_submit=$_GET["admin_submit"];}
 	elseif (isset($_POST["admin_submit"]))	{$admin_submit=$_POST["admin_submit"];}
+	else {$admin_submit="";}
 if (isset($_GET["bgcolor"]))			{$bgcolor=$_GET["bgcolor"];}
 	elseif (isset($_POST["bgcolor"]))	{$bgcolor=$_POST["bgcolor"];}
+	else {$bgcolor="";}
 if (isset($_GET["bcrypt"]))				{$bcrypt=$_GET["bcrypt"];}
 	elseif (isset($_POST["bcrypt"]))	{$bcrypt=$_POST["bcrypt"];}
-
+if (isset($_GET["script_height"]))				{$script_height=$_GET["script_height"];}
+	elseif (isset($_POST["script_height"]))	{$script_height=$_POST["script_height"];}
+	else {$script_height=0;}
 
 if ($bcrypt == 'OFF')
 	{$bcrypt=0;}
@@ -76,7 +88,7 @@ $CIDdate = date("mdHis");
 $ENTRYdate = date("YmdHis");
 $MT[0]='';
 $agents='@agents';
-$script_height = ($script_height - 20);
+$script_height = ($script_height>20 ? ($script_height - 20) : 0);
 if (strlen($bgcolor) < 6) {$bgcolor='FFFFFF';}
 
 # default optional vars if not set
@@ -90,8 +102,8 @@ $IFRAME=0;
 $wav='.wav';
 $gsm='.gsm';
 
-$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
 $user=preg_replace("/[^-_0-9\p{L}]/u","",$user);
+/* 3/28/25 - Moved to appropriate filtering section
 $pass = preg_replace('/[^-\.\+\/\=_0-9\p{L}]/u','',$pass);
 $server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
 $session_id = preg_replace('/[^-_\.0-9a-zA-Z]/','',$session_id);
@@ -100,6 +112,7 @@ $submit_button = preg_replace('/[^-_0-9a-zA-Z]/','',$submit_button);
 $admin_submit = preg_replace('/[^-_0-9a-zA-Z]/','',$admin_submit);
 $bgcolor = preg_replace("/\<|\>|\'|\"|\\\\|;| /","",$bgcolor);
 $bcrypt = preg_replace('/[^-_0-9a-zA-Z]/','',$bcrypt);
+*/
 
 $PHP_SELF=$_SERVER['PHP_SELF'];
 $PHP_SELF = preg_replace('/\.php.*/i','.php',$PHP_SELF);
@@ -122,7 +135,8 @@ if ($qm_conf_ct > 0)
 	$SSagent_soundboards =					$row[6];
 	$SSallow_web_debug =					$row[7];
 	}
-if ($SSallow_web_debug < 1) {$DB=0;   $format='text';}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;   $format='text';}
+$DB=preg_replace("/[^0-9]/","",$DB);
 
 $VUselected_language = '';
 $stmt="SELECT selected_language from vicidial_users where user='$user';";
@@ -145,6 +159,13 @@ if ($non_latin < 1)
 	$soundboard_id=preg_replace("/[^-_0-9a-zA-Z]/","",$soundboard_id);
 	$avatar_id=preg_replace("/[^-_0-9a-zA-Z]/","",$avatar_id);
 	$session_name=preg_replace("/[^-_0-9a-zA-Z]/","",$session_name);
+	$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
+	$session_id = preg_replace('/[^-_\.0-9a-zA-Z]/','',$session_id);
+	$stage = preg_replace('/[^-_\.0-9a-zA-Z]/','',$stage);
+	$submit_button = preg_replace('/[^-_0-9a-zA-Z]/','',$submit_button);
+	$admin_submit = preg_replace('/[^-_0-9a-zA-Z]/','',$admin_submit);
+	$bgcolor = preg_replace("/[^0-9a-zA-Z]/","",$bgcolor);
+	$bcrypt = preg_replace('/[^-_0-9a-zA-Z]/','',$bcrypt);
 	}
 else
 	{
@@ -152,7 +173,14 @@ else
 	$pass = preg_replace('/[^-\.\+\/\=_0-9\p{L}]/u','',$pass);
 	$soundboard_id=preg_replace("/\'|\"|\\\\|;| /","",$soundboard_id);
 	$avatar_id=preg_replace("/\'|\"|\\\\|;| /","",$avatar_id);
-	$session_name=preg_replace("/[^-_0-9a-zA-Z]/","",$session_name);
+	$session_name=preg_replace("/[^-_0-9\p{L}]/u","",$session_name);
+	$server_ip = preg_replace('/[^-\.\:\_0-9\p{L}]/u','',$server_ip);
+	$session_id = preg_replace('/[^-_\.0-9\p{L}]/u','',$session_id);
+	$stage = preg_replace('/[^-_\.0-9\p{L}]/u','',$stage);
+	$submit_button = preg_replace('/[^-_0-9\p{L}]/u','',$submit_button);
+	$admin_submit = preg_replace('/[^-_0-9\p{L}]/u','',$admin_submit);
+	$bgcolor = preg_replace("/[^0-9\p{L}]/u","",$bgcolor);
+	$bcrypt = preg_replace('/[^-_0-9\p{L}]/u','',$bcrypt);
 	}
 
 $auth=0;

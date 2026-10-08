@@ -10,6 +10,9 @@
 #
 # If areacode is not found, call will go to the 'D' option in the call menu
 # If destination is not found, call will go to the 'C' option in the call menu
+# If you are using INGROUP as an option, it will use the 'B' option in the call- 
+#      menu and the "Route" must be set to INGROUP and "In-Group" must be set to
+#      DYNAMIC_INGROUP_VAR
 #
 # Flag Options:
 # 1- Country code to search the areacode within, default 1
@@ -23,16 +26,21 @@
 #
 # example of what to put in settings container:
 # NOTE: if you want any state non-matches to go to a destination, put that line FIRST
+# NOTE: for INGROUP, the 2nd field is the In-Group ID, and the 'B' call menu option needs to have "Route" set to INGROUP and "In-Group" set to DYNAMIC_INGROUP_VAR
 #<destination type>|<destination>|<states list separated by spaces>
 #DID|9998881111|--NOMATCHES--
 #DID|9998882222|FL TX NY CA
 #EXTEN|919998887112|AL MS MO TN KY
 #CALLMENU|test_menu|IL MN WI MI IA
+#INGROUP|TEST_IN_MT|MT
+#INGROUP|TEST_IN_MA|MA
+#INGROUP|TEST_IN_CT|CT
 #
-# Copyright (C) 2016  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 161205-1627 - First build
+# 250403-1958 - Added INGROUP option
 #
 
 $script = 'cm_sc_areacode.agi';
@@ -54,7 +62,7 @@ $tsSQLdate = "$year$mon$mday$hour$min$sec";
 $SQLdate = "$year-$mon-$mday $hour:$min:$sec";
 $SQLdateBEGIN = $SQLdate;
 $state='';
-$CIDlead_id='';
+$CIDlead_id=0;
 
 # default path to astguiclient configuration file:
 $PATHconf =		'/etc/astguiclient.conf';
@@ -214,14 +222,22 @@ $callerid =~ s/\'|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
 $calleridname =~ s/\'|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
 $extension =~ s/\'|\"|\\\\|\\\|\\|\\;|\\\;|\;|;//gi;
 
-if ($calleridname =~ /^V\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^Y\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^M\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/)
+if ($calleridname =~ /^V\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^Y\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^M\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^DC\d\d\d\d\d\dW\d\d\d\d\d\d\d\d\d\dW/)
 	{
 	$callerid = $calleridname;
 	$callerid =~ s/\"//gi;
 	$callerid =~ s/ .*//gi;
 	$CIDlead_id = $callerid;
-	$CIDlead_id = substr($CIDlead_id, 10, 10);
-	$CIDlead_id = ($CIDlead_id + 0);
+	if ($CIDlead_id =~ /^DC\d\d\d\d\d\dW\d\d\d\d\d\d\d\d\d\dW/)
+		{
+		$CIDlead_id = substr($CIDlead_id, 9, 10);
+		$CIDlead_id = ($CIDlead_id + 0);
+		}
+	else
+		{
+		$CIDlead_id = substr($CIDlead_id, 10, 10);
+		$CIDlead_id = ($CIDlead_id + 0);
+		}
 
 	### gather state and phone_number from lead record ###
 	$stmtA= "SELECT state,phone_number from vicidial_list where lead_id='$CIDlead_id';";
@@ -236,6 +252,8 @@ if ($calleridname =~ /^V\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^Y\d\d\d\d\d\d\d\
 		$phone_number =		$aryA[1];
 		}
 	$sthA->finish();
+
+	if ($AGILOG) {$agi_string = "Lead Defined: |$unique_id|$channel|$extension|$type|$calleridname|     |$CIDlead_id|$state|$phone_number(";   &agi_output;}
 	}
 
 if ( ($callerid =~ /\".*\"/) && ( (!$calleridname) or ($calleridname =~ /unknown/) ) )
@@ -245,7 +263,7 @@ if ( ($callerid =~ /\".*\"/) && ( (!$calleridname) or ($calleridname =~ /unknown
 	$calleridname =~ s/\"|\" //gi;
 	}
 
-if ($callerid !~ /^V\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^Y\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^M\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/)
+if ($callerid !~ /^V\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^Y\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^M\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^DC\d\d\d\d\d\dW\d\d\d\d\d\d\d\d\d\dW/)
 	{
 	$callerid =~ s/\D|\'//gi;
 	$calleridname =~ s/unknown|\'//gi;
@@ -258,6 +276,7 @@ if ($callerid !~ /^V\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d|^Y\d\d\d\d\d\d\d\d\d\
 	if (length($callerid)<10) {$callerid = $parked_by;}
 	if (length($pin)>0) {$callerid = $pin;}
 	}
+
 $phone_ac = substr($phone_number, 0, $ac_length);
 
 if ($AGILOG) {$agi_string = "AGI Variables: |$unique_id|$channel|$extension|$type|$callerid|     |$country_code|$phone_number($phone_ac)|$ac_length|";   &agi_output;}
@@ -366,6 +385,13 @@ if (length($container_entry) > 5)
 		$destination_context =	$destination;
 		$destination_exten =	's';
 		}
+	if ($destination_type =~ /INGROUP/) 
+		{
+		$destination_context =	$context;
+		$destination_exten =	'B';
+		$AGI->exec("EXEC Set(_ingroupvar=$destination)");
+		$AGI->exec("EXEC Set(_state=$state)");
+		}
 	}
 else
 	{
@@ -399,7 +425,7 @@ else
 	{
 	$AGI->exec("EXEC Set(_state=$state)");
 
-	if ($AGILOG) {$agi_string = "entry found($state|$phone_ac|$destination_type), exiting the cm_sc_areacode.agi app, transferring call to $destination_exten @ $destination_context";   &agi_output;}
+	if ($AGILOG) {$agi_string = "entry found($state|$phone_ac|$destination_type|$destination), exiting the cm_sc_areacode.agi app, transferring call to $destination_exten @ $destination_context";   &agi_output;}
 	print "SET CONTEXT $destination_context\n";
 		$result = <STDIN>;
 		checkresult($result);

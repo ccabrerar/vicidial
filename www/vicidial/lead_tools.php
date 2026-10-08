@@ -1,7 +1,7 @@
 <?php
 # lead_tools.php - Various tools for lead basic lead management.
 #
-# Copyright (C) 2022  Matt Florell,Michael Cargile <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell,Michael Cargile <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 121110-1446 - Initial Build
@@ -18,10 +18,11 @@
 # 170819-1002 - Added allow_manage_active_lists option
 # 191119-1815 - Fixes for translations compatibility, issue #1142
 # 220228-1025 - Added allow_web_debug system setting
+# 260601-1702 - Added permissions errors warning messages
 #
 
-$version = '2.14-14';
-$build = '220228-1025';
+$version = '2.14-15';
+$build = '260601-1702';
 
 # This limit is to prevent data inconsistancies.
 # If there are too many leads in a list this
@@ -748,9 +749,16 @@ if (
 		$allowed_campaigns_sql = "'$allowed_campaigns_sql'";
 		}
 
+	if (strlen($allowed_campaigns_sql)<3)
+		{
+		echo "<BR>"._QXZ("ERROR: You can't use this tool as your user group is not allowed to access any campaigns");
+		exit;
+		}
+
+
 	# figure out which lists they are allowed to see
-	$activeSQL = "and active = 'N'";
-	if ($SSallow_manage_active_lists > 0) {$activeSQL = '';}
+	$activeSQL = "and active = 'N'"; $activeSQL_msg = "be inactive, and";
+	if ($SSallow_manage_active_lists > 0) {$activeSQL = ''; $activeSQL_msg = "";}
 	$lists_stmt = "SELECT list_id, list_name FROM vicidial_lists WHERE campaign_id IN ($allowed_campaigns_sql) $activeSQL ORDER BY list_id";
 	if ($DB) { echo "|$lists_stmt|\n"; }
 	$lists_rslt = mysql_to_mysqli($lists_stmt, $link);
@@ -787,6 +795,12 @@ if (
 			$allowed_lists_count++;
 			}
 		$i++;
+		}
+
+	if ($allowed_lists_count==0)
+		{
+		echo "<BR>"._QXZ("You can't use this tool as your user group does not have access to any valid lists.  A valid list must $activeSQL_msg have less than $list_lead_limit leads in it.");	
+		exit;
 		}
 
 	# figure out which statuses are in the lists they are allowed to look at

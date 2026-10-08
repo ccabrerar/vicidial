@@ -6,8 +6,9 @@
 # CHANGELOG:
 # 220825-1601 - First build
 # 240801-1130 - Code updates for PHP8 compatibility
+# 250623-1714 - Changed $report_name variable to work with slave database setting
 #
-$report_name="VERM reports";
+$report_name="VERM Reports";
 
 $startMS = microtime();
 

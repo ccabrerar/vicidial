@@ -6,6 +6,7 @@
 # CHANGELOG:
 # 220825-1609 - First build
 # 240801-1130 - Code updates for PHP8 compatibility
+# 241118-1640 - added active agent toggle function
 #
 
 
@@ -629,10 +630,19 @@ function LaunchReport(time_period, agent_flag)
 		full_report_var_str+="&vicidial_queue_groups="+vicidial_queue_groups;
 		}
 
-	if (agent_flag)
+	var users_value=$( "input[type=text][id=users]" ).val();
+	if (users_value!="") 
+		{
+		var users=$('#agent_filter_list [value="' + users_value + '"]').data('value');
+		alert(users_value);
+		// full_report_var_str+="&users="+users;
+		}
+
+
+	if (users)
 		{
 		full_report_var_str+="&report_types_to_display=All+reports";
-		full_report_var_str+="&users="+agent_flag;
+		full_report_var_str+="&users="+users;
 		}
 	else
 		{
@@ -698,6 +708,7 @@ function LaunchWallboard(wallboard_id)
 <link rel="stylesheet" type="text/css" href="VERM_stylesheet.php">
 <script src="jquery.min.js"></script>
 <script language="JavaScript" src="help.js"></script>
+<script language="JavaScript" src="VERM_custom_form_functions.php"></script>
 
 <?php
 $stmt = "select count(*) from vicidial_campaigns where active='Y' and campaign_allow_inbound='Y' $group_SQLand;";
@@ -776,6 +787,7 @@ echo "<div id='HelpDisplayDiv' class='help_info' style='display:none;'></div>";
 		echo "<TR>";
 		echo "<TD width='".($LOGuser_level==9 ? "33" : "50")."%' valign='top' class='admin_column'>";
 			echo "<font class='rpt_header'>"._QXZ("Agent report")."$NWB#VERM_admin-agent$NWE</font><BR>";
+/*
 			echo "	"._QXZ("Filtered for agent").":<BR><select id=\"users\" name=\"users\" class='VERM_form_field'>";
 			echo "<option value=''> - </option>";
 			$user_stmt="select user, full_name from vicidial_users $whereLOGadmin_viewable_groupsSQL order by full_name";
@@ -785,6 +797,24 @@ echo "<div id='HelpDisplayDiv' class='help_info' style='display:none;'></div>";
 				echo "<option value='$user_row[user]'>$user_row[full_name]</option>";
 				}
 			echo "	</select>";
+*/
+			if ($toggle_inactive_agents)
+				{
+				# echo "<input type='button' id='ToggleActiveAgents' class='actButton' value='"._QXZ("HIDE INACTIVE AGENTS")."' onClick=\"ToggleAgents(this.value, this.id, 'agent_filter_list')\"><BR>";
+				echo "Filter active agents only: <input type='checkbox' id='ToggleActiveAgents' value='"._QXZ("HIDE INACTIVE AGENTS")."' onClick=\"ToggleAgents(this.value, this.id, 'agent_filter_list')\"><BR>";
+				}
+
+			
+			echo "<input list='agent_filter_list' type='text' name='users' id='users' class='VERM_form_field' VALUE='$users'>\n";
+			echo "<datalist id='agent_filter_list'>\n";
+			$user_stmt="select user, full_name, active from vicidial_users $whereLOGadmin_viewable_groupsSQL order by full_name";
+			$user_rslt=mysql_to_mysqli($user_stmt, $link);
+			while ($user_row=mysqli_fetch_array($user_rslt))
+				{
+				echo "<option data-value='$user_row[user]' value='$user_row[full_name] ($user_row[user])'/>\n";
+				}
+			echo "</datalist>\n";
+
 
 			echo "<ul>";
 			echo "<li><a class='report_link' onClick=\"LaunchReport('TODAY', document.getElementById('users').value)\">"._QXZ("Today")."</a></li>"; # href='VERM_main_report_page.php?report_type=AGENTS&time_period=TODAY'

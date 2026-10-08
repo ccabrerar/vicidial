@@ -12,7 +12,7 @@
 # exten => 8301,3,Playback(park)
 # exten => 8301,4,Hangup 
 #
-# Copyright (C) 2018  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # changes:
 # 60731-1423 - changed to use DBI-DBD::mysql
@@ -22,6 +22,7 @@
 # 101004-1012 - Changed park to Music On Hold, added option for park on AGI
 # 130108-1817 - Changes for Asterisk 1.8 compatibility
 # 180430-1842 - Added inbound_groups-park_ext option
+# 260515-0937 - Changed run time to use servers.vicidial_recording_limit setting
 #
 
 $script = 'park_CID.agi';
@@ -36,6 +37,7 @@ if ($min < 10) {$min = "0$min";}
 if ($sec < 10) {$sec = "0$sec";}
 $now_date_epoch = time();
 $now_date = "$year-$mon-$mday $hour:$min:$sec";
+$DBvicidial_recording_limit=6;
 
 # default path to astguiclient configuration file:
 $PATHconf =		'/etc/astguiclient.conf';
@@ -87,7 +89,7 @@ $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VA
     or die "Couldn't connect to database: " . DBI->errstr;
 
 ### Grab Server values from the database
-$stmtA = "SELECT agi_output FROM servers where server_ip = '$VARserver_ip';";
+$stmtA = "SELECT agi_output,vicidial_recording_limit FROM servers where server_ip = '$VARserver_ip';";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
@@ -96,7 +98,8 @@ while ($sthArows > $rec_count)
 	{
 	$AGILOG = '0';
 	@aryA = $sthA->fetchrow_array;
-	$DBagi_output =	$aryA[0];
+	$DBagi_output =					$aryA[0];
+	$DBvicidial_recording_limit =	$aryA[1];
 	if ($DBagi_output =~ /STDERR/)	{$AGILOG = '1';}
 	if ($DBagi_output =~ /FILE/)	{$AGILOG = '2';}
 	if ($DBagi_output =~ /BOTH/)	{$AGILOG = '3';}
@@ -104,6 +107,7 @@ while ($sthArows > $rec_count)
 	}
 $sthA->finish();
 
+$DBvicidial_recording_limit_seconds = ($DBvicidial_recording_limit * 60);
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -338,13 +342,13 @@ $AGI->stream_file('sip-silence');
 $AGI->stream_file('sip-silence');
 $AGI->stream_file('sip-silence');
 
-if ($AGILOG) {$agi_string = "--    Starting MoH: |$park_context|   |$callerid|";   &agi_output;}
+if ($AGILOG) {$agi_string = "--    Starting MoH: |$park_context|   |$callerid|   |Run limit seconds: $DBvicidial_recording_limit_seconds";   &agi_output;}
 
 print "SET MUSIC ON $park_context\n";
 	$result = <STDIN>;
 	checkresult($result);
 
-sleep(360);
+sleep($DBvicidial_recording_limit_seconds);
 
 if ($AGILOG) {$agi_string = "--    MoH Done:  |$callerid|";   &agi_output;}
 

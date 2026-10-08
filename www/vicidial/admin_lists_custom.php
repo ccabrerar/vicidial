@@ -1,7 +1,7 @@
 <?php
 # admin_lists_custom.php
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # this screen manages the custom lists fields in ViciDial
 #
@@ -58,10 +58,11 @@
 # 210311-2338 - Added BUTTON field type and 2FA
 # 220217-2004 - Added input variable filtering
 # 220221-0910 - Added allow_web_debug system setting
+# 250307-1057 - Added ENGINE=MyISAM to the create table statements
 #
 
-$admin_version = '2.14-49';
-$build = '220221-0910';
+$admin_version = '2.14-50';
+$build = '250307-1057';
 
 require("dbconnect_mysqli.php");
 require("functions.php");
@@ -2053,7 +2054,7 @@ function add_field_function($DB,$link,$linkCUSTOM,$ip,$user,$table_exists,$field
 		}
 
 	if ($table_exists < 1)
-		{$field_sql .= ");";}
+		{$field_sql .= ") ENGINE=MyISAM;";}
 	else
 		{$field_sql .= ";";}
 
@@ -2064,7 +2065,7 @@ function add_field_function($DB,$link,$linkCUSTOM,$ip,$user,$table_exists,$field
 		if ($DB) {echo "Non-DB $field_type field type, $field_label\n";}
 
 		if ($table_exists < 1)
-			{$field_sql = "CREATE TABLE custom_$list_id (lead_id INT(9) UNSIGNED PRIMARY KEY NOT NULL);";}
+			{$field_sql = "CREATE TABLE custom_$list_id (lead_id INT(9) UNSIGNED PRIMARY KEY NOT NULL) ENGINE=MyISAM;";}
 		else
 			{$SQLexecuted++;}
 		}

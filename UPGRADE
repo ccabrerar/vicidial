@@ -867,6 +867,41 @@ OTHER CHANGES:
 247. Added archived-log cold-storage options and scripts.
 	See LOG_ARCHIVING_AND_COLD_STORAGE.txt document for more infomation.
 
+248. Added "API New Lead URL" feature to System Settings, with per List override
+	setting. This can send a URL request when new leads are added to the
+	system through the "add_lead" Non-Agent API function.
+
+249. Added agc/dispo_move_listSC.php script, allowing for multiple more complex
+	Dispo Move List functions after an agent dispositions a call.
+
+250. Added "hopper_bulk_insert" Non-Agent API function.
+
+251. Added Stereo Call Recording, allowing for additional call recordings with 
+	the customer on one side(the Right channel) and the agent on the other 
+	side(the Left channel), as well as optional parallel stereo call 
+	recordings. For more information, read the doc:
+	STEREO_CALL_RECORDINGS.txt
+
+252. Added "Talk Seconds URLs" Campaign and In-Group features. Allows for URLs 
+	to be sent out from the Agent Screen while the agent is talking to the
+	customer, based on the number of seconds they have been talking.
+
+253. Added Recording DTMF Muting, allowing for the muting of call recordings
+	for X seconds if any DTMF signal is detected on the call. Configurable
+	in Campaigns, In-Groups and system-wide.
+
+254. Added Database crashed table auto-check, with display on Admin Web screens
+	for level 9 users if crashed tables are found. Enabled by default, 
+	configurable in the System Settings.
+
+255. Added ADAPT_PERCENTMAX Dial Method campaign option.
+
+256. Added In-Group "Transfer Talk Minimum" features, allowing for restruction
+	on agent screen transfers before talk time threshold.
+
+257. Added Web Lead Loader feature to auto-detect custom column layouts in lead
+	files, as well as new load loading process rejection summaries
+
 
 
 

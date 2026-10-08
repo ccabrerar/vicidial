@@ -4,7 +4,7 @@
 #
 # functions for agent scripts
 #
-# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 #
 # CHANGES:
@@ -58,14 +58,33 @@
 # 210615-1032 - Default security fixes, CVE-2021-28854
 # 220921-1204 - Added more failed login logging in user_authorization function
 # 230518-1111 - Added in-group and campaign custom fields 1-5, for script/webform/dispo-call-url use
+# 251205-1742 - Fix for undefined variable issue
+# 260203-1600 - Code updates for PHP8 compatibility
 #
-
 # $mysql_queries = 28
 
+if(!isset($server_ip))
+	{
+	if (isset($_GET["server_ip"]))                            {$server_ip=$_GET["server_ip"];}
+	elseif (isset($_POST["server_ip"]))               {$server_ip=$_POST["server_ip"];}
+	else {$server_ip="";}
+	}
+if(!isset($session_name))
+	{
+	if (isset($_GET["session_name"]))                            {$session_name=$_GET["session_name"];}
+	elseif (isset($_POST["session_name"]))               {$session_name=$_POST["session_name"];}
+	else {$session_name="";}
+	}
+if(!isset($mel))	{$mel=0;}
+if(!isset($one_mysql_log)) {$one_mysql_log=0;}
+$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
+$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
+
 ##### BEGIN validate user login credentials, check for failed lock out #####
-function user_authorization($user,$pass,$user_option,$user_update,$bcrypt,$return_hash,$api_call,$source)
+function user_authorization($user,$pass,$user_option,$user_update,$bcrypt,$return_hash,$api_call,$source, $DB=0)
 	{
 	require("dbconnect_mysqli.php");
+	global $mel, $one_mysql_log, $server_ip, $session_name;
 
 	#############################################
 	##### START SYSTEM_SETTINGS LOOKUP #####
@@ -221,7 +240,7 @@ function user_authorization($user,$pass,$user_option,$user_update,$bcrypt,$retur
 		if ( (preg_match("/MXAG/",$SShosted_settings)) and ($mvla_total < 1) )
 			{
 			$vla_set = $SShosted_settings;
-			$vla_set = preg_replace("/.*MXAG|_BUILD_|DRA|_MXCS\d+|_MXTR\d+| /",'',$vla_set);
+			$vla_set = preg_replace("/.*MXAG|_BUILD_|DRA|_MXCS\d+|_MXTR\d+|VCA\d+| /",'',$vla_set);
 			$vla_set = preg_replace('/[^0-9]/','',$vla_set);
 			if (strlen($vla_set)>0)
 				{$vla_on++;}
@@ -344,6 +363,7 @@ function user_authorization($user,$pass,$user_option,$user_update,$bcrypt,$retur
 ##### BEGIN custom_list_fields_values - gather values for display of custom list fields for a lead #####
 function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_id,$did_id,$did_extension,$did_pattern,$did_description,$dialed_number,$dialed_label,$only_field,$source_field,$source_field_value)
 	{
+	global $mel, $one_mysql_log, $server_ip, $session_name;	
 	$STARTtime = date("U");
 	$TODAY = date("Y-m-d");
 	$NOW_TIME = date("Y-m-d H:i:s");
@@ -378,6 +398,7 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 	$tablecount_to_print = mysqli_num_rows($rslt);
 	if ($tablecount_to_print > 0) 
 		{
+		$rank_select="";	
 		$stmt="SELECT count(*) from custom_$list_id;";
 		if ($DB>0) {$CFoutput .= "$stmt";}
 		$rslt=mysql_to_mysqli($stmt, $link);
@@ -512,7 +533,7 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 				{
 				$row=mysqli_fetch_row($rslt);
 				$o=0;
-				while ($fields_to_print >= $o) 
+				while ($fields_to_print > $o) 
 					{
 					$A_field_value[$o]		= trim("$row[$o]");
 					if ($A_field_select[$o]=='----EMPTY----')
@@ -540,6 +561,7 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 				}
 
 			$o=0;
+			$te_printed=0;
 			$last_field_rank=0;
 			while ($fields_to_print > $o) 
 				{
@@ -603,7 +625,7 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 					{
 					$field_options_array = explode("\n",$A_field_options[$o]);
 					$field_options_count = count($field_options_array);
-					$te=0;   $te_printed=0;
+					$te=0;
 					if ($A_field_type[$o]=='SOURCESELECT')
 						{
 						$NEWfield_options_array = array();
@@ -687,7 +709,7 @@ function custom_list_fields_values($lead_id,$list_id,$uniqueid,$user,$DB,$call_i
 							if ($DB) {echo "SOURCESELECT 3: $te|$field_options_count|$field_options_array[0]|\n";}
 							}
 						}
-					$te=0;   $te_printed=0;
+					$te=0;
 					if ($DB > 0) {echo "DEBUG: |$A_field_id[$o]|$A_field_label[$o]|$A_field_name[$o]|$A_field_type[$o]|$A_field_options[$o]|$field_options_count|\n";}
 					while ($te < $field_options_count)
 						{

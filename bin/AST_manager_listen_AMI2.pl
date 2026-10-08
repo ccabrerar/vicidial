@@ -17,7 +17,7 @@
 # the ADMIN_keepalive_ALL.pl script, which makes sure it is always running in a
 # screen, provided that the astguiclient.conf keepalive setting "2" is set.
 #
-# Copyright (C) 2021  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 170915-2106 - Initial version based off the orginal AST_manager_listen.pl script
@@ -25,6 +25,10 @@
 # 170930-0923 - Commented out handle_sip_event and handle_cpd_event functions, not needed anymore, to be deleted later
 # 190121-1505 - Added RA_USER_PHONE On-Hook CID to solve last RINGAGENT issues
 # 210407-2009 - Added Event handlers for new manager events
+# 251007-2110 - Added code for recording_dtmf_detection and recording_dtmf_muting
+# 260327-1516 - Added support for PJSIP (requires patched Asterisk 18+)
+# 260515-1933 - Added internal logging
+#
 
 # constants
 $DB=0;  # Debug flag, set to 0 for no debug messages, lots of output
@@ -33,6 +37,7 @@ $full_listen_log=0; # set to 1 to log all output to log file
 $run_check=1; # concurrency check
 $last_keepalive_epoch = time();
 $keepalive_skips=0;
+$script_name = 'AST_manager_listen_AMI2.pl';
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -125,6 +130,8 @@ if (try_load($module))
 $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
 or die "Couldn't connect to database: " . DBI->errstr;
 
+$action='start';   $stage='LOGGED INTO MYSQL SERVER';   &internal_logger;
+
 ### Grab Server values from the database
 $stmtA = "SELECT telnet_host,telnet_port,ASTmgrUSERNAME,ASTmgrSECRET,ASTmgrUSERNAMEupdate,ASTmgrUSERNAMElisten,ASTmgrUSERNAMEsend,max_vicidial_trunks,answer_transfer_agent,local_gmt,ext_context,vd_server_logs,asterisk_version FROM servers where server_ip = '$server_ip';";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
@@ -161,6 +168,20 @@ if ($sthArows > 0)
 		else {$SYSLOG = '0';}
 	}
 $sthA->finish();
+
+### Grab System Settings values from the database
+$stmtA = "SELECT recording_dtmf_detection,recording_dtmf_muting FROM system_settings;";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+if ($sthArows > 0)
+	{
+	@aryA = $sthA->fetchrow_array;
+	$SSrecording_dtmf_detection =		$aryA[0];
+	$SSrecording_dtmf_muting =		$aryA[1];
+	}
+$sthA->finish();
+
 
 if (!$telnet_port) {$telnet_port = '5038';}
 
@@ -247,6 +268,8 @@ else
 	{
 	### BEGIN manager event handling for asterisk version >= 13
 	$endless_loop = 1;
+	$iLog_ct=0;
+	$iLog_calls=0;
 	while($endless_loop > 0)
 		{
 		$breakout = 1;
@@ -436,6 +459,7 @@ else
 			# handle the event
 			$retcode = handle_event( %event_hash );
 			$last_event_epoch = time();
+			$iLog_calls++;
 			}
 		elsif ( ( exists($event_hash{"Response"}) ) && ( exists($event_hash{"Ping"}) ) )
 			{
@@ -452,6 +476,15 @@ else
 			print "\nAsterisk server shutting down, PROCESS KILLED... EXITING\n\n";
 			$event_string="Asterisk server shutting down, PROCESS KILLED... EXITING|ONE DAY INTERVAL:$one_day_interval|";
 			&event_logger;
+			}
+		# update internal process log
+		$iLog_ct++;
+		if ($iLog_ct =~ /00$/) 
+			{
+			$stmtA = "UPDATE vicidial_internal_log SET up_time=NOW(), action='running', stage='Loops: $iLog_ct   Events: $iLog_calls' WHERE process='$script_name' and server_ip='$server_ip' order by db_time desc limit 1;";
+			if($DB){print STDERR "|$stmtA|";}
+			my $affected_rows = $dbhA->do($stmtA);
+			if($DB){print STDERR "$affected_rows|\n";}
 			}
 		}
 
@@ -554,15 +587,20 @@ sub handle_event
 		# SIPCriticalTimeout event
 		case "SIPCriticalTimeout" { return handle_sip_crit_timeout_event( %event_hash ); }
 
+		# PJSIPRetransmitTimeout event
+		case "PJSIPRetransmitTimeout" { return handle_sip_crit_timeout_event( %event_hash ); }
+
 		# PeerRegistered event
 		case "PeerRegistered" { return handle_peer_registered_event( %event_hash ); }
 
-		# SIPRTPDisconnect evett
+		# SIPRTPDisconnect event
 		case "SIPRTPDisconnect" { return handle_sip_rtp_disconnect_event( %event_hash ); }
+
+		# PJSIPRTPDisconnect event
+		case "PJSIPRTPDisconnect" { return handle_sip_rtp_disconnect_event( %event_hash ); }
 
 		# PeerStatus event
 		case "PeerStatus" { return handle_peer_status_event( %event_hash ); }
-
 
 		#case "" { return handle__event( %event_hash ); }
 
@@ -594,7 +632,7 @@ sub handle_sip_crit_timeout_event
 		}
 	else
 		{
-		print STDERR "SIPCriticalTimeout event does not have a Type, CallID, SeqNo, Host, or Timeout ?!!!\n";
+		print STDERR "SIPCriticalTimeout or PJSIPRetransmitTimeout event does not have a Type, CallID, SeqNo, Host, or Timeout ?!!!\n";
 		return 3;
 		}
 
@@ -653,7 +691,7 @@ sub handle_sip_rtp_disconnect_event
 		}
 	else
 		{
-		print STDERR "SIPRTPDisconnect event does not have a Channel or RTPLastRX ?!!!\n";
+		print STDERR "(PJ)SIPRTPDisconnect event does not have a Channel or RTPLastRX ?!!!\n";
 		return 3;
 		}
 	}
@@ -866,6 +904,111 @@ sub handle_dtmf_begin_event
 		$dtmf_string = "$HRnow_date|$s_hires|$usec|$event_hash{'Channel'}|$event_hash{'Uniqueid'}|$event_hash{'Digit'}|$event_hash{'Direction'}|Begin|$event_hash{'CallerIDName'}";
 		&dtmf_logger;
 
+		$temp_server_ip = $event_hash{'ServerIP'};
+		$temp_channel = $event_hash{'Channel'};
+		##### BEGIN - if recording_dtmf_detection is enabled, check for recordings on this channel #####
+		if ( ($SSrecording_dtmf_detection > 0) && ( ($temp_channel !~ /Local\/5\d\d\d\d\d\d\d@default/i) || ( ($temp_channel =~ /Local\/5\d\d\d\d\d\d\d@default/i) && ($temp_channel =~ /;1$/) ) ) )
+			{
+			$channelSQL = "channel='$temp_channel'";
+			if (($temp_channel =~ /Local\/5\d\d\d\d\d\d\d@default/i)) 
+				{
+				$temp_rec_channel = $temp_channel;
+				$temp_rec_channel =~ s/-.*//gi;
+				$channelSQL = "channel='$temp_rec_channel'";
+				}
+			$rec_live_match=0;
+			$stmtA = "SELECT count(*) FROM recording_live where $channelSQL and server_ip='$temp_server_ip' and recording_status='STARTED';";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArowsREC=$sthA->rows;
+			if ($sthArowsREC > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$rec_live_match =		$aryA[0];
+				}
+			$sthA->finish();
+			if($DBX){print STDERR "$sthArowsREC|$rec_live_match|$stmtA|\n";}
+
+			if ($rec_live_match > 0) 
+				{
+				$temp_recording_id =	'';
+				$rec_channel =			'';
+				$dtmf_detected =		0;
+				$dtmf_muting =			0;
+				$dtmf_muting_seconds =	0;
+				$mute_state =			'';
+				$recording_type =		'';
+				$recording_filename =	'';
+				$rec_lead_id =			0;
+				$NEXTdtmf_muting =		0;
+
+				$stmtA = "SELECT recording_id,channel,dtmf_detected,dtmf_muting,dtmf_muting_seconds,mute_state,recording_type,filename,lead_id FROM recording_live where $channelSQL and server_ip='$temp_server_ip' and recording_status='STARTED' order by recording_id limit 1;";
+				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+				$sthArowsRECdetail=$sthA->rows;
+				if ($sthArowsRECdetail > 0)
+					{
+					@aryA = $sthA->fetchrow_array;
+					$temp_recording_id =	$aryA[0];
+					$rec_channel =			$aryA[1];
+					$dtmf_detected =		$aryA[2];
+					$dtmf_muting =			$aryA[3];
+					$dtmf_muting_seconds =	$aryA[4];
+					$mute_state =			$aryA[5];
+					$recording_type =		$aryA[6];
+					$recording_filename =	$aryA[7];
+					$rec_lead_id =			$aryA[8];
+					$NEXTdtmf_muting = ($dtmf_muting + 1);
+					}
+				$sthA->finish();
+
+				if ( ($SSrecording_dtmf_muting > 0) && ($dtmf_muting_seconds > 0) && ($sthArowsRECdetail > 0) )
+					{
+					$mute_stateSQL='';
+					if ($mute_state < 1) 
+						{$mute_stateSQL="mute_state='1', dtmf_muting='$NEXTdtmf_muting',";}
+					# update recording_live record, trigger dtmf muting and increment dtmf_detected counter
+					$stmtA = "UPDATE recording_live SET $mute_stateSQL dtmf_detected='$NEXTdtmf_muting' where recording_id='$temp_recording_id';";
+					my $affected_rows = $dbhA->do($stmtA);
+					if($DBX){print STDERR "$affected_rows|$stmtA|\n";}
+
+					# if dtmf muting is triggered, then send the command to mute the channel and update the recording_live record
+					if (length($mute_stateSQL) > 10) 
+						{
+						$mute_direction = 'both';
+						if ( ($recording_type eq 'MONO_LEGACY') || ($recording_type eq 'MONO_LEGACY_RIR') )
+							{$mute_direction = 'both';}
+						if ( ($recording_type !~ /PARALLEL/) && ($recording_type =~ /CUSTOMER_ONLY|SACCO|SACICO|SACRCO/) )
+							{$mute_direction = 'read';}
+						if ( ($recording_type !~ /PARALLEL/) && ($recording_type =~ /CUSTOMER_MUTE|SACCM|SACICM|SACRCM/) )
+							{$mute_direction = 'write';}
+						$vmgr_callerid = substr($recording_filename, -15) . 'DTMFM';
+						$stmtE="INSERT INTO vicidial_manager values('','','$now_date','NEW','N','$temp_server_ip','','MixMonitorMute','$vmgr_callerid','ActionID: $vmgr_callerid','Channel: $temp_channel','Direction: $mute_direction','State: 1','','','','','','');";
+						my $affected_rowsVM = $dbhA->do($stmtE);
+						if($DBX){print STDERR "$affected_rowsVM|$stmtE|\n";}
+
+						$stmtC = "UPDATE recording_live SET mute_state='2', dtmf_muting_end_time=NOW() + INTERVAL $dtmf_muting_seconds SECOND where recording_id='$temp_recording_id';";
+						my $affected_rowsRL = $dbhA->do($stmtC);
+						if($DBX){print STDERR "$affected_rowsRL|$stmtC|\n";}
+
+						$stmtB="INSERT INTO recording_dtmf_muting_log SET recording_id='$temp_recording_id',recording_type='$recording_type',server_ip='$temp_server_ip',channel='$rec_channel',channel_to_mute='$temp_channel',filename='$recording_filename',lead_id='$rec_lead_id',campaign_id='',trigger_dtmf='$event_hash{'Digit'}',dtmf_muting='$NEXTdtmf_muting',dtmf_muting_start_time=NOW(),dtmf_muting_end_time=NOW() + INTERVAL $dtmf_muting_seconds SECOND,dtmf_muting_seconds='$dtmf_muting_seconds',mute_state='2';";
+						my $affected_rowsML = $dbhA->do($stmtB);
+						if($DBX){print STDERR "$affected_rowsML|$stmtB|\n";}
+						}
+					}
+				else
+					{
+					if ($sthArowsRECdetail > 0)
+						{
+						# update recording_live record, increment dtmf_detected counter
+						$stmtA = "UPDATE recording_live SET dtmf_detected='$NEXTdtmf_muting' where recording_id='$temp_recording_id';";
+						my $affected_rows = $dbhA->do($stmtA);
+						if($DBX){print STDERR "$affected_rows|$stmtA|\n";}
+						}
+					}
+				}
+			}
+		##### END - if recording_dtmf_detection is enabled, check for recordings on this channel #####
 		return 1;
 		}
 	else
@@ -978,6 +1121,14 @@ sub dtmf_logger
 		print Dout "|$dtmf_string|\n";
 		close(Dout);
 		}
+	}
+
+sub internal_logger
+	{
+	$stmtA = "INSERT INTO vicidial_internal_log SET db_time=NOW(), up_time=NOW(), process='$script_name', server_ip='$server_ip', action='$action', stage='$stage';";
+	if($DB){print STDERR "|$stmtA|";}
+	my $affected_rows = $dbhA->do($stmtA);
+	if($DB){print STDERR "$affected_rows|\n";}
 	}
 
 # subroutine to parse the asterisk version

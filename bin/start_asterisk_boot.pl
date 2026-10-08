@@ -6,7 +6,7 @@
 # operate as intended
 #
 #
-# Copyright (C) 2013  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 #
@@ -16,11 +16,13 @@
 # 90506-1443 - mikec - Added the T option to the asterisk command. This enables timestamping.
 # 91210-1500 - mattf - Added datetimestamp to astshell screen
 # 131022-1659 - mattf - Added CLI help display
+# 260515-1951 - Added internal logging
 #
 
-$build = '131022-1659';
+$build = '260515-1951';
 # default path to astguiclient configuration file:
 $PATHconf =		'/etc/astguiclient.conf';
+$script_name = 'start_asterisk_boot.pl';
 
 open(conf, "$PATHconf") || die "can't open $PATHconf: $!\n";
 @conf = <conf>;
@@ -105,6 +107,8 @@ use DBI;
 $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
  or die "Couldn't connect to database: " . DBI->errstr;
 
+$action='start';   $stage='LOGGED INTO MYSQL SERVER '.$build;   &internal_logger;
+
 ### Grab Server values from the database
 $stmtA = "SELECT vd_server_logs FROM servers where server_ip = '$VARserver_ip';";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
@@ -172,3 +176,12 @@ $affected_rows = $dbhA->do($stmtA);
 
 
 exit;
+
+
+sub internal_logger
+	{
+	$stmtA = "INSERT INTO vicidial_internal_log SET db_time=NOW(), up_time=NOW(), process='$script_name', server_ip='$VARserver_ip', action='$action', stage='$stage';";
+	if($DB){print STDERR "|$stmtA|";}
+	my $affected_rows = $dbhA->do($stmtA);
+	if($DB){print STDERR "$affected_rows|\n";}
+	}

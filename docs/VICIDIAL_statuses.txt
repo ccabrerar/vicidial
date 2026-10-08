@@ -57,7 +57,7 @@ TIMEOT - Inbound call Drop Timeout, call waited until drop-seconds and was sent 
 AFTHRS - Inbound after hours drop, call received outside of in-group call time
 NANQUE - Inbound no agent no queue drop, no agent logged in
 RAXFER - Remote Agent API transfer
-ALTNUM - Agent manual Dial Alternate number dialing, number dialed before final disposition
+ALTNUM - Agent manual Dial Alternate number dialing, number dialed with no final disposition OR 2nd call dialed on same lead before lead finished
 DISPO - Agent in disposition screen when they closed their web browser wiithout selecting dispisition
 WAITTO - Wait time option call termination on inbound call
 PDROP - Pre-routing dropped call, call hung up the instant the Answer signal is received
@@ -85,3 +85,15 @@ ADAIR - Dead Air Auto, for AMD NOAUDIODATA calls
 ACFLTR - Inbound call areacode filter check
 LTMGAD - Campaign HotKey option, will transfer customer to voicemail message and disposition the call
 XAMMAD - Campaign HotKey option, will transfer customer to voicemail message and disposition the call
+FAXHU - Fax AMD Auto Hangup
+FASHU - False Answer AMD Auto Hangup
+GVM - Generic Voicemail Message
+PVM - Personalized Voicemail Message
+VAMCS - AMD CallScreeen
+VAMFAS - AMD False Answer Signal
+VAMFIS - AMD FAS Silence
+VAMRNG - AMD FAS Ringing
+VAMFAX - AMD Fax Machine
+VAMSIT - AMD SIT Tones
+VAMMAC - AMD Answering Machine
+VAMNS - AMD Not Sure

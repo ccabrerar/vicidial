@@ -6,6 +6,7 @@
 # CHANGELOG:
 # 220825-1630 - First build
 # 230106-1307 - Auto download for large data output
+# 241003-1236 - Added recording link
 #
 
 if (isset($_GET["page_no"]))			{$page_no=$_GET["page_no"];}
@@ -97,24 +98,31 @@ if ($DB) {$HTML_output.="<B>$stmt</B>";}
 $rslt=mysql_to_mysqli($stmt, $link);
 $total_pages=ceil(mysqli_num_rows($rslt)/20);
 
-$HTML_output.="<BR><h2 class='rpt_header' id='sad_anchor'>"._QXZ("Answered Call Details").": $NWB#VERM_ANSWERED_DT-details$NWE</h2>";
-$HTML_output.="<hr style='height:2px;border-width:0;color:#ddd;background-color:#ddd;margin-bottom: 2em;'>";
-$HTML_output.="<table width='100%' id='details_table'>";
-$HTML_output.="<tr class='export_row'>";
-# $HTML_output.="<td class='export_row_cell' align='left'><B><a name='page_anchor' class='header_link' href='".$PHP_SELF."?sort_answered_details=".$sort_answered_details."&page_no=1#page_anchor' alt='First page of results'>|<</a>&nbsp;&nbsp;&nbsp;&nbsp;<a class='header_link' href='".$PHP_SELF."?sort_answered_details=".$sort_answered_details."&page_no=".($page_no-1)."#page_anchor' alt='Prev page of results'><<</a></B></td>";
-$HTML_output.="<td class='export_row_cell' align='left'>";
-$HTML_output.="<input type='button' class='download_button' onClick=\"GoToDetailsPage('ANSWERED_DT', '1')\" title=\"First page\" value='|<'>&nbsp;&nbsp;&nbsp;&nbsp;";
-$HTML_output.="<input type='button' class='download_button' onClick=\"GoToDetailsPage('ANSWERED_DT', '".($page_no-1)."')\" title=\"Prev page\" value='<<'>";
-$HTML_output.="</td>";
-$HTML_output.="<td class='export_row_cell' align='center' colspan='".(count($selected_columns)-2)."'>&nbsp;</td>";
-# $HTML_output.="<td class='export_row_cell' align='right'><B><a class='header_link' href='".$PHP_SELF."?sort_answered_details=".$sort_answered_details."&page_no=".($page_no+1)."#page_anchor' alt='Next page of results'>>></a>&nbsp;&nbsp;&nbsp;&nbsp;<a class='header_link' href='".$PHP_SELF."?sort_answered_details=".$sort_answered_details."&page_no=".$total_pages."#page_anchor' alt='Last page of results'>>|</a></B></td>";
-$HTML_output.="<td class='export_row_cell' align='right'>";
-$HTML_output.="<input type='button' class='download_button' onClick=\"GoToDetailsPage('ANSWERED_DT', '".($page_no<$total_pages ? $page_no+1 : $total_pages)."')\" title=\"Next page\" value='>>'>&nbsp;&nbsp;&nbsp;&nbsp;";
-$HTML_output.="<input type='button' class='download_button' onClick=\"GoToDetailsPage('ANSWERED_DT', '".($total_pages)."')\" title=\"Last page\" value='>|'>";
-$HTML_output.="</td>";
-$HTML_output.="</tr>";
-$HTML_output.="<tr>";
-$CSV_output="";
+# Reduce memory usage
+if ($download_rpt)
+	{
+	$CSV_output="";
+	}
+else
+	{
+	$HTML_output.="<BR><h2 class='rpt_header' id='sad_anchor'>"._QXZ("Answered Call Details").": $NWB#VERM_ANSWERED_DT-details$NWE</h2>";
+	$HTML_output.="<hr style='height:2px;border-width:0;color:#ddd;background-color:#ddd;margin-bottom: 2em;'>";
+	$HTML_output.="<table width='100%' id='details_table'>";
+	$HTML_output.="<tr class='export_row'>";
+	# $HTML_output.="<td class='export_row_cell' align='left'><B><a name='page_anchor' class='header_link' href='".$PHP_SELF."?sort_answered_details=".$sort_answered_details."&page_no=1#page_anchor' alt='First page of results'>|<</a>&nbsp;&nbsp;&nbsp;&nbsp;<a class='header_link' href='".$PHP_SELF."?sort_answered_details=".$sort_answered_details."&page_no=".($page_no-1)."#page_anchor' alt='Prev page of results'><<</a></B></td>";
+	$HTML_output.="<td class='export_row_cell' align='left'>";
+	$HTML_output.="<input type='button' class='download_button' onClick=\"GoToDetailsPage('ANSWERED_DT', '1')\" title=\"First page\" value='|<'>&nbsp;&nbsp;&nbsp;&nbsp;";
+	$HTML_output.="<input type='button' class='download_button' onClick=\"GoToDetailsPage('ANSWERED_DT', '".($page_no-1)."')\" title=\"Prev page\" value='<<'>";
+	$HTML_output.="</td>";
+	$HTML_output.="<td class='export_row_cell' align='center' colspan='".(count($selected_columns)-2)."'>&nbsp;</td>";
+	# $HTML_output.="<td class='export_row_cell' align='right'><B><a class='header_link' href='".$PHP_SELF."?sort_answered_details=".$sort_answered_details."&page_no=".($page_no+1)."#page_anchor' alt='Next page of results'>>></a>&nbsp;&nbsp;&nbsp;&nbsp;<a class='header_link' href='".$PHP_SELF."?sort_answered_details=".$sort_answered_details."&page_no=".$total_pages."#page_anchor' alt='Last page of results'>>|</a></B></td>";
+	$HTML_output.="<td class='export_row_cell' align='right'>";
+	$HTML_output.="<input type='button' class='download_button' onClick=\"GoToDetailsPage('ANSWERED_DT', '".($page_no<$total_pages ? $page_no+1 : $total_pages)."')\" title=\"Next page\" value='>>'>&nbsp;&nbsp;&nbsp;&nbsp;";
+	$HTML_output.="<input type='button' class='download_button' onClick=\"GoToDetailsPage('ANSWERED_DT', '".($total_pages)."')\" title=\"Last page\" value='>|'>";
+	$HTML_output.="</td>";
+	$HTML_output.="</tr>";
+	$HTML_output.="<tr>";
+	}
 
 if ($total_calls>$auto_download_limit)
 	{
@@ -125,15 +133,27 @@ foreach ($selected_columns as $display_name => $column_name)
 	{
 	if ($display_name!="uniqueid")
 		{
-		$CSV_output.="\"$display_name\",";
-		# $HTML_output.="<th><a class='header_link' name='call_detail_sort_".$column_name."' id='call_detail_sort_".$column_name."' href='".$PHP_SELF."?sort_answered_details=".($column_name==$sort_answered_details_preg ? "$reverse_link" : "$column_name")."&page_no=".$page_no."#call_detail_sort_".$column_name."'>".$display_name.($column_name==$sort_answered_details_preg ? " $sort_char" : "")."</a></th>";
-
-		$HTML_output.="<th><input type='button' class='sort_button' value='".$display_name.($column_name==$sort_answered_details_preg ? " $sort_char" : "")."' onClick=\"javascript:document.getElementById('sort_answered_details').value='".($column_name==$sort_answered_details_preg ? "$reverse_link" : "$column_name")."'; this.form.action+='#sad_anchor'; this.form.submit()\"></th>\n";
+		if ($download_rpt)
+			{
+			$CSV_output.="\"$display_name\",";
+			}
+		else
+			{
+			# $HTML_output.="<th><a class='header_link' name='call_detail_sort_".$column_name."' id='call_detail_sort_".$column_name."' href='".$PHP_SELF."?sort_answered_details=".($column_name==$sort_answered_details_preg ? "$reverse_link" : "$column_name")."&page_no=".$page_no."#call_detail_sort_".$column_name."'>".$display_name.($column_name==$sort_answered_details_preg ? " $sort_char" : "")."</a></th>";
+			$HTML_output.="<th><input type='button' class='sort_button' value='".$display_name.($column_name==$sort_answered_details_preg ? " $sort_char" : "")."' onClick=\"javascript:document.getElementById('sort_answered_details').value='".($column_name==$sort_answered_details_preg ? "$reverse_link" : "$column_name")."'; this.form.action+='#sad_anchor'; this.form.submit()\"></th>\n";
+			}
 		}
 	}
-$CSV_output.="\n";
-$HTML_output.="<th>&nbsp;</th>";
-$HTML_output.="</tr>";
+if ($download_rpt)
+	{
+	$CSV_output.="\"Link to recording\"";
+	$CSV_output.="\n";
+	}
+else
+	{
+	$HTML_output.="<th>&nbsp;</th>";
+	$HTML_output.="</tr>";
+	}
 
 $output_array=array();
 $i=0;
@@ -181,9 +201,11 @@ if ($sort_index)
 	# print "***** $sort_index ********\n";
 	# array_multisort($output_array[$sort_index], SORT_ASC, SORT_STRING);
 
-	foreach ($output_array as $sorting_array) {
-        $sort_array_holder[] = $sorting_array["$sort_index"];
-    }
+	foreach ($output_array as $sorting_array) 
+		{
+		$sort_array_holder[] = $sorting_array["$sort_index"];
+		}
+
 	if (preg_match('/ desc$/', $sort_answered_details))
 		{
 		array_multisort($sort_array_holder,SORT_DESC, SORT_STRING,$output_array);
@@ -210,38 +232,61 @@ foreach ($output_array as $data_row)
 			}
 		if ($key!="detail_id")
 			{
-			$HTML_output.="<td>".$value."</td>";
-			$CSV_output.="\"".$value."\",";
+			if ($download_rpt)
+				{
+				$CSV_output.="\"".trim($value)."\",";
+				}
+			else
+				{
+				$HTML_output.="<td>".$value."</td>";
+				}
 			}
 		else
 			{
-			$HTML_output.="<td><a onClick=\"ShowCallDetails('$value', 'ANSWERED_DT')\"><svg width='20' height='20' viewBox='0 0 20 20' data-svg='search'><circle fill='none' stroke='#000' stroke-width='1.1' cx='9' cy='9' r='7'></circle><path fill='none' stroke='#000' stroke-width='1.1' d='M14,14 L18,18 L14,14 Z'></path></svg></a></td>";
-			# $HTML_output.="<td><IMG SRC=\"images/glass.png\" onClick=\"ShowCallDetails('$value')\" WIDTH=20 HEIGHT=20 BORDER=0 ALT=\"HELP\" ALIGN=TOP></td>";
+			$asterisk_call_id=GetCallerCode($value);
+			$recording_array=GetRecording($value);
+
+			if (!$download_rpt)
+				{
+				$HTML_output.="<td><a onClick=\"ShowCallDetails('$value', 'ANSWERED_DT')\"><svg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg' data-svg='search'><circle fill='none' stroke='#000' stroke-width='1.1' cx='9' cy='9' r='7'></circle><path fill='none' stroke='#000' stroke-width='1.1' d='M14,14 L18,18 L14,14 Z'></path></svg></a></td>";
+				# $HTML_output.="<td><IMG SRC=\"images/glass.png\" onClick=\"ShowCallDetails('$value')\" WIDTH=20 HEIGHT=20 BORDER=0 ALT=\"HELP\" ALIGN=TOP></td>";
+				}
 			}
 		}
-	$CSV_output.="\n";
 
-	$HTML_output.="</tr>";
+	if ($download_rpt)
+		{
+		$CSV_output.="\"".$recording_array[1]."\"";
+		$CSV_output.="\n";
+		}
+	else
+		{
+		$HTML_output.="</tr>\n";
+		}
 	}
-$HTML_output.="<tr class='export_row'>";
-# $HTML_output.="<td class='export_row_cell' align='left'><B><a class='header_link' href='".$PHP_SELF."?sort_answered_details=".$sort_answered_details."&page_no=1#page_anchor' alt='First page of results'>|<</a>&nbsp;&nbsp;&nbsp;&nbsp;<a class='header_link' href='".$PHP_SELF."?sort_answered_details=".$sort_answered_details."&page_no=".($page_no-1)."#page_anchor' alt='Prev page of results'><<</a></B></td>";
-$HTML_output.="<td class='export_row_cell' align='left'>";
-$HTML_output.="<input type='button' class='download_button' onClick=\"GoToDetailsPage('ANSWERED_DT', '1')\" title=\"First page\" value='|<'>&nbsp;&nbsp;&nbsp;&nbsp;";
-$HTML_output.="<input type='button' class='download_button' onClick=\"GoToDetailsPage('ANSWERED_DT', '".($page_no-1)."')\" title=\"Prev page\" value='<<'>";
-$HTML_output.="</td>";
-# $HTML_output.="<td class='export_row_cell' align='center' colspan='".(count($selected_columns)-2)."'>"._QXZ("Export as")."... &nbsp;&nbsp;&nbsp;&nbsp;<a  href=\"".$PHP_SELF."?download_rpt=answer_details&sort_answered_details=".$sort_answered_details."\" title=\"Export as a CSV file\" class=\"uk-icon\">CSV</a>&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("Current page").": $page_no / $total_pages</td>";
-$HTML_output.="<td colspan='".(count($selected_columns)-2)."' align='center' class='export_row_cell'>"._QXZ("Export as")."... &nbsp;&nbsp;&nbsp;&nbsp;<input type='button' class='download_button' onClick=\"DownloadReport('ANSWERED_DT', 'answer_details')\" title=\"Export as a CSV file\" value='CSV'>&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("Current page").": $page_no / $total_pages</td>";
 
-# $HTML_output.="<td class='export_row_cell' align='right'><B><a class='header_link' href='".$PHP_SELF."?sort_answered_details=".$sort_answered_details."&page_no=".($page_no+1)."#page_anchor' alt='Next page of results'>>></a>&nbsp;&nbsp;&nbsp;&nbsp;<a class='header_link' href='".$PHP_SELF."?sort_answered_details=".$sort_answered_details."&page_no=".($total_pages-1)."#page_anchor' alt='Last page of results'>>|</a></B></td>";
-$HTML_output.="<td class='export_row_cell' align='right'>";
-$HTML_output.="<input type='button' class='download_button' onClick=\"GoToDetailsPage('ANSWERED_DT', '".($page_no<$total_pages ? $page_no+1 : $total_pages)."')\" title=\"Next page\" value='>>'>&nbsp;&nbsp;&nbsp;&nbsp;";
-$HTML_output.="<input type='button' class='download_button' onClick=\"GoToDetailsPage('ANSWERED_DT', '".($total_pages)."')\" title=\"Last page\" value='>|'>";
-$HTML_output.="</td>";
+$output_array=null; # Free up memory just in case
 
-$HTML_output.="</tr>";
-$HTML_output.="</table>";
-$HTML_output.="<input type=hidden name=page_no id=page_no value='$page_no'>";
-$HTML_output.="<input type='hidden' name='sort_answered_details' id='sort_answered_details' value='$sort_answered_details'>";
+if (!$download_rpt)
+	{
+	$HTML_output.="<tr class='export_row'>";
+	# $HTML_output.="<td class='export_row_cell' align='left'><B><a class='header_link' href='".$PHP_SELF."?sort_answered_details=".$sort_answered_details."&page_no=1#page_anchor' alt='First page of results'>|<</a>&nbsp;&nbsp;&nbsp;&nbsp;<a class='header_link' href='".$PHP_SELF."?sort_answered_details=".$sort_answered_details."&page_no=".($page_no-1)."#page_anchor' alt='Prev page of results'><<</a></B></td>";
+	$HTML_output.="<td class='export_row_cell' align='left'>";
+	$HTML_output.="<input type='button' class='download_button' onClick=\"GoToDetailsPage('ANSWERED_DT', '1')\" title=\"First page\" value='|<'>&nbsp;&nbsp;&nbsp;&nbsp;";
+	$HTML_output.="<input type='button' class='download_button' onClick=\"GoToDetailsPage('ANSWERED_DT', '".($page_no-1)."')\" title=\"Prev page\" value='<<'>";
+	$HTML_output.="</td>";
+	# $HTML_output.="<td class='export_row_cell' align='center' colspan='".(count($selected_columns)-2)."'>"._QXZ("Export as")."... &nbsp;&nbsp;&nbsp;&nbsp;<a  href=\"".$PHP_SELF."?download_rpt=answer_details&sort_answered_details=".$sort_answered_details."\" title=\"Export as a CSV file\" class=\"uk-icon\">CSV</a>&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("Current page").": $page_no / $total_pages</td>";
+	$HTML_output.="<td colspan='".(count($selected_columns)-2)."' align='center' class='export_row_cell'>"._QXZ("Export as")."... &nbsp;&nbsp;&nbsp;&nbsp;<input type='button' class='download_button' onClick=\"DownloadReport('ANSWERED_DT', 'answer_details')\" title=\"Export as a CSV file\" value='CSV'>&nbsp;&nbsp;&nbsp;&nbsp;"._QXZ("Current page").": $page_no / $total_pages</td>";
+	# $HTML_output.="<td class='export_row_cell' align='right'><B><a class='header_link' href='".$PHP_SELF."?sort_answered_details=".$sort_answered_details."&page_no=".($page_no+1)."#page_anchor' alt='Next page of results'>>></a>&nbsp;&nbsp;&nbsp;&nbsp;<a class='header_link' href='".$PHP_SELF."?sort_answered_details=".$sort_answered_details."&page_no=".($total_pages-1)."#page_anchor' alt='Last page of results'>>|</a></B></td>";
+	$HTML_output.="<td class='export_row_cell' align='right'>";
+	$HTML_output.="<input type='button' class='download_button' onClick=\"GoToDetailsPage('ANSWERED_DT', '".($page_no<$total_pages ? $page_no+1 : $total_pages)."')\" title=\"Next page\" value='>>'>&nbsp;&nbsp;&nbsp;&nbsp;";
+	$HTML_output.="<input type='button' class='download_button' onClick=\"GoToDetailsPage('ANSWERED_DT', '".($total_pages)."')\" title=\"Last page\" value='>|'>";
+	$HTML_output.="</td>";
+	$HTML_output.="</tr>";
+	$HTML_output.="</table>";
+	$HTML_output.="<input type=hidden name=page_no id=page_no value='$page_no'>";
+	$HTML_output.="<input type='hidden' name='sort_answered_details' id='sort_answered_details' value='$sort_answered_details'>";
+	}
 
 if ($download_rpt)
 	{
@@ -291,7 +336,8 @@ function GetCallerCode($uniqueid)
 	{
 	global $link, $DB;
 	$caller_code="";
-	$cc_stmt="select caller_code from vicidial_log_extended where uniqueid='$uniqueid'";
+	preg_match('/^[0-9\.]+/', $uniqueid, $uid_values);
+	$cc_stmt="select caller_code from vicidial_log_extended where uniqueid='$uid_values[0]'";
 	$cc_rslt=mysqli_query($link, $cc_stmt);
 	$cc_row=mysqli_fetch_array($cc_rslt);
 	$caller_code=$cc_row[0];
@@ -343,5 +389,37 @@ function GetDID($uniqueid)
 	$did_str=$did_row["extension"]." - ".$did_id_info["$did_row[extension]"];
 
 	return $did_str;
+	}
+
+function GetRecording($vicidial_id)
+	{
+	global $link, $DB, $search_archived_data, $log_recording_access;
+
+	$rec_str="";
+
+	$uid_values=explode("|", $vicidial_id);
+	$u=count($uid_values)-1; # Get the last value, as closer_log uses a different type of ID
+	$rec_stmt="select filename, location, recording_id, lead_id from recording_log where vicidial_id='$uid_values[$u]'";
+	$rec_rslt=mysqli_query($link, $rec_stmt);
+	$rec_row=mysqli_fetch_array($rec_rslt);
+
+	if ($log_recording_access<1) 
+		{$rec_link = $rec_row["location"];}
+	else
+		{
+		if(isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on')   
+			{
+			$actual_link = "https://";
+			}
+		else  
+			{
+			$actual_link = "http://";
+			}
+		$directory=dirname($_SERVER['PHP_SELF']);
+		$actual_link .= $_SERVER['HTTP_HOST'].$directory."/";
+		$rec_link = $actual_link."recording_log_redirect.php?recording_id=".$rec_row["recording_id"]."&lead_id=".$rec_row["lead_id"]."&search_archived_data=$search_archived_data";
+		}
+
+	return array("$rec_row[filename]", "$rec_link", "$rec_row[recording_id]", $uid_values[$u]);
 	}
 ?>

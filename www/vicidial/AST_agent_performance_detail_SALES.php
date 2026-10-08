@@ -951,8 +951,8 @@ while ($m < $k)
 	$PAUSEtotal[$m] = $pfUSERtotPAUSE_MS;
 
 	$total_hours=($Stime/3600);
-	$Ssales_per_call=sprintf("%.2f", (100*($Stotal_sales/$Scalls)))." %";
-	$Ssales_per_hour=sprintf("%.2f", ($Stotal_sales/$total_hours));
+	$Ssales_per_call=sprintf("%.2f", (100*MathZDC($Stotal_sales, $Scalls)))." %";
+	$Ssales_per_hour=sprintf("%.2f", MathZDC($Stotal_sales, $total_hours));
 
 	$Ssales_per_call=sprintf("%13s", $Ssales_per_call);
 	$Ssales_per_hour=sprintf("%14s", $Ssales_per_hour);

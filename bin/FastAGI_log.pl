@@ -25,7 +25,7 @@
 # exten => h,1,DeadAGI(agi://127.0.0.1:4577/call_log--HVcauses--PRI-----NODEBUG-----${HANGUPCAUSE}-----${DIALSTATUS}-----${DIALEDTIME}-----${ANSWEREDTIME})
 # 
 #
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG:
 # 61010-1007 - First test build
@@ -102,7 +102,11 @@
 # 240225-0957 - Added AUTONEXT hopper_hold_inserts campaign option
 # 241001-2224 - Fixes for Khomp call processing
 # 241020-1929 - Added khomp campaign settings options
-# 281028-0958 - Added vicidial_khomp_log logging of container used
+# 241028-0958 - Added vicidial_khomp_log logging of container used
+# 250928-1556 - Added hosted_settings dialplan variable
+# 260327-0824 - Fixes for PJSIP compatibility
+# 260424-1644 - Fix for rare Auto-Alt Dial issue
+# 260515-1936 - Added internal logging
 #
 
 # defaults for PreFork
@@ -116,6 +120,7 @@ $VARfastagi_log_checkforwait =	'60';
 $DB=0;
 $DBX=0;
 $ADB=0;
+$script_name = 'FastAGI_log.pl';
 
 # default path to astguiclient configuration file:
 $PATHconf =		'/etc/astguiclient.conf';
@@ -176,6 +181,12 @@ $log_level = '0';
 use DBI;
 $dbhB = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
 	or die "Couldn't connect to database: " . DBI->errstr;
+
+$action='start';   $stage='LOGGED INTO MYSQL SERVER';
+$stmtA = "INSERT INTO vicidial_internal_log SET db_time=NOW(), up_time=NOW(), process='$script_name', server_ip='$VARserver_ip', action='$action', stage='$stage';";
+if($DB){print STDERR "|$stmtA|";}
+my $affected_rows = $dbhB->do($stmtA);
+if($DB){print STDERR "$affected_rows|\n";}
 
 ### Grab Server values from the database
 $stmtB = "SELECT vd_server_logs,asterisk_version FROM servers where server_ip = '$VARserver_ip';";
@@ -770,9 +781,9 @@ sub process_request
 					if ($AGILOG) {$agi_string = "|CAMPDTO: $dial_timeout|$callerid|";   &agi_output;}
 					}
 
-				### BEGIN OpenSIPs CallerIDname code ###
-				### get system_settings
-				$stmtA = "SELECT opensips_cid_name FROM system_settings";
+				### BEGIN OpenSIPs CallerIDname and Hosted Settings code ###
+				### get system_settings and hosted_settings
+				$stmtA = "SELECT opensips_cid_name,hosted_settings FROM system_settings";
 				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 				$sthArows=$sthA->rows;
@@ -780,9 +791,10 @@ sub process_request
 					{
 					@aryA = $sthA->fetchrow_array;
 					$opensips_cid_name =     $aryA[0];
+					$hosted_settings =       $aryA[1];
 					}
 				$sthA->finish();
-				if ($AGILOG) {$agi_string = "$stmtA|$opensips_cid_name";   &agi_output;}
+				if ($AGILOG) {$agi_string = "$stmtA|$opensips_cid_name|$hosted_settings";   &agi_output;}
 
 				### opensips_cid_name is active
 				if ( $opensips_cid_name == 1)
@@ -805,10 +817,19 @@ sub process_request
 						{
 						if ($AGILOG) {$agi_string = "Adding \"X-CIDNAME: $camp_opensips_cid_name\" header to INVITE";   &agi_output;}
 						$header = "X-CIDNAME: " . $camp_opensips_cid_name;
+						$AGI->exec("EXEC Set(__OSCIDNAME=\"$camp_opensips_cid_name\")");
 						$AGI->exec("EXEC SIPAddHeader(\"$header\")");
 						}
 					}
-				### END OpenSIPs CallerIDname code ###
+
+				### if hosted_settings has a value, set a dialplan variable
+				if ( length($hosted_settings) > 0 )
+					{
+					$AGI->exec("EXEC Set(_HOSTEDSETTINGS=$hosted_settings)");
+					if ($AGILOG) {$agi_string = "|HOSTEDSETTINGS: $hosted_settings|$callerid|";   &agi_output;}
+					}
+
+				### END OpenSIPs CallerIDname and Hosted Settings code ###
 
 				if ($AGILOG) {$agi_string = "|KHOMP $amd_type|$HVcauses|$extension|$campaign_vdad_exten"; &agi_output;}
 
@@ -829,6 +850,10 @@ sub process_request
 
 					# add the SIP tracking header
 					$header = "X-" . $khomp_header . ": " . $khomp_id;
+					$kp_header = "X-" . $khomp_header;
+					$kp_header_value = $khomp_id;
+					$AGI->exec("EXEC Set(__KPHEADER=$kp_header)");
+					$AGI->exec("EXEC Set(__KPHEADERVALUE=$kp_header_value)");
 					$AGI->exec("EXEC SIPAddHeader(\"$header\")");
 					if ($AGILOG) {$agi_string = "|KHOMP SIP Header= $header|$khomp_id_format|";   &agi_output;}
 
@@ -2364,7 +2389,7 @@ sub process_request
 								$alt_skip_reason='';   $addr3_skip_reason='';
 								if ($AGILOG) {$agi_string = "AUTO-ALT MATCH: |$VD_status|$VDL_status|$VD_auto_alt_dial_statuses|$VD_auto_alt_dial|$VD_alt_dial|$VD_alt_dial_log|";   &agi_output;}
 								if ($ADB > 0) {$aad_string = "ALT-22: $VD_lead_id|Alt-Dial Match|";   &aad_output;}
-								if ( ($VD_auto_alt_dial =~ /(ALT_ONLY|ALT_AND_ADDR3|ALT_AND_EXTENDED)/) && ($VD_alt_dial =~ /NONE|MAIN/) )
+								if ( ($VD_auto_alt_dial =~ /(ALT_ONLY|ALT_AND_ADDR3|ALT_AND_EXTENDED)/) && ($VD_alt_dial =~ /NONE|MAIN/) && ($VD_alt_dial_log =~ /NONE|MAIN/) )
 									{
 									$alt_dial_skip=0;
 									$VD_alt_phone='';
@@ -2471,8 +2496,8 @@ sub process_request
 										if ($AGILOG) {$aad_string = "$VD_lead_id|$VD_alt_phone|$VD_campaign_id|ALT|0|hopper skip|$alt_skip_reason|";   &aad_output;}
 									}
 									}
-									if ($ADB > 0) {$aad_string = "ALT-25: $VD_lead_id|$VD_alt_dial|";   &aad_output;}
-								if ( ( ($VD_auto_alt_dial =~ /(ADDR3_ONLY)/) && ($VD_alt_dial =~ /NONE|MAIN/) ) || ( ($VD_auto_alt_dial =~ /(ALT_AND_ADDR3)/) && ($VD_alt_dial =~ /ALT/) ) )
+									if ($ADB > 0) {$aad_string = "ALT-25: $VD_lead_id|$VD_alt_dial|$VD_alt_dial_log|";   &aad_output;}
+								if ( ( ($VD_auto_alt_dial =~ /(ADDR3_ONLY)/) && ($VD_alt_dial =~ /NONE|MAIN/) && ($VD_alt_dial_log =~ /NONE|MAIN/) ) || ( ($VD_auto_alt_dial =~ /(ALT_AND_ADDR3)/) && ($VD_alt_dial =~ /ALT/) && ($VD_alt_dial_log =~ /ALT/) ) )
 									{
 									$addr3_dial_skip=0;
 									$VD_address3='';
@@ -2580,7 +2605,7 @@ sub process_request
 									}
 									}
 								if ($ADB > 0) {$aad_string = "ALT-28: $VD_lead_id|$VD_alt_dial|";   &aad_output;}
-								if ( ( ($VD_auto_alt_dial =~ /(EXTENDED_ONLY)/) && ($VD_alt_dial =~ /NONE|MAIN/) ) || ( ($VD_auto_alt_dial =~ /(ALT_AND_EXTENDED)/) && ($VD_alt_dial =~ /ALT/) ) || ( ($VD_auto_alt_dial =~ /ADDR3_AND_EXTENDED|ALT_AND_ADDR3_AND_EXTENDED/) && ($VD_alt_dial =~ /ADDR3/) ) || ( ($VD_auto_alt_dial =~ /(EXTENDED)/) && ($VD_alt_dial =~ /X/) && ($VD_alt_dial !~ /XLAST/) ) )
+								if ( ( ($VD_auto_alt_dial =~ /(EXTENDED_ONLY)/) && ($VD_alt_dial =~ /NONE|MAIN/) && ($VD_alt_dial_log =~ /NONE|MAIN/) ) || ( ($VD_auto_alt_dial =~ /(ALT_AND_EXTENDED)/) && ($VD_alt_dial =~ /ALT/) && ($VD_alt_dial_log =~ /ALT/) ) || ( ($VD_auto_alt_dial =~ /ADDR3_AND_EXTENDED|ALT_AND_ADDR3_AND_EXTENDED/) && ($VD_alt_dial =~ /ADDR3/) && ($VD_alt_dial_log =~ /ADDR3/) ) || ( ($VD_auto_alt_dial =~ /(EXTENDED)/) && ($VD_alt_dial =~ /X/) && ($VD_alt_dial !~ /XLAST/) && ($VD_alt_dial_log =~ /X/) && ($VD_alt_dial_log !~ /XLAST/) ) )
 									{
 									if ($VD_alt_dial =~ /ADDR3/) {$Xlast=0;}
 									else

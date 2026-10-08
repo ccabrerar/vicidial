@@ -11,7 +11,7 @@
 # agents that should appear to be logged in so that the calls can be transferred 
 # out to them properly.
 #
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG:
 # 50215-0954 - First version of script
@@ -58,9 +58,12 @@
 # 240219-1518 - Added daily_limit inbound option
 # 240420-2246 - Added ConfBridge code
 # 240516-2149 - Allow for ALT start_call_url, added --version flag
+# 260403-2253 - Added vicidial_max_inbound_cache logging
+# 260515-1935 - Added internal logging
 #
 
-$build = '240516-2149';
+$build = '260515-1933';
+$script_name = 'AST_VDremote_agents.pl';
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -189,6 +192,7 @@ use DBI;
 $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
  or die "Couldn't connect to database: " . DBI->errstr;
 
+$action='start';   $stage='LOGGED INTO MYSQL SERVER '.$build;   &internal_logger;
 
 #############################################
 ##### Gather system_settings #####
@@ -251,6 +255,7 @@ if ($run_check > 0)
 
 #$one_day_interval = 12;	# 1 month loops for one year 
 $one_day_interval = 1;		# 1 day
+$iLog_ct=0;
 while($one_day_interval > 0)
 	{
 	#$endless_loop=5760000;		# 30 days minutes at XXX seconds per loop
@@ -471,6 +476,17 @@ while($one_day_interval > 0)
 							}
 						if ($max_inbound_count >= $max_inbound_calls)
 							{
+							$RAWcloser_campaigns='';
+							$stmtJ = "SELECT closer_campaigns FROM vicidial_remote_agents where user_start='$QHuser[$w]';";
+							$sthA = $dbhA->prepare($stmtJ) or die "preparing: ",$dbhA->errstr;
+							$sthA->execute or die "executing: $stmtJ ", $dbhA->errstr;
+							$sthArowsVRA=$sthA->rows;
+							if ($sthArowsVRA > 0)
+								{
+								@aryA = $sthA->fetchrow_array;
+								$RAWcloser_campaigns = $aryA[0];
+								}
+
 							$max_inbound_triggered++;
 							$stmtJ = "UPDATE vicidial_live_agents set closer_campaigns='' where user='$QHuser[$w]';";
 							$affected_rows = $dbhA->do($stmtJ);
@@ -479,6 +495,9 @@ while($one_day_interval > 0)
 							$affected_rows = $dbhA->do($stmtJ);
 
 							$stmtJ = "UPDATE vicidial_remote_agents set closer_campaigns='' where user_start='$QHuser[$w]';";
+							$affected_rows = $dbhA->do($stmtJ);
+
+							$stmtJ = "INSERT INTO vicidial_max_inbound_cache SET user='$QHuser[$w]', campaign_id='$QHcampaign_id[$w]', event_date=NOW(), blended='1', closer_campaigns='$RAWcloser_campaigns', max_inbound_count='$max_inbound_calls', call_count_today='$max_inbound_count', status='NEW', notes='VRA';";
 							$affected_rows = $dbhA->do($stmtJ);
 
 							$stmtJ = "INSERT INTO vicidial_admin_log set event_date=NOW(), user='$QHuser[$w]', ip_address='$VARserver_ip', event_section='USERS', event_type='MODIFY', record_id='$QHuser[$w]', event_code='MAX IN CALLS MODIFY REMOTE AGENT', event_sql='DELETE FROM vicidial_live_inbound_agents where user=$QHuser[$w]', event_notes='|$max_inbound_count|$max_inbound_calls|$QHuser[$w]|$QHcall_id[$w]|RA|';";
@@ -1238,7 +1257,7 @@ while($one_day_interval > 0)
 		usleep(1*$loop_delay*1000);
 
 		$endless_loop--;
-		if($DB){print STDERR "\nloop counter: |$endless_loop|$one_day_interval|     |$loop_delay|\n";}
+		if($DB){print STDERR "\nloop counter: |$endless_loop|$one_day_interval|$iLog_ct|     |$loop_delay|\n";}
 
 		### putting a blank file called "VDAD.kill" in the directory will automatically safely kill this program
 		if (-e "$PATHhome/VDAD.kill")
@@ -1250,6 +1269,16 @@ while($one_day_interval > 0)
 			}
 
 		$bad_grabber_counter=0;
+
+		# update internal process log
+		$iLog_ct++;
+		if ($iLog_ct =~ /00$/) 
+			{
+			$stmtA = "UPDATE vicidial_internal_log SET up_time=NOW(), action='running', stage='Loops: $iLog_ct' WHERE process='$script_name' and server_ip='$server_ip' order by db_time desc limit 1;";
+			if($DB){print STDERR "|$stmtA|";}
+			my $affected_rows = $dbhA->do($stmtA);
+			if($DB){print STDERR "$affected_rows|\n";}
+			}
 		}
 
 
@@ -1384,6 +1413,15 @@ sub event_logger
 		close(Lout);
 		}
 	$event_string='';
+	}
+
+
+sub internal_logger
+	{
+	$stmtA = "INSERT INTO vicidial_internal_log SET db_time=NOW(), up_time=NOW(), process='$script_name', server_ip='$server_ip', action='$action', stage='$stage';";
+	if($DB){print STDERR "|$stmtA|";}
+	my $affected_rows = $dbhA->do($stmtA);
+	if($DB){print STDERR "$affected_rows|\n";}
 	}
 
 

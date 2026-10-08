@@ -2,7 +2,7 @@
 # default path to astguiclient configuration file:
 $PATHconf =		'/etc/astguiclient.conf';
 
-# Copyright (C) 2024  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # VD_email_inbound.pl
 # This script is responsible for assigning transferred and new emails to 
@@ -27,7 +27,10 @@ $PATHconf =		'/etc/astguiclient.conf';
 # 190216-0810 - Fix for user-group, email-group and campaign allowed/permissions matching issues
 # 191017-2043 - Added filtered routing options
 # 240219-1526 - Added daily_limit in-group parameter
+# 260515-1941 - Added internal logging
 #
+
+$script_name = 'VD_email_inbound.pl';
 
 if ($ARGV[0]=~/--help/) 
 	{
@@ -107,6 +110,8 @@ $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VA
 $dbhB = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
     or die "Couldn't connect to database: " . DBI->errstr;
 
+$action='start';   $stage='LOGGED INTO MYSQL SERVER';   $server_ip=$VARserver_ip;   &internal_logger;
+
 ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
 $year = ($year + 1900);
 $mon++;
@@ -155,7 +160,7 @@ $BDtsSQLdate = "$Byear$Bmon$Bmday$Bhour$Bmin$Bsec";
 #$vig_rslt=$dbhA->prepare($vig_stmt);
 #$vig_rslt->execute();
 
-
+$iLog_ct=0;
 for ($i=0; $i<=1000000; $i++) 
 	{
 	$vci=0;
@@ -232,6 +237,16 @@ for ($i=0; $i<=1000000; $i++)
 		$inb_rslt->finish();
 
 		if ($email_ct>0) {AssignAgents();} else {if ($ARGV[0]=~/debug/i) {print "**** NO EMAILS TO QUEUE ****\n";}}
+		}
+
+	# update internal process log
+	$iLog_ct++;
+	if ($iLog_ct =~ /000$/) 
+		{
+		$stmtA = "UPDATE vicidial_internal_log SET up_time=NOW(), action='running', stage='Loops: $iLog_ct' WHERE process='$script_name' and server_ip='$server_ip' order by db_time desc limit 1;";
+		if($DB){print STDERR "|$stmtA|";}
+		my $affected_rows = $dbhA->do($stmtA);
+		if($DB){print STDERR "$affected_rows|\n";}
 		}
 	usleep(100000);
 	}
@@ -406,4 +421,12 @@ sub mysql_error_logging
 			}
 		}
 	$one_mysql_log=0;
+	}
+
+sub internal_logger
+	{
+	$stmtA = "INSERT INTO vicidial_internal_log SET db_time=NOW(), up_time=NOW(), process='$script_name', server_ip='$server_ip', action='$action', stage='$stage';";
+	if($DB){print STDERR "|$stmtA|";}
+	my $affected_rows = $dbhA->do($stmtA);
+	if($DB){print STDERR "$affected_rows|\n";}
 	}

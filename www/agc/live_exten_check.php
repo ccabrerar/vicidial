@@ -1,7 +1,7 @@
 <?php
 # live_exten_check.php    version 2.14
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed purely to send whether the client channel is live and to what channel it is connected
 # This script depends on the server_ip being sent and also needs to have a valid user/pass from the vicidial_users table
@@ -44,10 +44,11 @@
 # 210616-2105 - Added optional CORS support, see options.php for details
 # 210825-0905 - Fix for XSS security issue
 # 220220-0907 - Added allow_web_debug system setting
+# 260302-1206 - Code updates for PHP8 compatibility
 #
 
-$version = '2.14-20';
-$build = '220220-0907';
+$version = '2.14-21';
+$build = '260302-1206';
 $php_script = 'live_exten_check.php';
 $SSagent_debug_logging=0;
 $startMS = microtime();
@@ -58,22 +59,30 @@ require_once("functions.php");
 ### If you have globals turned off uncomment these lines
 if (isset($_GET["user"]))				{$user=$_GET["user"];}
 	elseif (isset($_POST["user"]))		{$user=$_POST["user"];}
+	else {$user="";}
 if (isset($_GET["pass"]))				{$pass=$_GET["pass"];}
 	elseif (isset($_POST["pass"]))		{$pass=$_POST["pass"];}
+	else {$pass="";}
 if (isset($_GET["server_ip"]))				{$server_ip=$_GET["server_ip"];}
 	elseif (isset($_POST["server_ip"]))		{$server_ip=$_POST["server_ip"];}
+	else {$server_ip="";}
 if (isset($_GET["session_name"]))			{$session_name=$_GET["session_name"];}
 	elseif (isset($_POST["session_name"]))	{$session_name=$_POST["session_name"];}
+	else {$session_name="";}
 if (isset($_GET["format"]))				{$format=$_GET["format"];}
 	elseif (isset($_POST["format"]))	{$format=$_POST["format"];}
 if (isset($_GET["exten"]))				{$exten=$_GET["exten"];}
 	elseif (isset($_POST["exten"]))		{$exten=$_POST["exten"];}
+	else {$exten="";}
 if (isset($_GET["protocol"]))				{$protocol=$_GET["protocol"];}
 	elseif (isset($_POST["protocol"]))		{$protocol=$_POST["protocol"];}
+	else {$protocol="";}
 if (isset($_GET["favorites_count"]))			{$favorites_count=$_GET["favorites_count"];}
 	elseif (isset($_POST["favorites_count"]))	{$favorites_count=$_POST["favorites_count"];}
+	else {$favorites_count=0;}
 if (isset($_GET["favorites_list"]))				{$favorites_list=$_GET["favorites_list"];}
 	elseif (isset($_POST["favorites_list"]))	{$favorites_list=$_POST["favorites_list"];}
+	else {$favorites_list="";}
 
 # variable filtering
 $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
@@ -110,7 +119,8 @@ if ($qm_conf_ct > 0)
 	$SSagent_debug_logging =	$row[3];
 	$SSallow_web_debug =		$row[4];
 	}
-if ($SSallow_web_debug < 1) {$DB=0;   $format="text";}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;  $format='text';}
+$DB=preg_replace("/[^0-9]/","",$DB);
 
 $VUselected_language = '';
 $stmt="SELECT selected_language from vicidial_users where user='$user';";
@@ -126,23 +136,30 @@ if ($sl_ct > 0)
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
-$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
-$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
+# $DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+# $session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
+# $server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
 $exten = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$exten);
 $protocol = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$protocol);
 $favorites_list = preg_replace("/\'|\"|\\\\|;| /","",$favorites_list);
-$format = preg_replace('/[^-_0-9a-zA-Z]/','',$format);
-$favorites_count = preg_replace('/[^-_0-9a-zA-Z]/','',$favorites_count);
+# $format = preg_replace('/[^-_0-9a-zA-Z]/','',$format);
+$favorites_count = preg_replace('/[^0-9]/','',$favorites_count);
 
 if ($non_latin < 1)
 	{
 	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
 	$pass=preg_replace("/[^-\.\+\/\=_0-9a-zA-Z]/","",$pass);
+	$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
+	$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
+	$format = preg_replace('/[^-_0-9a-zA-Z]/','',$format);
 	}
 else
 	{
 	$user = preg_replace('/[^-_0-9\p{L}]/u','',$user);
 	$pass = preg_replace('/[^-\.\+\/\=_0-9\p{L}]/u','',$pass);
+	$session_name = preg_replace('/[^-\.\:\_0-9\p{L}]/u','',$session_name);
+	$server_ip = preg_replace('/[^-\.\:\_0-9\p{L}]/u','',$server_ip);
+	$format = preg_replace('/[^-_0-9\p{L}]/u','',$format);
 	}
 
 if (strlen($SSagent_debug_logging) > 1)
@@ -358,7 +375,7 @@ if ($format=='debug')
 	echo "\n</body>\n</html>\n";
 	}
 
-if ($SSagent_debug_logging > 0) {vicidial_ajax_log($NOW_TIME,$startMS,$link,$ACTION,$php_script,$user,$stage,$lead_id,$session_name,$stmt);}
+if ($SSagent_debug_logging > 0) {vicidial_ajax_log($NOW_TIME,$startMS,$link,"",$php_script,$user,"",0,$session_name,$stmt);} # ACTION, stage, and lead_id are never used in this script
 exit; 
 
 ?>

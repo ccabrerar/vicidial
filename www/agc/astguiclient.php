@@ -1,7 +1,7 @@
 <?php
 # astguiclient.php - the web-based version of the astGUIclient client application
 # 
-# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # make sure you have added a user to the vicidial_users MySQL table with at least
 # user_level 1 or greater to access this page. Also you need to have the login
@@ -74,10 +74,11 @@
 # 210616-2053 - Added optional CORS support, see options.php for details
 # 220220-0938 - Added allow_web_debug system setting
 # 230418-1009 - Added astguiclient_disabled options.php setting, disabled by default
+# 260302-1403 - Code updates for PHP8 compatibility
 #
 
-$version = '2.2.6-7';
-$build = '230418-1009';
+$version = '2.2.6-8';
+$build = '260302-1403';
 $php_script = 'astguiclient.php';
 $astguiclient_disabled = '1';
 
@@ -87,24 +88,35 @@ require_once("functions.php");
 ### If you have globals turned off uncomment these lines
 if (isset($_GET["user"]))					{$user=$_GET["user"];}
 	elseif (isset($_POST["user"]))			{$user=$_POST["user"];}
+	else {$user="";}
 if (isset($_GET["pass"]))					{$pass=$_GET["pass"];}
 	elseif (isset($_POST["pass"]))			{$pass=$_POST["pass"];}
+	else {$pass="";}
 if (isset($_GET["phone_login"]))			{$phone_login=$_GET["phone_login"];}
 	elseif (isset($_POST["phone_login"]))	{$phone_login=$_POST["phone_login"];}
+	else {$phone_login="";}
 if (isset($_GET["phone_pass"]))				{$phone_pass=$_GET["phone_pass"];}
 	elseif (isset($_POST["phone_pass"]))	{$phone_pass=$_POST["phone_pass"];}
+	else {$phone_pass="";}
 if (isset($_GET["relogin"]))				{$relogin=$_GET["relogin"];}
 	elseif (isset($_POST["relogin"]))		{$relogin=$_POST["relogin"];}
-	if (!isset($phone_login)) 
-		{
-		if (isset($_GET["pl"]))                {$phone_login=$_GET["pl"];}
-				elseif (isset($_POST["pl"]))   {$phone_login=$_POST["pl"];}
-		}
-	if (!isset($phone_pass))
-		{
-		if (isset($_GET["pp"]))                {$phone_pass=$_GET["pp"];}
-				elseif (isset($_POST["pp"]))   {$phone_pass=$_POST["pp"];}
-		}
+	else {$relogin="";}
+if (isset($_GET["force_logout"]))                            {$force_logout=$_GET["force_logout"];}
+	elseif (isset($_POST["force_logout"]))               {$force_logout=$_POST["force_logout"];}
+	else {$force_logout="";}
+if (isset($_GET["ADD"]))                            {$ADD=$_GET["ADD"];}
+	elseif (isset($_POST["ADD"]))               {$ADD=$_POST["ADD"];}
+	else {$ADD="";}
+if (!isset($phone_login)) 
+	{
+	if (isset($_GET["pl"]))                {$phone_login=$_GET["pl"];}
+			elseif (isset($_POST["pl"]))   {$phone_login=$_POST["pl"];}
+	}
+if (!isset($phone_pass))
+	{
+	if (isset($_GET["pp"]))                {$phone_pass=$_GET["pp"];}
+			elseif (isset($_POST["pp"]))   {$phone_pass=$_POST["pp"];}
+	}
 
 $forever_stop=0;
 $user_abb = "$user$user$user$user";
@@ -112,12 +124,13 @@ while ( (strlen($user_abb) > 4) and ($forever_stop < 200) )
 	{$user_abb = preg_replace("/^./","",$user_abb);   $forever_stop++;}
 
 ### security strip all non-alphanumeric characters out of the variables ###
-$DB=preg_replace("/[^0-9a-z]/","",$DB);
-$phone_login=preg_replace("/[^-_0-9a-zA-Z]/","",$phone_login);
-$phone_pass=preg_replace("/[^-_0-9a-zA-Z]/","",$phone_pass);
+# Moved down for non_latin scrub
+# $phone_login=preg_replace("/[^-_0-9a-zA-Z]/","",$phone_login);
+# $phone_pass=preg_replace("/[^-_0-9a-zA-Z]/","",$phone_pass);
 $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
-$relogin=preg_replace("/[^-_0-9a-zA-Z]/","",$relogin);
+# $relogin=preg_replace("/[^-_0-9a-zA-Z]/","",$relogin);
+$ADD=preg_replace("/[^0-9]/","",$ADD);
 
 # if options file exists, use the override values for the above variables
 #   see the options-example.php file for more information
@@ -148,7 +161,9 @@ if ($qm_conf_ct > 0)
 	$SSdefault_language =		$row[3];
 	$SSallow_web_debug =		$row[4];
 	}
-if ($SSallow_web_debug < 1) {$DB=0;}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;}
+$DB=preg_replace("/[^0-9]/","",$DB);
+
 
 $VUselected_language = '';
 $stmt="SELECT selected_language from vicidial_users where user='$user';";
@@ -171,11 +186,17 @@ if ($non_latin < 1)
 	{
 	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
 	$pass=preg_replace("/[^-_0-9a-zA-Z]/","",$pass);
+	$phone_login=preg_replace("/[^-_0-9a-zA-Z]/","",$phone_login);
+	$phone_pass=preg_replace("/[^-_0-9a-zA-Z]/","",$phone_pass);
+	$relogin=preg_replace("/[^-_0-9a-zA-Z]/","",$relogin);
 	}
 else
 	{
 	$user = preg_replace('/[^-_0-9\p{L}]/u','',$user);
 	$pass = preg_replace('/[^-_0-9\p{L}]/u','',$pass);
+	$phone_login=preg_replace("/[^-_0-9\p{L}]/u","",$phone_login);
+	$phone_pass=preg_replace("/[^-_0-9\p{L}]/u","",$phone_pass);
+	$relogin=preg_replace("/[^-_0-9\p{L}]/u","",$relogin);
 	}
 
 if ($force_logout)
@@ -440,6 +461,9 @@ else
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$row=mysqli_fetch_row($rslt);
 	$favorites_present=$row[0];
+	$favorites_count=0;
+	$favorites_list='';
+	$favorites_listX='';
 	if ($favorites_present > 0)
 		{
 		$stmt="SELECT extensions_list from phone_favorites where extension='$extension' and server_ip = '$server_ip';";

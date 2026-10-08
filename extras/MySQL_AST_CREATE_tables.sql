@@ -257,7 +257,7 @@ department VARCHAR(30)
 CREATE TABLE server_updater (
 server_ip VARCHAR(15) NOT NULL,
 last_update DATETIME,
-db_time TIMESTAMP,
+db_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 unique index serverip (server_ip)
 ) ENGINE=MyISAM;
 
@@ -331,7 +331,7 @@ index serverstat(server_ip,status)
 CREATE TABLE vicidial_list (
 lead_id INT(9) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
 entry_date DATETIME,
-modify_date TIMESTAMP,
+modify_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 status VARCHAR(6),
 user VARCHAR(20),
 vendor_lead_code VARCHAR(20),
@@ -405,7 +405,7 @@ callerid VARCHAR(20),
 channel VARCHAR(100),
 random_id INT(8) UNSIGNED,
 last_call_time DATETIME,
-last_update_time TIMESTAMP,
+last_update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 last_call_finish DATETIME,
 closer_campaigns TEXT,
 call_server_ip VARCHAR(15),
@@ -470,7 +470,7 @@ phone_number VARCHAR(18),
 call_time DATETIME,
 call_type ENUM('IN','OUT','OUTBALANCE') default 'OUT',
 stage VARCHAR(20) default 'START',
-last_update_time TIMESTAMP,
+last_update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 alt_dial VARCHAR(6) default 'NONE',
 queue_priority TINYINT(2) default '0',
 agent_only VARCHAR(20) default '',
@@ -705,7 +705,10 @@ failed_last_ip_today VARCHAR(50) default '',
 failed_last_type_today VARCHAR(20) default '',
 modify_dial_prefix ENUM('0','1','2','3','4','5','6') default '0',
 inbound_credits MEDIUMINT(7) default '-1',
-hci_enabled ENUM('0','1','2','3','4','5','6') default '0'
+hci_enabled ENUM('0','1','2','3','4','5','6') default '0',
+modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+manual_dial_lead_id ENUM('Y','N','ONLY','DISABLED') default 'DISABLED',
+modify_settings_containers ENUM('0','1','2','3','4','5','6') default '0'
 ) ENGINE=MyISAM;
 
 CREATE UNIQUE INDEX user ON vicidial_users (user);
@@ -771,7 +774,8 @@ webphone_layout VARCHAR(255) default '',
 allowed_queue_groups TEXT,
 reports_header_override ENUM('DISABLED','LOGO_ONLY_SMALL','LOGO_ONLY_LARGE','ALT_1','ALT_2','ALT_3','ALT_4') default 'DISABLED',
 admin_home_url VARCHAR(255) default '',
-script_id VARCHAR(20) default ''
+script_id VARCHAR(20) default '',
+modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_campaigns (
@@ -818,10 +822,10 @@ display_dialable_count ENUM('Y','N') default 'Y',
 wrapup_seconds SMALLINT(3) UNSIGNED default '0',
 wrapup_message VARCHAR(255) default 'Wrapup Call',
 closer_campaigns TEXT,
-use_internal_dnc ENUM('Y','N','AREACODE') default 'N',
+use_internal_dnc ENUM('Y','N','AREACODE') default 'Y',
 allcalls_delay SMALLINT(3) UNSIGNED default '0',
 omit_phone_code ENUM('Y','N') default 'N',
-dial_method ENUM('MANUAL','RATIO','ADAPT_HARD_LIMIT','ADAPT_TAPERED','ADAPT_AVERAGE','INBOUND_MAN','SHARED_RATIO','SHARED_ADAPT_HARD_LIMIT','SHARED_ADAPT_TAPERED','SHARED_ADAPT_AVERAGE') default 'MANUAL',
+dial_method ENUM('MANUAL','RATIO','ADAPT_HARD_LIMIT','ADAPT_TAPERED','ADAPT_AVERAGE','ADAPT_PERCENTMAX','INBOUND_MAN','SHARED_RATIO','SHARED_ADAPT_HARD_LIMIT','SHARED_ADAPT_TAPERED','SHARED_ADAPT_AVERAGE','SHARED_ADAPT_PERCENTMAX') default 'MANUAL',
 available_only_ratio_tally ENUM('Y','N') default 'N',
 adaptive_dropped_percentage VARCHAR(4) default '3',
 adaptive_maximum_level VARCHAR(6) default '3.0',
@@ -941,7 +945,7 @@ realtime_agent_time_stats ENUM('DISABLED','WAIT_CUST_ACW','WAIT_CUST_ACW_PAUSE',
 use_auto_hopper ENUM('Y','N') default 'Y',
 auto_hopper_multi VARCHAR(6) default '1',
 auto_hopper_level MEDIUMINT(8) UNSIGNED default '0',
-auto_trim_hopper ENUM('Y','N') default 'Y',
+auto_trim_hopper ENUM('Y','N') default 'N',
 api_manual_dial ENUM('STANDARD','QUEUE','QUEUE_AND_AUTOCALL') default 'STANDARD',
 manual_dial_call_time_check ENUM('DISABLED','ENABLED') default 'DISABLED',
 display_leads_count ENUM('Y','N') default 'N',
@@ -991,7 +995,7 @@ allow_emails ENUM('Y','N') default 'N',
 amd_inbound_group VARCHAR(20) default '',
 amd_callmenu VARCHAR(50) default '',
 survey_wait_sec TINYINT(3) default '10',
-manual_dial_lead_id ENUM('Y','N') default 'N',
+manual_dial_lead_id ENUM('Y','N','ONLY') default 'N',
 dead_max SMALLINT(5) UNSIGNED default '0',
 dead_max_dispo VARCHAR(6) default 'DCMX',
 dispo_max SMALLINT(5) UNSIGNED default '0',
@@ -1065,7 +1069,7 @@ campaign_script_two VARCHAR(20) default '',
 leave_vm_no_dispo ENUM('ENABLED','DISABLED') default 'DISABLED',
 leave_vm_message_group_id VARCHAR(40) default '---NONE---',
 dial_timeout_lead_container VARCHAR(40) default 'DISABLED',
-amd_type ENUM('AMD','CPD','KHOMP') default 'AMD',
+amd_type ENUM('AMD','CPD','KHOMP','ViciAMD') default 'AMD',
 vmm_daily_limit TINYINT(3) UNSIGNED default '0',
 opensips_cid_name VARCHAR(15) default '',
 amd_agent_route_options ENUM('ENABLED','DISABLED','PENDING') default 'DISABLED',
@@ -1131,8 +1135,20 @@ leave_3way_stop_recording ENUM('DISABLED','ALL_CALLS') default 'DISABLED',
 manual_minimum_ring_seconds SMALLINT(5) default '0',
 manual_minimum_attempt_seconds SMALLINT(5) default '0',
 manual_minimum_answer_seconds SMALLINT(5) default '0',
-stereo_recording ENUM('DISABLED','CUSTOMER','CUSTOMER_MUTE') default 'DISABLED',
-khomp_settings_container VARCHAR(40) DEFAULT 'KHOMPSETTINGS'
+stereo_recording ENUM('DISABLED','BOTH_CHANNELS','CUSTOMER_ONLY','CUSTOMER_MUTE') default 'DISABLED',
+khomp_settings_container VARCHAR(40) DEFAULT 'KHOMPSETTINGS',
+stereo_rec_filename VARCHAR(50) default 'S_FULLDATE_CUSTPHONE',
+stereo_parallel_recording VARCHAR(50) default 'DISABLED',
+parallel_rec_co_filename VARCHAR(50) default '',
+parallel_rec_cm_filename VARCHAR(50) default '',
+parallel_rec_fr_filename VARCHAR(50) default '',
+recording_dtmf_muting SMALLINT(3) UNSIGNED default '0',
+stereo_recording_agent ENUM('NEVER','ONDEMAND','ALLCALLS','ALLFORCE') default 'ALLFORCE',
+call_count_limit_restrict VARCHAR(30) default 'DISABLED',
+adaptive_percentmax_percentage TINYINT(2) UNSIGNED default '50',
+hangup_again_link ENUM('DISABLED','ENABLED') default 'ENABLED',
+amd_agent_display ENUM('ENABLED','DISABLED') default 'DISABLED',
+amd_status_map VARCHAR(40) default 'DISABLED'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_lists (
@@ -1198,7 +1214,8 @@ scheduled_callback ENUM('Y','N') default 'N',
 completed ENUM('Y','N') default 'N',
 min_sec INT(5) UNSIGNED default '0',
 max_sec INT(5) UNSIGNED default '0',
-answering_machine ENUM('Y','N') default 'N'
+answering_machine ENUM('Y','N') default 'N',
+modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_campaign_statuses (
@@ -1459,7 +1476,17 @@ third_alert_container VARCHAR(40) default 'DISABLED',
 third_alert_only VARCHAR(40) default 'DISABLED',
 agent_search_list VARCHAR(20) default '',
 state_descriptions VARCHAR(40) default '---DISABLED---',
-stereo_recording ENUM('DISABLED','CUSTOMER','CUSTOMER_MUTE') default 'DISABLED'
+stereo_recording ENUM('DISABLED','BOTH_CHANNELS','CUSTOMER_ONLY','CUSTOMER_MUTE') default 'DISABLED',
+modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+stereo_rec_filename VARCHAR(50) default 'S_FULLDATE_CUSTPHONE',
+stereo_parallel_recording VARCHAR(50) default 'DISABLED',
+parallel_rec_co_filename VARCHAR(50) default '',
+parallel_rec_cm_filename VARCHAR(50) default '',
+parallel_rec_fr_filename VARCHAR(50) default '',
+recording_dtmf_muting SMALLINT(3) UNSIGNED default '0',
+stereo_recording_agent ENUM('NEVER','ONDEMAND','ALLCALLS','ALLFORCE','DISABLED') default 'ALLFORCE',
+xfer_talk_minimum ENUM('DISABLED','ENABLED') default 'DISABLED',
+xfer_talk_minimum_sec SMALLINT(5) UNSIGNED default '0'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_stations (
@@ -1574,7 +1601,8 @@ script_comments VARCHAR(255),
 script_text TEXT,
 active ENUM('Y','N'),
 user_group VARCHAR(20) default '---ALL---',
-script_color VARCHAR(20) default 'white'
+script_color VARCHAR(20) default 'white',
+modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=MyISAM;
 
 CREATE TABLE phone_favorites (
@@ -1591,7 +1619,7 @@ campaign_id VARCHAR(8),
 status VARCHAR(10),
 entry_time DATETIME,
 callback_time DATETIME,
-modify_date TIMESTAMP,
+modify_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 user VARCHAR(20),
 recipient ENUM('USERONLY','ANYONE'),
 comments VARCHAR(255),
@@ -1626,7 +1654,8 @@ lead_filter_id VARCHAR(20) PRIMARY KEY NOT NULL,
 lead_filter_name VARCHAR(30) NOT NULL,
 lead_filter_comments VARCHAR(255),
 lead_filter_sql TEXT,
-user_group VARCHAR(20) default '---ALL---'
+user_group VARCHAR(20) default '---ALL---',
+modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_call_times (
@@ -1659,7 +1688,8 @@ thursday_afterhours_filename_override VARCHAR(255) default '',
 friday_afterhours_filename_override VARCHAR(255) default '',
 saturday_afterhours_filename_override VARCHAR(255) default '',
 user_group VARCHAR(20) default '---ALL---',
-ct_holidays TEXT
+ct_holidays TEXT,
+modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_state_call_times (
@@ -1684,12 +1714,13 @@ sct_friday_stop SMALLINT(4) unsigned default '0',
 sct_saturday_start SMALLINT(4) unsigned default '0',
 sct_saturday_stop SMALLINT(4) unsigned default '0',
 user_group VARCHAR(20) default '---ALL---',
-ct_holidays TEXT
+ct_holidays TEXT,
+modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_campaign_stats (
 campaign_id VARCHAR(20) PRIMARY KEY NOT NULL,
-update_time TIMESTAMP,
+update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 dialable_leads INT(9) UNSIGNED default '0',
 calls_today INT(9) UNSIGNED default '0',
 answers_today INT(9) UNSIGNED default '0',
@@ -1757,7 +1788,7 @@ index (campaign_id)
 CREATE TABLE vicidial_campaign_server_stats (
 campaign_id VARCHAR(20) NOT NULL,
 server_ip VARCHAR(15) NOT NULL,
-update_time TIMESTAMP,
+update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 local_trunk_shortage SMALLINT(5) UNSIGNED default '0',
 index (campaign_id),
 index (server_ip)
@@ -2043,7 +2074,19 @@ coldstorage_dbname VARCHAR(50) default '',
 coldstorage_login VARCHAR(50) default '',
 coldstorage_pass VARCHAR(50) default '',
 coldstorage_port VARCHAR(10) default '',
-stereo_recording ENUM('0','1','2','3','4','5','6') default '0'
+stereo_recording ENUM('0','1','2','3','4','5','6') default '0',
+enhanced_agent_monitoring ENUM('0','1','2','3','4','5','6') default '0',
+agent_hide_dial_fail ENUM('0','1','2','3','4','5','6') default '0',
+agent_man_dial_filter VARCHAR(20) default '',
+agent_3way_dial_filter VARCHAR(20) default '',
+recording_dtmf_detection TINYINT(3) UNSIGNED default '0',
+recording_dtmf_muting TINYINT(3) UNSIGNED default '0',
+stereo_parallel_recording ENUM('0','1','2','3','4','5','6') default '0',
+db_crashed_tables_check ENUM('0','1','2','3','4','5','6') default '1',
+xfer_min_container VARCHAR(40) default '',
+max_inbound_auto_reenable ENUM('0','1','2','3','4','5','6') default '1',
+viciamd_enabled ENUM('0','1','2','3','4','5','6') default '0',
+amd_status_map VARCHAR(40) default 'DISABLED'
 ) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_campaigns_list_mix (
@@ -2219,6 +2262,7 @@ shift_weekdays VARCHAR(7) default '0123456',
 report_option ENUM('Y','N') default 'N',
 user_group VARCHAR(20) default '---ALL---',
 report_rank SMALLINT(5) default '1',
+modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 index (shift_id)
 ) ENGINE=MyISAM;
 
@@ -2235,7 +2279,7 @@ shift_id VARCHAR(20),
 notes VARCHAR(255),
 manager_user VARCHAR(20),
 manager_ip VARCHAR(15),
-event_datestamp TIMESTAMP NOT NULL,
+event_datestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 tcid_link INT(9) UNSIGNED,
 index (user),
 index (event_epoch)
@@ -2245,7 +2289,7 @@ CREATE TABLE vicidial_timeclock_status (
 user VARCHAR(20) UNIQUE NOT NULL,
 user_group VARCHAR(20) NOT NULL,
 event_epoch INT(10) UNSIGNED,
-event_date TIMESTAMP,
+event_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 status VARCHAR(50),
 ip_address VARCHAR(15),
 shift_id VARCHAR(20),
@@ -2262,7 +2306,7 @@ user VARCHAR(20) NOT NULL,
 user_group VARCHAR(20) NOT NULL,
 ip_address VARCHAR(15),
 shift_id VARCHAR(20),
-event_datestamp TIMESTAMP NOT NULL,
+event_datestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 tcid_link INT(9) UNSIGNED,
 index (timeclock_id),
 index (user)
@@ -2327,7 +2371,7 @@ phone_code VARCHAR(10) default '1',
 menu_id VARCHAR(50) default '',
 record_call ENUM('Y','N','Y_QUEUESTOP') default 'N',
 filter_inbound_number ENUM('DISABLED','GROUP','URL','DNC_INTERNAL','DNC_CAMPAIGN','GROUP_AREACODE') default 'DISABLED',
-filter_phone_group_id VARCHAR(20) default '',
+filter_phone_group_id TEXT,
 filter_url VARCHAR(1000) default '',
 filter_action ENUM('EXTEN','VOICEMAIL','AGENT','PHONE','IN_GROUP','CALLMENU','VMAIL_NO_INST') default 'EXTEN',
 filter_extension VARCHAR(50) default '9998811112',
@@ -2357,7 +2401,7 @@ filter_url_did_redirect ENUM('Y','N') default 'N',
 no_agent_ingroup_redirect ENUM('DISABLED','Y','NO_PAUSED','READY_ONLY') default 'DISABLED',
 no_agent_ingroup_id VARCHAR(20) default '',
 no_agent_ingroup_extension VARCHAR(50) default '9998811112',
-pre_filter_phone_group_id VARCHAR(20) default '',
+pre_filter_phone_group_id TEXT,
 pre_filter_extension VARCHAR(50) default '',
 entry_list_id BIGINT(14) UNSIGNED default '0',
 filter_entry_list_id BIGINT(14) UNSIGNED default '0',
@@ -2368,6 +2412,8 @@ did_carrier_description VARCHAR(255) default '',
 inbound_route_answer ENUM('Y','N') DEFAULT 'Y',
 pre_filter_recent_call VARCHAR(20) default '',
 pre_filter_recent_extension VARCHAR(50) default '',
+alter_cid_name VARCHAR(40) default 'DISABLED',
+modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 unique index (did_pattern),
 index (group_id)
 ) ENGINE=MyISAM;
@@ -2590,7 +2636,7 @@ index (event_date)
 
 CREATE TABLE vicidial_drop_rate_groups (
 group_id VARCHAR(20) PRIMARY KEY NOT NULL,
-update_time TIMESTAMP,
+update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 calls_today INT(9) UNSIGNED default '0',
 answers_today INT(9) UNSIGNED default '0',
 drops_today DOUBLE(12,3) default '0',
@@ -3048,7 +3094,7 @@ CREATE TABLE vicidial_campaign_stats_debug (
 campaign_id VARCHAR(20) NOT NULL,
 server_ip VARCHAR(15) NOT NULL,
 entry_time DATETIME,
-update_time TIMESTAMP,
+update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 debug_output TEXT,
 adapt_output TEXT,
 index (campaign_id),
@@ -3247,7 +3293,7 @@ stats_date DATE NOT NULL,
 stats_flag ENUM('OPEN','CLOSED','CLOSING') default 'CLOSED',
 stats_type ENUM('TOTAL','INGROUP','CAMPAIGN','') default '',
 campaign_id VARCHAR(20) default '',
-update_time TIMESTAMP,
+update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 closed_time DATETIME,
 max_channels MEDIUMINT(8) UNSIGNED default '0',
 max_calls MEDIUMINT(8) UNSIGNED default '0',
@@ -3265,7 +3311,7 @@ CREATE TABLE vicidial_daily_ra_stats (
 stats_date DATE NOT NULL,
 stats_flag ENUM('OPEN','CLOSED','CLOSING') default 'CLOSED',
 user VARCHAR(20) default '',
-update_time TIMESTAMP,
+update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 closed_time DATETIME,
 max_calls MEDIUMINT(8) UNSIGNED default '0',
 total_calls INT(9) UNSIGNED default '0',
@@ -3343,7 +3389,7 @@ CREATE TABLE vicidial_comments (
 comment_id BIGINT(20) unsigned NOT NULL AUTO_INCREMENT,
 lead_id INT(11) NOT NULL,
 user_id VARCHAR(20) NOT NULL,
-timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 list_id BIGINT(14) UNSIGNED NOT NULL,
 campaign_id VARCHAR(8) NOT NULL,
 comment VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
@@ -3622,7 +3668,7 @@ language_id VARCHAR(100) NOT NULL,
 language_code VARCHAR(20) default '',
 language_description VARCHAR(255) default '',
 user_group VARCHAR(20) default '---ALL---',
-modify_date TIMESTAMP,
+modify_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 active ENUM('Y','N') default 'N',
 unique index (language_id)
 ) ENGINE=MyISAM CHARACTER SET utf8 COLLATE utf8_unicode_ci;
@@ -3633,7 +3679,7 @@ language_id VARCHAR(100) NOT NULL,
 english_text VARCHAR(10000) default '',
 translated_text TEXT,
 source VARCHAR(20) default '',
-modify_date TIMESTAMP,
+modify_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 index (language_id),
 index (english_text)
 ) ENGINE=MyISAM CHARACTER SET utf8 COLLATE utf8_unicode_ci;
@@ -3767,15 +3813,16 @@ PRIMARY KEY (manager_chat_id)
 CREATE TABLE vicidial_url_multi (
 url_id INT(9) UNSIGNED NOT NULL AUTO_INCREMENT,
 campaign_id VARCHAR(20) NOT NULL,
-entry_type ENUM('campaign','ingroup','list','') default '',
+entry_type ENUM('campaign','ingroup','list','system','') default '',
 active ENUM('Y','N') default 'N',
-url_type ENUM('dispo','start','addlead','noagent','') default '',
+url_type ENUM('dispo','start','addlead','noagent','apinewlead','talk','') default '',
 url_rank SMALLINT(5) default '1',
 url_statuses VARCHAR(1000) default '',
 url_description VARCHAR(255) default '',
 url_address TEXT,
 url_lists VARCHAR(1000) default '',
 url_call_length SMALLINT(5) default '0',
+modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 PRIMARY KEY (url_id),
 KEY vicidial_url_multi_campaign_id_key (campaign_id)
 ) ENGINE=MyISAM CHARSET=utf8 COLLATE=utf8_unicode_ci;
@@ -3826,7 +3873,8 @@ container_id VARCHAR(40) PRIMARY KEY NOT NULL,
 container_notes VARCHAR(255) default '',
 container_type VARCHAR(40) default 'OTHER',
 user_group VARCHAR(20) default '---ALL---',
-container_entry MEDIUMTEXT
+container_entry MEDIUMTEXT,
+modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=MyISAM CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 CREATE TABLE vicidial_dnc_log (
@@ -3841,7 +3889,8 @@ index (phone_number)
 CREATE TABLE vicidial_status_groups (
 status_group_id VARCHAR(20) PRIMARY KEY NOT NULL,
 status_group_notes VARCHAR(255) default '',
-user_group VARCHAR(20) default '---ALL---'
+user_group VARCHAR(20) default '---ALL---',
+modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=MyISAM CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 CREATE TABLE vicidial_custom_reports (
@@ -3921,6 +3970,7 @@ lead_id INT(9) UNSIGNED,
 vicidial_id VARCHAR(20),
 user VARCHAR(20) DEFAULT NULL,
 processed TINYINT(1) default '0',
+rir_type VARCHAR(1) default '',
 index(lead_id),
 index(user),
 index(processed)
@@ -4213,7 +4263,7 @@ group_id VARCHAR(20) NOT NULL,
 queue_priority TINYINT(2) default '0',
 call_date DATETIME,
 gmt_offset_now DECIMAL(4,2) DEFAULT '0.00',
-modify_date TIMESTAMP,
+modify_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 index (icbq_status),
 index (group_id),
 index (icbq_date),
@@ -4239,7 +4289,8 @@ cid_auto_rotate_minutes MEDIUMINT(7) UNSIGNED default '0',
 cid_auto_rotate_minimum MEDIUMINT(7) UNSIGNED default '0',
 cid_auto_rotate_calls MEDIUMINT(7) UNSIGNED default '0',
 cid_last_auto_rotate DATETIME,
-cid_auto_rotate_cid VARCHAR(20) default ''
+cid_auto_rotate_cid VARCHAR(20) default '',
+modify_stamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=MyISAM CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 CREATE TABLE vicidial_agent_function_log (
@@ -4366,7 +4417,7 @@ processed ENUM('N','Y','U') default 'N',
 index(caller_code), 
 index(invite_date), 
 index(processed) 
-) ENGINE=MyISAM;  
+) ENGINE=MyISAM;
 
 CREATE TABLE vicidial_log_extended_sip (
 call_date DATETIME(6),
@@ -4645,7 +4696,7 @@ ingroups TEXT,
 list_ids TEXT,
 create_date DATETIME DEFAULT NULL,
 create_user VARCHAR(10) DEFAULT NULL,
-modify_date TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+modify_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 modify_user VARCHAR(10) DEFAULT NULL,
 PRIMARY KEY (checkpoint_row_id)
 ) ENGINE=MyISAM;
@@ -4670,7 +4721,7 @@ qc_scorecard_id VARCHAR(20) DEFAULT NULL,
 qc_agent VARCHAR(20) DEFAULT NULL,
 qc_user_group VARCHAR(20) DEFAULT NULL,
 qc_status VARCHAR(20) DEFAULT NULL,
-date_modified TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+date_modified TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 date_claimed DATETIME DEFAULT NULL,
 date_completed DATETIME DEFAULT NULL,
 PRIMARY KEY (qc_log_id),
@@ -4683,7 +4734,7 @@ qc_scorecard_id VARCHAR(20) NOT NULL,
 scorecard_name VARCHAR(255) DEFAULT NULL,
 active ENUM('Y','N') DEFAULT 'Y',
 passing_score SMALLINT(5) UNSIGNED DEFAULT 0,
-last_modified TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+last_modified TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 PRIMARY KEY (qc_scorecard_id)
 ) ENGINE=MyISAM;
 
@@ -4842,7 +4893,7 @@ CREATE TABLE `verm_custom_report_holder` (
 `user` VARCHAR(20) COLLATE utf8_unicode_ci DEFAULT NULL,
 `report_name` VARCHAR(100) COLLATE utf8_unicode_ci DEFAULT NULL,
 `report_parameters` TEXT COLLATE utf8_unicode_ci DEFAULT NULL,
-`modify_date` TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+`modify_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 PRIMARY KEY (`custom_report_id`),
 UNIQUE KEY `verm_custom_report_holder_pkey` (`user`,`report_name`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
@@ -4872,7 +4923,7 @@ CREATE TABLE `wallboard_reports` (
 `wallboard_name` VARCHAR(100) COLLATE utf8_unicode_ci DEFAULT NULL,
 `wallboard_views` TINYINT(3) UNSIGNED DEFAULT NULL,
 `date_created` DATETIME DEFAULT NULL,
-`last_modified` TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+`last_modified` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 `data_refresh_rate` SMALLINT(5) UNSIGNED DEFAULT 10,
 `view_refresh_rate` SMALLINT(5) UNSIGNED DEFAULT 30,
 PRIMARY KEY (`wallboard_report_id`)
@@ -5122,7 +5173,7 @@ campaign_id VARCHAR(8),
 user_ip VARCHAR(45) default '',
 login_time DATETIME,
 last_call_time DATETIME,
-last_update_time TIMESTAMP,
+last_update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 status VARCHAR(40),
 lead_id INT(9) UNSIGNED default '0',
 phone_number VARCHAR(18),
@@ -5258,7 +5309,7 @@ message VARCHAR(100),
 message_type ENUM('MEETING','CLOSED','WEATHER','CUSTOM'),
 status ENUM('ACTIVE','LIVE','COMPLETED','CANCELLED') DEFAULT 'ACTIVE',
 user VARCHAR(20),
-modify_date TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+modify_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 modified_by VARCHAR(20),
 holiday_id VARCHAR(30),
 KEY inbound_disabled_entries_key (start_datetime,end_datetime,location)
@@ -5283,12 +5334,12 @@ timeoff_month CHAR(7) DEFAULT NULL,
 timeoff_type VARCHAR(10) DEFAULT NULL,
 hours DECIMAL(5,2) unsigned DEFAULT NULL,
 entry_date DATETIME DEFAULT NULL,
-modify_date TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+modify_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 entered_by VARCHAR(20) DEFAULT NULL,
 last_modified_by VARCHAR(20) DEFAULT NULL,
 PRIMARY KEY (vtl_id),
 UNIQUE KEY vicidial_timeoff_log_agent_month_key (user,timeoff_month,timeoff_type)
-);
+) ENGINE=MyISAM;
 
 CREATE TABLE recording_log_stereo (
 recording_id INT(10) UNSIGNED PRIMARY KEY NOT NULL,
@@ -5300,10 +5351,147 @@ filename VARCHAR(100),
 lead_id INT(9) UNSIGNED,
 options VARCHAR(100),
 processing_log TEXT,
+dtmf_detected TINYINT(3) UNSIGNED default '0',
+dtmf_muting TINYINT(3) UNSIGNED default '0',
+parallel_recording_id INT(10) UNSIGNED default '0',
+recording_status VARCHAR(20) default '',
 index(filename),
 index(lead_id),
+index(start_time),
+index(parallel_recording_id)
+) ENGINE=MyISAM;
+
+CREATE TABLE clr_log (
+clr_id INT(10) UNSIGNED PRIMARY KEY AUTO_INCREMENT NOT NULL,
+start_time DATETIME,
+begin_range DATETIME,
+range_minutes SMALLINT(5) UNSIGNED default '0',
+phase VARCHAR(40) default '',
+records_ct MEDIUMINT(7) UNSIGNED default '0',
+length_in_sec MEDIUMINT(8) UNSIGNED default '0',
+options VARCHAR(100) default '',
+server_ip VARCHAR(15) default '',
+processing_log TEXT,
 index(start_time)
 ) ENGINE=MyISAM;
+
+CREATE TABLE recording_log_parallel (
+parallel_recording_id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
+channel VARCHAR(100),
+server_ip VARCHAR(15),
+extension VARCHAR(100),
+start_time DATETIME,
+end_time DATETIME,
+length_in_sec MEDIUMINT(8) UNSIGNED,
+filename VARCHAR(100),
+lead_id INT(9) UNSIGNED,
+user VARCHAR(20),
+vicidial_id VARCHAR(20),
+recording_status VARCHAR(20) default '',
+processing_log TEXT,
+index(filename),
+index(lead_id),
+index(start_time),
+index(vicidial_id)
+) ENGINE=MyISAM;
+
+CREATE TABLE recording_live (
+recording_id INT(10) UNSIGNED PRIMARY KEY NOT NULL,
+recording_type VARCHAR(40) default 'MONO_LEGACY',
+server_ip VARCHAR(15),
+start_time DATETIME,
+end_time DATETIME,
+channel VARCHAR(255),
+filename VARCHAR(100),
+lead_id INT(9) UNSIGNED,
+user VARCHAR(20),
+dtmf_detected TINYINT(3) UNSIGNED default '0',
+dtmf_muting TINYINT(3) UNSIGNED default '0',
+dtmf_muting_seconds TINYINT(3) UNSIGNED default '0',
+dtmf_muting_end_time DATETIME,
+mute_state TINYINT(3) UNSIGNED default '0',
+recording_status VARCHAR(20) default '',
+index(filename),
+index(lead_id),
+index(user),
+index(recording_id),
+index(dtmf_muting_end_time)
+) ENGINE=MyISAM;
+
+CREATE TABLE recording_live_log (
+recording_id INT(10) UNSIGNED PRIMARY KEY NOT NULL,
+recording_type VARCHAR(40) default 'MONO_LEGACY',
+server_ip VARCHAR(15),
+start_time DATETIME,
+end_time DATETIME,
+channel VARCHAR(255),
+filename VARCHAR(100),
+lead_id INT(9) UNSIGNED,
+user VARCHAR(20),
+dtmf_detected TINYINT(3) UNSIGNED default '0',
+dtmf_muting TINYINT(3) UNSIGNED default '0',
+dtmf_muting_seconds TINYINT(3) UNSIGNED default '0',
+dtmf_muting_end_time DATETIME,
+mute_state TINYINT(3) UNSIGNED default '0',
+recording_status VARCHAR(20) default '',
+index(filename),
+index(lead_id),
+index(user),
+index(recording_id),
+index(dtmf_muting_end_time)
+) ENGINE=MyISAM;
+
+CREATE TABLE recording_dtmf_muting_log (
+dtmf_mute_id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
+recording_id INT(10) UNSIGNED NOT NULL,
+recording_type VARCHAR(40) default 'MONO_LEGACY',
+server_ip VARCHAR(15),
+channel VARCHAR(255),
+channel_to_mute VARCHAR(255),
+filename VARCHAR(100),
+lead_id INT(9) UNSIGNED,
+campaign_id VARCHAR(20) default '',
+trigger_dtmf VARCHAR(100) default '',
+dtmf_muting SMALLINT(3) UNSIGNED default '0',
+dtmf_muting_start_time DATETIME,
+dtmf_muting_end_time DATETIME,
+dtmf_muting_seconds TINYINT(3) UNSIGNED default '0',
+mute_state TINYINT(3) UNSIGNED default '0',
+index(filename),
+index(recording_id),
+index(dtmf_muting_end_time)
+) ENGINE=MyISAM;
+
+CREATE TABLE crashed_tables (
+table_name VARCHAR(100) PRIMARY KEY NOT NULL,
+crashed_datetime DATETIME,
+last_check_datetime DATETIME
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_max_inbound_cache (
+user VARCHAR(20),
+campaign_id VARCHAR(20),
+event_date DATETIME,
+blended ENUM('1','0') default '0',
+closer_campaigns TEXT,
+max_inbound_count MEDIUMINT(7) default '0',
+call_count_today MEDIUMINT(7) default '0',
+status VARCHAR(20) default '',
+notes VARCHAR(100) default '',
+index (user),
+index (event_date),
+index (status)
+) ENGINE=MyISAM;
+
+CREATE TABLE vicidial_internal_log (
+db_time DATETIME NOT NULL,
+up_time DATETIME NOT NULL,
+server_ip VARCHAR(15) NOT NULL,
+process VARCHAR(100) default '',
+action VARCHAR(100) default '',
+stage VARCHAR(255) default '',
+KEY intlog_dbtime_key (up_time)
+) ENGINE=MyISAM CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 
 ALTER TABLE vicidial_email_list MODIFY message text character set utf8;
@@ -5354,7 +5542,8 @@ INSERT INTO vicidial_lists SET list_id='998',list_name='Default Manual list',cam
 
 INSERT INTO system_settings (version,install_date,first_login_trigger) values('2.14b0.5', CURDATE(), 'Y');
 
-INSERT INTO vicidial_status_categories (vsc_id,vsc_name) values('UNDEFINED','Default Category');
+INSERT INTO vicidial_status_categories (vsc_id,vsc_name,vsc_description) values('UNDEFINED','Default Category','');
+INSERT INTO vicidial_status_categories (vsc_id,vsc_name,vsc_description) values('QC','QC-specific status','Quality control specific statuses');
 
 INSERT INTO vicidial_user_groups SET user_group='ADMIN',group_name='VICIDIAL ADMINISTRATORS',allowed_campaigns=' -ALL-CAMPAIGNS- - -',agent_status_viewable_groups=' --ALL-GROUPS-- ',admin_viewable_groups=' ---ALL--- ',admin_viewable_call_times=' ---ALL--- ',agent_allowed_chat_groups=' --ALL-GROUPS-- ';
 
@@ -5466,10 +5655,12 @@ CREATE INDEX vlecc on vicidial_log_extended (caller_code);
 CREATE UNIQUE INDEX vvmmcount on vicidial_vmm_counts (lead_id,call_date);
 CREATE UNIQUE INDEX vicidial_user_logins_daily_user on vicidial_user_logins_daily(login_day, user);
 
+CREATE INDEX vdtmflt on vicidial_dtmf_log (dtmf_time);
+
 CREATE INDEX vlali on vicidial_live_agents (lead_id);
 CREATE INDEX vlaus on vicidial_live_agents (user);
 
-CREATE TABLE call_log_archive LIKE call_log; 
+CREATE TABLE call_log_archive LIKE call_log;
 
 CREATE TABLE vicidial_log_archive LIKE vicidial_log;
 
@@ -5498,7 +5689,7 @@ CREATE UNIQUE INDEX vlea on vicidial_log_extended_archive (uniqueid,call_date,le
 CREATE TABLE vicidial_log_extended_sip_archive LIKE vicidial_log_extended_sip;
 CREATE UNIQUE INDEX vlesa on vicidial_log_extended_sip_archive (caller_code,call_date);
 
-CREATE TABLE vicidial_log_noanswer_archive LIKE vicidial_log_noanswer; 
+CREATE TABLE vicidial_log_noanswer_archive LIKE vicidial_log_noanswer;
 
 CREATE TABLE vicidial_did_agent_log_archive LIKE vicidial_did_agent_log; 
 CREATE UNIQUE INDEX vdala on vicidial_did_agent_log_archive (uniqueid,call_date,did_route);
@@ -5517,11 +5708,14 @@ CREATE TABLE recording_log_archive LIKE recording_log;
 ALTER TABLE recording_log_archive MODIFY recording_id INT(10) UNSIGNED UNIQUE NOT NULL;
 ALTER TABLE recording_log_archive DROP PRIMARY KEY;
 
+CREATE TABLE recording_log_parallel_archive LIKE recording_log_parallel;
+CREATE TABLE recording_log_stereo_archive LIKE recording_log_stereo;
+
 CREATE TABLE vicidial_drop_log_archive LIKE vicidial_drop_log; 
 DROP INDEX drop_date on vicidial_drop_log_archive;
 CREATE UNIQUE INDEX vicidial_drop_log_archive_key on vicidial_drop_log_archive(drop_date, uniqueid);
 
-CREATE TABLE vicidial_rt_monitor_log_archive LIKE vicidial_rt_monitor_log; 
+CREATE TABLE vicidial_rt_monitor_log_archive LIKE vicidial_rt_monitor_log;
 
 CREATE TABLE vicidial_campaign_hour_counts_archive LIKE vicidial_campaign_hour_counts;
 
@@ -5610,6 +5804,14 @@ CREATE UNIQUE INDEX vdpla on vicidial_3way_press_log_archive (call_date,caller_c
 
 CREATE TABLE vicidial_daily_rt_monitoring_log LIKE vicidial_rt_monitor_log;
 
+CREATE TABLE recording_dtmf_muting_log_archive LIKE recording_dtmf_muting_log;
+ALTER TABLE recording_dtmf_muting_log_archive MODIFY dtmf_mute_id INT(10) UNSIGNED NOT NULL;
+CREATE UNIQUE INDEX rdml_key on recording_dtmf_muting_log_archive(dtmf_mute_id, recording_id);
+
+CREATE INDEX rllst on recording_live_log(start_time);
+CREATE TABLE recording_live_log_archive LIKE recording_live_log;
+
+
 GRANT RELOAD ON *.* TO cron@'%';
 GRANT RELOAD ON *.* TO cron@localhost;
 
@@ -5676,7 +5878,19 @@ INSERT INTO vicidial_statuses (status,status_name,selectable,human_answered,cate
 INSERT INTO vicidial_statuses (status,status_name,selectable,human_answered,category,sale,dnc,customer_contact,not_interested,unworkable,scheduled_callback,completed,answering_machine) values('ADCT','Disconnected Number Temporary','N','N','UNDEFINED','N','N','N','N','N','N','N','N');
 INSERT INTO vicidial_statuses (status,status_name,selectable,human_answered,category,sale,dnc,customer_contact,not_interested,unworkable,scheduled_callback,completed,answering_machine) values('LSMERG','Agent lead search old lead mrg','N','N','UNDEFINED','N','N','N','N','N','N','N','N');
 INSERT INTO vicidial_statuses (status,status_name,selectable,human_answered,category,sale,dnc,customer_contact,not_interested,unworkable,scheduled_callback,completed,answering_machine) values('DAIR','Dead Air','Y','N','UNDEFINED','N','N','N','N','N','N','N','N');
+INSERT INTO vicidial_statuses (status,status_name,selectable,human_answered,category,sale,dnc,customer_contact,not_interested,unworkable,scheduled_callback,completed,answering_machine) values('GVM','Generic Voicemail Message','Y','N','UNDEFINED','N','N','N','N','N','N','N','Y');
+INSERT INTO vicidial_statuses (status,status_name,selectable,human_answered,category,sale,dnc,customer_contact,not_interested,unworkable,scheduled_callback,completed,answering_machine) values('PVM','Personalized Voicemail Message','Y','N','UNDEFINED','N','N','N','N','N','N','N','Y');
 INSERT INTO vicidial_statuses (status,status_name) VALUES ('ADAIR', 'Dead Air Auto');
+INSERT INTO vicidial_statuses (status,status_name) VALUES ('FAXHU', 'Fax Auto Hangup');
+INSERT INTO vicidial_statuses (status,status_name) VALUES ('FASHU', 'False Answer Auto Hangup');
+INSERT INTO vicidial_statuses (status,status_name,selectable,human_answered,category,sale,dnc,customer_contact,not_interested,unworkable,scheduled_callback,completed,answering_machine) values('VAMCS','AMD CallScreeen','N','N','UNDEFINED','N','N','N','N','N','N','N','N');
+INSERT INTO vicidial_statuses (status,status_name,selectable,human_answered,category,sale,dnc,customer_contact,not_interested,unworkable,scheduled_callback,completed,answering_machine) values('VAMFAS','AMD False Answer Signal','N','N','UNDEFINED','N','N','N','N','N','N','N','N');
+INSERT INTO vicidial_statuses (status,status_name,selectable,human_answered,category,sale,dnc,customer_contact,not_interested,unworkable,scheduled_callback,completed,answering_machine) values('VAMFIS','AMD FAS Silence','N','N','UNDEFINED','N','N','N','N','N','N','N','N');
+INSERT INTO vicidial_statuses (status,status_name,selectable,human_answered,category,sale,dnc,customer_contact,not_interested,unworkable,scheduled_callback,completed,answering_machine) values('VAMRNG','AMD FAS Ringing','N','N','UNDEFINED','N','N','N','N','N','N','N','N');
+INSERT INTO vicidial_statuses (status,status_name,selectable,human_answered,category,sale,dnc,customer_contact,not_interested,unworkable,scheduled_callback,completed,answering_machine) values('VAMFAX','AMD Fax Machine','N','N','UNDEFINED','N','N','N','N','N','N','N','N');
+INSERT INTO vicidial_statuses (status,status_name,selectable,human_answered,category,sale,dnc,customer_contact,not_interested,unworkable,scheduled_callback,completed,answering_machine) values('VAMSIT','AMD SIT Tones','N','N','UNDEFINED','N','N','N','N','N','N','N','N');
+INSERT INTO vicidial_statuses (status,status_name,selectable,human_answered,category,sale,dnc,customer_contact,not_interested,unworkable,scheduled_callback,completed,answering_machine) values('VAMMAC','AMD Answering Machine','N','N','UNDEFINED','N','N','N','N','N','N','N','Y');
+INSERT INTO vicidial_statuses (status,status_name,selectable,human_answered,category,sale,dnc,customer_contact,not_interested,unworkable,scheduled_callback,completed,answering_machine) values('VAMNS','AMD Not Sure','N','N','UNDEFINED','N','N','N','N','N','N','N','N');
 
 INSERT INTO vicidial_qc_codes (code,code_name,qc_result_type) VALUES ('QCPASS','PASS','PASS');
 INSERT INTO vicidial_qc_codes (code,code_name,qc_result_type) VALUES ('QCFAIL','FAIL','FAIL');
@@ -5700,8 +5914,12 @@ INSERT INTO vicidial_settings_containers(container_id,container_notes,container_
 INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('AGENT_LATENCY_LOGGING','Default agent latency logging settings','PERL_CLI','---ALL---','minimum_gap => 30\r\nemail_sender => \r\nemail_list => \r\nemail_subject => Agent Network Alert');
 INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('EXAMPLE_LIST_WEEKDAY_RESETS','Example Weekday List Resets Container settings','LIST_WEEKDAY_RESETS','---ALL---','; weekday => reset-times in 24-hour time separated by dashes\r\nmonday => 0830-1230-1800\r\ntuesday => 0900-1400-1830\r\nwednesday => 0930-1200-1730-1900\r\nthursday => 1030-1330-1900\r\nfriday => 0800-1300-1530\r\nsaturday => 0930-1100\r\nsunday => 1000');
 INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('EXAMPLE_VID_PROMPT_SPECIAL','Example Call Menu VID Special Container settings','CM_VIDPROMPT_SPECIAL','---ALL---','list_ingroup => 102,TEST_IN2\r\nlist_ingroup => 103,TEST_IN3\r\nlist_ingroup => 104,TEST_IN4\r\ndefault_ingroup => TEST_IN5\r\nnot_found_action => new_lead\r\nnew_lead_ingroup => TEST_IN');
-INSERT INTO `vicidial_settings_containers` VALUES ('VERM_STATUS_NAMES_OVERRIDE','Override dialer status names in enhanced reporting','OTHER','---ALL---','; For each status name you want overridden, type the status followed by\r\n; a pipe, then the new status name\r\n; Ex:\r\n; NZ|Taumatawhakatangihangakoauauotamateaturipukakapikimaungahoronukupoka\r\n201214|Request To Cancel\r\n210200|No Answer-Incomplete Call\r\n210201|Contact Established\r\n210202|Provider Review - HB\r\n210203|Promise to Pay\r\n210204|Setup Payment Plan\r\n210205|Research-Inquiry\r\n210206|Voice Mail Left - HB\r\n210207|Do Not Call\r\n210208|Appeal Verification\r\n210209|Bad Phone\r\n210210|Bad Address\r\n210211|Direct Pay Verification\r\n210213|Provider Approved\r\n210215|Update Notes Only\r\n210216|Voicemail-No Status Change\r\n210217|Sent Letter Request - HB\r\n210218|Auto VoiceMail Left - HB\r\n210219|Auto VoiceMail-No Status Change\r\n210302|Provider Review - LB\r\n210306|Voice Mail Left - LB\r\n210317|Sent Letter Request - LB\r\n210318|Auto VoiceMail Left - LB\r\n211503|Provider - COVID-19\r\n211603|Transferred Call to MLA\r\n'), ('VERM_REPORT_OPTIONS','Container for customizing VERM report output','OTHER','---ALL---','; This is the report queue used if none is chosen by the user\r\n; It\'s preloaded in some forms as well\r\nVERM_default_report_queue => ALL\r\n\r\n; If there are statuses to exclude from reports, list them here\r\n; Separate with commas.  Default is AFTHRS\r\nexc_addtl_statuses => AFTHRS\r\n\r\n; Set the below value to 1 (or anything non-blank/non-zero) in order to \r\n; show the agents ID in addition to their full name in the report results\r\nshow_full_agent_info => 1\r\n\r\n; Some reports count \"lost\" calls - which are defined by the below variable\r\n; listing what you define as \"lost\" dispos.  Separate with commas.\r\nlost_statuses => LOST,210208,DISPO\r\n\r\n; You can create a detailed IVR survey report for ingroups by defining\r\n; \"ivr_survey_ingroups_detail\" and \"ivr_survey_ingroups_voicemails.\"\r\n; For \"details\", supply an ingroup used as a tracking group on call menus.\r\n; Then, add a pipe and after that list all call menus that use the ingroup\r\n; as the tracking group, separating each with a comma\r\n; To track whether the calls went to voicemail, list every call menu/option\r\n; combination that goes to voicemail, separating the call menu from the \r\n; option with a pipe.  One callmenu/option combo per line.\r\nivr_survey_ingroups_detail => 521205|561401,561402,561403,561404,561505\r\nivr_survey_ingroups_voicemails => 561505|t\r\n\r\n; #####################################################\r\n; # ALL of the below are used in the wallboard report #\r\n; #####################################################\r\nVERM_default_outb_widget_queue => ALL_OUT\r\nVERM_default_inb_widget_queue1 => 514915v_USA_Shared\r\nVERM_default_inb_widget_queue2 => 515915v_MLA_Shared\r\n\r\n; Used specifically for the SLA widget\r\n; Uses ingroups - separate multiple ingroups by commas\r\n; Comment out or leave blank to count all ingroups\r\nSLA_LEVEL_PCT_ingroups => 514915v,515915v\r\n\r\n; This removes remote agents from the wallboard reports\r\n; Comment out to include remote agents (or set to zero)\r\nomit_remote_agents => 1\r\n\r\n\r\n; #### AUTO DOWNLOAD ####\r\n; If the "total calls" value on any report requested exceeds the below \r\n; limit, automatically download the three "DETAILS" reports instead\r\n; of attempting to display that many records on-screen\r\nauto_download_limit => 50000\r\n\r\n; #### OUTCOMES report overrides ####\r\n; Use "outcome_lagged_status_overrides" for conditions where the call \r\n; record in the vicidial_log or vicidial_closer_log table has no uniqueid\r\n; value despite having a status/outcome, which can indicate a call \r\n; affected by network lag for certain statuses.  This will change the call \r\n; status to "LAGGED".  Separate statuses with commas.  Default is the \r\n; automatic "PU" status.\r\noutcome_lagged_status_overrides => PU\r\n\r\n; Use "unknown_network_statuses" to change call statuses to read "Network/\r\n; LAGGED" on the OUTCOMES report. Separate statuses with commas.\r\n; IMPORTANT: if you are using the outcome_lagged_status_overrides option \r\n; above, make sure "LAGGED" is one of the unknown_network_statuses here\r\n; unknown_network_statuses => LAGGED\r\n\r\n; Use "outcome_status_overrides" to change one status to another on the \r\n; OUTCOMES report.  Overrides are comma-separated pairs of dispositions  \r\n; where the first disposition is the disposition to change, and the second\r\n; is the disposition to change to.  Separate pairs with a pipe character as\r\n; in the below example.  Off by default.\r\n; outcome_status_overrides => CBHOLD,DISPO|XFER,AL');
-INSERT INTO vicidial_settings_containers VALUES ('VICIDIAL_TIMEOFF_SETTINGS','Settings for time-off admin utility','OTHER','---ALL---','; Comma-delimited time-off codes - MANDATORY, must have at least one defined. \r\n; Default is \'VAC\' for vacation\r\ntimeoff_types => VAC\r\n\r\n; optional, if set to \'1\' will show all viewable agents, even ones with no \r\n; time off for month.  Default is 0\r\ndisplay_all_agents => 0\r\n\r\n; optional, used to filter users displayed, in addition to user_group \r\n; permissions\r\nuser_filter_SQL =>  \r\n\r\n; optional, uses columns from vicidial_users table.   Defaults to \r\n; full_name asc, user asc if commented out or non-existent\r\n; sort_SQL => full_name asc, user asc\r\n\r\n; include custom coding for misc download coding where \"custom_download\" \r\n; marked in agent_timeoff_script.php - DO NOT USE WITHOUT CODING KNOWLEDGE\r\n; set to \'1\' to activate\r\ncustom_download => 0');
+INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('VERM_STATUS_NAMES_OVERRIDE','Override dialer status names in enhanced reporting','OTHER','---ALL---','; For each status name you want overridden, type the status followed by\r\n; a pipe, then the new status name\r\n; Ex:\r\n; NZ|Taumatawhakatangihangakoauauotamateaturipukakapikimaungahoronukupoka\r\n201214|Request To Cancel\r\n210200|No Answer-Incomplete Call\r\n210201|Contact Established\r\n210202|Provider Review - HB\r\n210203|Promise to Pay\r\n210204|Setup Payment Plan\r\n210205|Research-Inquiry\r\n210206|Voice Mail Left - HB\r\n210207|Do Not Call\r\n210208|Appeal Verification\r\n210209|Bad Phone\r\n210210|Bad Address\r\n210211|Direct Pay Verification\r\n210213|Provider Approved\r\n210215|Update Notes Only\r\n210216|Voicemail-No Status Change\r\n210217|Sent Letter Request - HB\r\n210218|Auto VoiceMail Left - HB\r\n210219|Auto VoiceMail-No Status Change\r\n210302|Provider Review - LB\r\n210306|Voice Mail Left - LB\r\n210317|Sent Letter Request - LB\r\n210318|Auto VoiceMail Left - LB\r\n211503|Provider - COVID-19\r\n211603|Transferred Call to MLA\r\n'), ('VERM_REPORT_OPTIONS','Container for customizing VERM report output','OTHER','---ALL---','; This is the report queue used if none is chosen by the user\r\n; It\'s preloaded in some forms as well\r\nVERM_default_report_queue => ALL\r\n\r\n; If there are statuses to exclude from reports, list them here\r\n; Separate with commas.  Default is AFTHRS\r\nexc_addtl_statuses => AFTHRS\r\n\r\n; Set the below value to 1 (or anything non-blank/non-zero) in order to \r\n; show the agents ID in addition to their full name in the report results\r\nshow_full_agent_info => 1\r\n\r\n; Some reports count \"lost\" calls - which are defined by the below variable\r\n; listing what you define as \"lost\" dispos.  Separate with commas.\r\nlost_statuses => LOST,210208,DISPO\r\n\r\n; You can create a detailed IVR survey report for ingroups by defining\r\n; \"ivr_survey_ingroups_detail\" and \"ivr_survey_ingroups_voicemails.\"\r\n; For \"details\", supply an ingroup used as a tracking group on call menus.\r\n; Then, add a pipe and after that list all call menus that use the ingroup\r\n; as the tracking group, separating each with a comma\r\n; To track whether the calls went to voicemail, list every call menu/option\r\n; combination that goes to voicemail, separating the call menu from the \r\n; option with a pipe.  One callmenu/option combo per line.\r\nivr_survey_ingroups_detail => 521205|561401,561402,561403,561404,561505\r\nivr_survey_ingroups_voicemails => 561505|t\r\n\r\n; #####################################################\r\n; # ALL of the below are used in the wallboard report #\r\n; #####################################################\r\nVERM_default_outb_widget_queue => ALL_OUT\r\nVERM_default_inb_widget_queue1 => 514915v_USA_Shared\r\nVERM_default_inb_widget_queue2 => 515915v_MLA_Shared\r\n\r\n; Used specifically for the SLA widget\r\n; Uses ingroups - separate multiple ingroups by commas\r\n; Comment out or leave blank to count all ingroups\r\nSLA_LEVEL_PCT_ingroups => 514915v,515915v\r\n\r\n; This removes remote agents from the wallboard reports\r\n; Comment out to include remote agents (or set to zero)\r\nomit_remote_agents => 1\r\n\r\n\r\n; #### AUTO DOWNLOAD ####\r\n; If the "total calls" value on any report requested exceeds the below \r\n; limit, automatically download the three "DETAILS" reports instead\r\n; of attempting to display that many records on-screen\r\nauto_download_limit => 50000\r\n\r\n; #### OUTCOMES report overrides ####\r\n; Use "outcome_lagged_status_overrides" for conditions where the call \r\n; record in the vicidial_log or vicidial_closer_log table has no uniqueid\r\n; value despite having a status/outcome, which can indicate a call \r\n; affected by network lag for certain statuses.  This will change the call \r\n; status to "LAGGED".  Separate statuses with commas.  Default is the \r\n; automatic "PU" status.\r\noutcome_lagged_status_overrides => PU\r\n\r\n; Use "unknown_network_statuses" to change call statuses to read "Network/\r\n; LAGGED" on the OUTCOMES report. Separate statuses with commas.\r\n; IMPORTANT: if you are using the outcome_lagged_status_overrides option \r\n; above, make sure "LAGGED" is one of the unknown_network_statuses here\r\n; unknown_network_statuses => LAGGED\r\n\r\n; Use "outcome_status_overrides" to change one status to another on the \r\n; OUTCOMES report.  Overrides are comma-separated pairs of dispositions  \r\n; where the first disposition is the disposition to change, and the second\r\n; is the disposition to change to.  Separate pairs with a pipe character as\r\n; in the below example.  Off by default.\r\n; outcome_status_overrides => CBHOLD,DISPO|XFER,AL');
+INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('VICIDIAL_TIMEOFF_SETTINGS','Settings for time-off admin utility','OTHER','---ALL---','; Comma-delimited time-off codes - MANDATORY, must have at least one defined. \r\n; Default is \'VAC\' for vacation\r\ntimeoff_types => VAC\r\n\r\n; optional, if set to \'1\' will show all viewable agents, even ones with no \r\n; time off for month.  Default is 0\r\ndisplay_all_agents => 0\r\n\r\n; optional, used to filter users displayed, in addition to user_group \r\n; permissions\r\nuser_filter_SQL =>  \r\n\r\n; optional, uses columns from vicidial_users table.   Defaults to \r\n; full_name asc, user asc if commented out or non-existent\r\n; sort_SQL => full_name asc, user asc\r\n\r\n; include custom coding for misc download coding where \"custom_download\" \r\n; marked in agent_timeoff_script.php - DO NOT USE WITHOUT CODING KNOWLEDGE\r\n; set to \'1\' to activate\r\ncustom_download => 0');
+INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('FAILED_DIAL_MESSAGE_OVERRIDE','Failed Dial Message Override','OTHER','---ALL---',"Unable to complete the call at this time.\nPlease try again later.");
+INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry) VALUES ('LISTLOADER_AUTO_MAPPING', 'Contains aliases for auto-mapping fields in listloader', 'OTHER', '---ALL---', '; Use this to auto-map fields in the listloader when you attempt to load\r\n; a file. This will populate the \'File data\' dropdown menus \r\n; You may define additional aliases by adding them to the below list.\r\n; They must be of the form \"alias => vicidial_field\". One per line.\r\n; The \"vicidial_field\" value must match the name of a column in the\r\n; vicidial_list table\r\n\r\n\'phone\' => \'phonenumber\'\r\n\'phoneno\' => \'phonenumber\'\r\n\'phone1\' => \'phonenumber\'\r\n\'primaryphone\' => \'phonenumber\'\r\n\'mainphone\' => \'phonenumber\'\r\n\'telephone\' => \'phonenumber\'\r\n\'tel\' => \'phonenumber\'\r\n\'cell\' => \'phonenumber\'\r\n\'cellphone\' => \'phonenumber\'\r\n\'mobile\' => \'phonenumber\'\r\n\'mobilephone\' => \'phonenumber\'\r\n\'workphone\' => \'phonenumber\'\r\n\'homephone\' => \'phonenumber\'\r\n\'fname\' => \'firstname\'\r\n\'first\' => \'firstname\'\r\n\'givenname\' => \'firstname\'\r\n\'lname\' => \'lastname\'\r\n\'last\' => \'lastname\'\r\n\'surname\' => \'lastname\'\r\n\'familyname\' => \'lastname\'\r\n\'mi\' => \'middleinitial\'\r\n\'middle\' => \'middleinitial\'\r\n\'middlename\' => \'middleinitial\'\r\n\'minit\' => \'middleinitial\'\r\n\'addr\' => \'address1\'\r\n\'addr1\' => \'address1\'\r\n\'street\' => \'address1\'\r\n\'streetaddress\' => \'address1\'\r\n\'address\' => \'address1\'\r\n\'addr2\' => \'address2\'\r\n\'street2\' => \'address2\'\r\n\'suite\' => \'address2\'\r\n\'apt\' => \'address2\'\r\n\'apartment\' => \'address2\'\r\n\'unit\' => \'address2\'\r\n\'addr3\' => \'address3\'\r\n\'zip\' => \'postalcode\'\r\n\'zipcode\' => \'postalcode\'\r\n\'postcode\' => \'postalcode\'\r\n\'postalzip\' => \'postalcode\'\r\n\'st\' => \'state\'\r\n\'stateprovince\' => \'state\'\r\n\'region\' => \'state\'\r\n\'prov\' => \'province\'\r\n\'country\' => \'countrycode\'\r\n\'countrycd\' => \'countrycode\'\r\n\'cc\' => \'countrycode\'\r\n\'sex\' => \'gender\'\r\n\'dob\' => \'dateofbirth\'\r\n\'birthday\' => \'dateofbirth\'\r\n\'birthdate\' => \'dateofbirth\'\r\n\'birth\' => \'dateofbirth\'\r\n\'altphone\' => \'altphone\'\r\n\'phone2\' => \'altphone\'\r\n\'secondaryphone\' => \'altphone\'\r\n\'otherphone\' => \'altphone\'\r\n\'alternatephone\' => \'altphone\'\r\n\'emailaddress\' => \'email\'\r\n\'emailaddr\' => \'email\'\r\n\'mail\' => \'email\'\r\n\'note\' => \'comments\'\r\n\'notes\' => \'comments\'\r\n\'comment\' => \'comments\'\r\n\'remark\' => \'comments\'\r\n\'remarks\' => \'comments\'\r\n\'description\' => \'comments\'\r\n\'vendorcode\' => \'vendorleadcode\'\r\n\'vendorid\' => \'vendorleadcode\'\r\n\'vendorleadid\' => \'vendorleadcode\'\r\n\'leadcode\' => \'vendorleadcode\'\r\n\'externalid\' => \'vendorleadcode\'\r\n\'sourcecode\' => \'sourceid\'\r\n\'source\' => \'sourceid\'\r\n\'leadsource\' => \'sourceid\'\r\n\'listid\' => \'listid\'\r\n\'list\' => \'listid\'\r\n\'phonecode\' => \'phonecode\'\r\n\'dialcode\' => \'phonecode\'\r\n\'countrydialing\' => \'phonecode\'\r\n\'prefix\' => \'title\'\r\n\'salutation\' => \'title\'\r\n\'mr\' => \'title\'\r\n\'securityphrase\' => \'securityphrase\'\r\n\'security\' => \'securityphrase\'\r\n\'pin\' => \'securityphrase\'\r\n\'password\' => \'securityphrase\'\r\n\'priority\' => \'rank\'\r\n\'score\' => \'rank\'\r\n\'weight\' => \'rank\'\r\n\'agent\' => \'owner\'\r\n\'assignedto\' => \'owner\'\r\n\'rep\' => \'owner\'\r\n\'town\' => \'city\'\r\n\r\n\r\n; This is the minimum required score that the header field must return\r\n; when processed with the Levenshtein distance algorithm. Default is 70.\r\n; If you wish to raise or lower it, uncomment the below line and change the \r\n; score value to whatever you wish\r\n; minimum_required_score => 70\r\n');
+INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry,modify_stamp) VALUES('VAMD_SETTINGS_NEW_TEMPLATE','Settings for ViciAMD Template for Campaigns','OTHER','---ALL---','# When doing audio signature analysis of the received audio VAMD compares\r\n# it to a database of known audio signatures. This comparison results in a\r\n# mathematical -distance- value between 0 and 1. 0 is a perfect match. 1 \r\n# is a perfect mismatch. The audio_match_dist is the maximum value that is\r\n# considered a match. Anything above that is not a match. Setting this\r\n# higher will weed out more automated messages but at a cost of a higher\r\n# false positive rate. Default is 0.2\r\naudio_match_dist = 0.2\r\n\r\n\r\n# When doing voice signature analysis of the received audio VAMD compares\r\n# it to a database of known voice signatures. This comparison results in a\r\n# mathematical -distance- value between 0 and 1. 0 is a perfect match. 1 \r\n# is a perfect mismatch. The voice_match_dist is the maximum value that is\r\n# considered a match. Anything above that is not a match. Setting this\r\n# higher will weed out more automated message but at a cost of a higher\r\n# false positive rate. Default is 0.2\r\nvoice_match_dist = 0.2\r\n\r\n\r\n# If no other result fits, a confidence check is done on the speech \r\n# recognition results. If that check is less than this threshold VAMD\r\n# statuses the call as NOTSURE,LOWCONFIDENCE. If it is higher than this\r\n# threshold VAMD statuses the call as NOTSURE,LOWSCORE.\r\n# Value ranges from 0 to 1\r\nmin_word_confidence = 0.1\r\n\r\n\r\n# The threshold above which sound is detected initially. \r\n# Value ranges is from 1 to 32,767\r\ninit_silence_threshold = 4000\r\n\r\n\r\n# The threshold above which sound is detected after the initial silence.\r\n# Value ranges is from 1 to 32,767\r\nsilence_threshold = 2000\r\n\r\n\r\n# The maximum initial silence in milliseconds. Any longer than this and the call will be statused as NOTSURE,INITIALSILENCE\r\nmax_init_sil_ms = 3000\r\n\r\n\r\n# The maximum length of audio collection in milliseconds before audio\r\n# processing of the data is forced. This triggers if no silence was \r\n# detected after the initial silence.\r\nmax_detection_ms = 5000\r\n\r\n\r\n# The minimum time spent collecting audio in ms. Audio processing cannot be\r\n# triggered until after this cutoff.\r\nmin_detection_ms = 3000\r\n\r\n\r\n# The maximum length of silence in milliseconds after the initial silence \r\n# before the customer greeting is assumed over and audio processing will\r\n# begin.\r\nmax_silence_ms = 800\r\n\r\n\r\n# If the total amount sound detected is less than this number of \r\n# milliseconds it is assumed that whatever is on the line is not a person\r\nmin_sound_ms = 150\r\n\r\n\r\n# The maximum number of words before the call is considered an answering \r\n# machine\r\nmax_words = 4\r\n\r\n\r\nphrase_dict = b2b-phrases.ini',NOW());
+INSERT INTO vicidial_settings_containers(container_id,container_notes,container_type,user_group,container_entry,modify_stamp) VALUES('Default_AMD_status_map','Default AMD status map','AMD_STATUS_MAP','---ALL---','MACHINE,* => VAMMAC\nMACHINE,MAXWORDS => VAMMAC\nNOTSURE,* => VAMNS\nNOTSURE,HANGUP => VAMNS\nNOTSURE,LOWCONFIDENCE => VAMNS',NOW());
 
 INSERT INTO `wallboard_widgets` VALUES ('queues_widget_1','AGENTS_AND_QUEUES','queues','','TEXT',5,'N',1,'Queue Information','','',NULL,'','',NULL,2),('queues_widget_0','AGENTS_AND_QUEUES','queues','','LOGO',2,'N',1,NULL,'','',NULL,'','',NULL,1),('queues_widget_2','AGENTS_AND_QUEUES','queues','SLA Level %','SLA_LEVEL_PCT',1,'N',1,NULL,'','>60',NULL,'','',NULL,3),('queues_widget_3','AGENTS_AND_QUEUES','queues','Outbound calls','LIVE_QUEUE_INFO',1,'N',1,'','201201','','','','','yellow_alarm,|red_alarm,',4),('queues_widget_4','AGENTS_AND_QUEUES','queues','USA Ded Inbound','LIVE_QUEUE_INFO',1,'N',1,'','ALL_IN','','','','','yellow_alarm,|red_alarm,',5),('queues_widget_5','AGENTS_AND_QUEUES','queues','MLA Ded Inbound','LIVE_QUEUE_INFO',1,'N',1,'','514911','','','','','yellow_alarm,|red_alarm,',6),('queues_widget_6','AGENTS_AND_QUEUES','queues','N Waiting Calls','N_WAITING_CALLS',1,'N',1,NULL,'','',NULL,'','',NULL,7),('queues_widget_7','AGENTS_AND_QUEUES','queues','Offered Calls','OFFERED_CALLS',1,'N',1,NULL,'','',NULL,'','',NULL,8),('queues_widget_8','AGENTS_AND_QUEUES','queues','Answered Calls','ANSWERED_CALLS',1,'N',1,NULL,'','',NULL,'','',NULL,9),('queues_widget_9','AGENTS_AND_QUEUES','queues','Lost Calls','LOST_CALLS',1,'N',1,NULL,'','',NULL,'','',NULL,10),('queues_widget_10','AGENTS_AND_QUEUES','queues','Longest Wait','LONGEST_WAIT',1,'N',1,NULL,'','',NULL,'','',NULL,11),('queues_widget_11','AGENTS_AND_QUEUES','queues','Live Queues','LIVE_QUEUES',1,'Y',1,NULL,'','',NULL,'','',NULL,12),('queues_widget_12','AGENTS_AND_QUEUES','queues','Live Calls','LIVE_CALLS',1,'Y',2,NULL,'','',NULL,'','',NULL,13),('agent_widget_0','AGENTS_AND_QUEUES','agents','','LOGO',2,'N',1,NULL,'','',NULL,'','',NULL,1),('agent_widget_1','AGENTS_AND_QUEUES','agents','N Waiting Calls','N_WAITING_CALLS',1,'N',1,NULL,'','',NULL,'','',NULL,2),('agent_widget_2','AGENTS_AND_QUEUES','agents','Agents Ready','AGENTS_READY',1,'N',1,NULL,'','',NULL,'','',NULL,3),('agent_widget_3','AGENTS_AND_QUEUES','agents','Agents On Call','N_AGENTS_ON_CALL',1,'N',1,NULL,'','',NULL,'','',NULL,4),('agent_widget_4','AGENTS_AND_QUEUES','agents','N Answered Calls','N_ANSWERED_CALLS',1,'N',1,NULL,'','',NULL,'','',NULL,5),('agent_widget_5','AGENTS_AND_QUEUES','agents','Clock','CLOCK',1,'N',1,NULL,'','',NULL,'','',NULL,6),('agent_widget_6','AGENTS_AND_QUEUES','agents','Live Agents','LIVE_AGENTS',1,'Y',3,NULL,'','',NULL,'','',NULL,7);
 
@@ -5709,4 +5927,4 @@ INSERT INTO `wallboard_reports` VALUES ('AGENTS_AND_QUEUES','Agents and Queues',
 
 UPDATE system_settings set vdc_agent_api_active='1';
 
-UPDATE system_settings SET db_schema_version='1720',db_schema_update_date=NOW(),reload_timestamp=NOW();
+UPDATE system_settings SET db_schema_version='1744',db_schema_update_date=NOW(),reload_timestamp=NOW();

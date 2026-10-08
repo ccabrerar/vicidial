@@ -1,4 +1,7 @@
-VICIdial ConfBridge Support:		STARTED: 2022-06-22	UPDATED: 2024-04-25
+VICIdial ConfBridge Support:		STARTED: 2022-06-22	UPDATED: 2025-01-08
+
+
+!!!!! NOTE: As of svn/trunk revision 3894(2025-01-06), the below code and configuration changes have all been integrated into the VICIdial codebase for use with Asterisk versions 18 and higher. For non-new installs you may still need to make some manual conf file changes and/or trigger a rebuild of the conf files on your Asterisk servers.
 
 
 !!! NOTE: VICIdial ConfBridge has been in use by several companies in production for over a year now and is considered stable !!!

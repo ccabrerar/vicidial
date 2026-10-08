@@ -1,0 +1,214 @@
+#!/usr/bin/perl
+
+# enhancedMONITORswitch.agi
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# This script switches the manager to MONITOR/BARGE/WHISPER for the agent being
+# monitored using enhanced_agent_monitoring
+
+# CHANGELOG:
+# 250103-1619 - First build
+#
+
+$script = 'enhancedMONITORswitch.agi';
+
+$now_date_epoch = time();
+($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+$year = ($year + 1900);
+$mon++;
+if ($mon < 10) {$mon = "0$mon";}
+if ($mday < 10) {$mday = "0$mday";}
+if ($hour < 10) {$hour = "0$hour";}
+if ($min < 10) {$min = "0$min";}
+if ($sec < 10) {$sec = "0$sec";}
+$SQLdate = "$year-$mon-$mday $hour:$min:$sec";
+
+# default path to astguiclient configuration file:
+$PATHconf =		'/etc/astguiclient.conf';
+
+open(conf, "$PATHconf") || die "can't open $PATHconf: $!\n";
+@conf = <conf>;
+close(conf);
+$i=0;
+foreach(@conf)
+	{
+	$line = $conf[$i];
+	$line =~ s/ |>|\n|\r|\t|\#.*|;.*//gi;
+	if ( ($line =~ /^PATHhome/) && ($CLIhome < 1) )
+		{$PATHhome = $line;   $PATHhome =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHlogs/) && ($CLIlogs < 1) )
+		{$PATHlogs = $line;   $PATHlogs =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHagi/) && ($CLIagi < 1) )
+		{$PATHagi = $line;   $PATHagi =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHweb/) && ($CLIweb < 1) )
+		{$PATHweb = $line;   $PATHweb =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHsounds/) && ($CLIsounds < 1) )
+		{$PATHsounds = $line;   $PATHsounds =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHmonitor/) && ($CLImonitor < 1) )
+		{$PATHmonitor = $line;   $PATHmonitor =~ s/.*=//gi;}
+	if ( ($line =~ /^VARserver_ip/) && ($CLIserver_ip < 1) )
+		{$VARserver_ip = $line;   $VARserver_ip =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_server/) && ($CLIDB_server < 1) )
+		{$VARDB_server = $line;   $VARDB_server =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_database/) && ($CLIDB_database < 1) )
+		{$VARDB_database = $line;   $VARDB_database =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_user/) && ($CLIDB_user < 1) )
+		{$VARDB_user = $line;   $VARDB_user =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_pass/) && ($CLIDB_pass < 1) )
+		{$VARDB_pass = $line;   $VARDB_pass =~ s/.*=//gi;}
+	if ( ($line =~ /^VARDB_port/) && ($CLIDB_port < 1) )
+		{$VARDB_port = $line;   $VARDB_port =~ s/.*=//gi;}
+	$i++;
+	}
+
+if (!$VARDB_port)	{$VARDB_port='3306';}
+if (!$AGILOGfile)	{$AGILOGfile = "$PATHlogs/agiout.$year-$mon-$mday";}
+
+use DBI;
+use Time::HiRes ('gettimeofday','usleep','sleep');  # necessary to have perl sleep command of less than one second
+use Asterisk::AGI;
+$AGI = new Asterisk::AGI;
+
+$dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
+    or die "Couldn't connect to database: " . DBI->errstr;
+
+### Grab Server values from the database
+$stmtA = "SELECT agi_output,local_gmt FROM servers where server_ip = '$VARserver_ip';";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+if ($sthArows > 0)
+	{
+	$AGILOG = '0';
+	@aryA = $sthA->fetchrow_array;
+	$DBagi_output =		$aryA[0];
+	$local_gmt =		$aryA[1];
+	if ($DBagi_output =~ /STDERR/)	{$AGILOG = '1';}
+	if ($DBagi_output =~ /FILE/)	{$AGILOG = '2';}
+	if ($DBagi_output =~ /BOTH/)	{$AGILOG = '3';}
+	}
+$sthA->finish();
+
+$agent_zap_channel =		"101";
+########## FIND playfilename  ##########
+
+$monitor_action='MONITOR';
+### begin parsing run-time options ###
+if (length($ARGV[0])>1)
+	{
+	if ($AGILOG) {$agi_string = "Perl Environment Dump:";   &agi_output;}
+	$i=0;
+	while ($#ARGV >= $i)
+		{
+		$args = "$args $ARGV[$i]";
+		if ($AGILOG) {$agi_string = "$i|$ARGV[$i]";   &agi_output;}
+		$i++;
+		}
+	
+	### list of command-line array arguments:
+	@ARGV_vars = split(/-----/, $ARGV[0]);
+
+	$monitor_method = 		$ARGV_vars[0];
+	$monitor_action = 		$ARGV_vars[1];
+	}
+
+$|=1;
+while(<STDIN>) 
+	{
+	chomp;
+	last unless length($_);
+	if ($AGILOG)
+		{
+		if (/^agi_(\w+)\:\s+(.*)$/)
+			{
+			$AGI{$1} = $2;
+			}
+		}
+
+	if (/^agi_uniqueid\:\s+(.*)$/)		{$unique_id = $1; $uniqueid = $unique_id;}
+	if (/^agi_channel\:\s+(.*)$/)		{$channel = $1;}
+	if (/^agi_extension\:\s+(.*)$/)		{$extension = $1;}
+	if (/^agi_type\:\s+(.*)$/)			{$type = $1;}
+	if (/^agi_callerid\:\s+(.*)$/)		{$callerid = $1;}
+	if (/^agi_calleridname\:\s+(.*)$/)	{$calleridname = $1;}
+	}
+
+# check for monitoruser variable, if not set, then set it
+
+$monitorsession = $AGI->get_variable('monitorsession');
+$agent_zap_channel = $AGI->get_variable('agent_zap_channel');
+$manager_zap_channel = $AGI->get_variable('manager_zap_channel');
+
+if ($AGILOG) {$agi_string = "Agent session: |$monitorsession| Channel: $channel| Agent Channel: $agent_zap_channel|";   &agi_output;}
+
+
+#$stmtA = "SELECT channel   FROM vicidial_live_agents  WHERE conf_exten = '$canal' AND ifnull(trim(channel), '') <> ''      and (channel in (select channel from live_channels) or comments='MANUAL')  LIMIT 1";
+#$stmtA = "INSERT INTO vicidial_manager values('','','$SQLdate','NEW','N','$VARserver_ip','','Originate','$BMquery','Channel: Local/$monitor_dialstring$stage$session_id@default','Context: default','Exten: $dialplan_number','Priority: 1','Callerid: \"$BEquery\" <$outbound_cid>','$variable','','','','');";
+
+
+$BEquery = "BE0$now_date_epoch$monitorsession";
+
+
+if ($monitor_method =~ /CMD/) 
+	{
+	# CMD - for commands on manager channel, default is MONITOR, mute the manager channel in agent ConfBridge session
+	$stmtA = "INSERT INTO vicidial_manager values('','','$SQLdate','NEW','N','$VARserver_ip','','ConfbridgeMute','$BEquery','Conference: $monitorsession','Channel: $manager_zap_channel','','','','','','','','');";
+	if ($monitor_action =~ /MONITOR/) 
+		{
+		$stmtA = "INSERT INTO vicidial_manager values('','','$SQLdate','NEW','N','$VARserver_ip','','ConfbridgeMute','$BEquery','Conference: $monitorsession','Channel: $manager_zap_channel','','','','','','','','');";
+		}
+	if ($monitor_action =~ /BARGE/) 
+		{
+		$stmtA = "INSERT INTO vicidial_manager values('','','$SQLdate','NEW','N','$VARserver_ip','','ConfbridgeUnmute','$BEquery','Conference: $monitorsession','Channel: $manager_zap_channel','','','','','','','','');";
+		}
+	if ($monitor_action =~ /WHISPER/) 
+		{
+		$stmtA = "INSERT INTO vicidial_manager values('','','$SQLdate','NEW','N','$VARserver_ip','','Redirect','$BEquery','Channel: $manager_zap_channel','Context: vici_monitor_whisper','Exten: 47378221$monitorsession','Priority: 1','CallerID: $BEquery','','','','','');";
+		}
+	}
+else
+	{
+	# MGR - for direct manager channel, default is MONITOR, mute the manager channel in agent ConfBridge session
+	$stmtA = "INSERT INTO vicidial_manager values('','','$SQLdate','NEW','N','$VARserver_ip','','ConfbridgeMute','$BEquery','Conference: $monitorsession','Channel: $channel','','','','','','','','');";
+	if ($monitor_action =~ /MONITOR/) 
+		{
+		$stmtA = "INSERT INTO vicidial_manager values('','','$SQLdate','NEW','N','$VARserver_ip','','ConfbridgeMute','$BEquery','Conference: $monitorsession','Channel: $channel','','','','','','','','');";
+		}
+	if ($monitor_action =~ /BARGE/) 
+		{
+		$stmtA = "INSERT INTO vicidial_manager values('','','$SQLdate','NEW','N','$VARserver_ip','','ConfbridgeUnmute','$BEquery','Conference: $monitorsession','Channel: $channel','','','','','','','','');";
+		}
+	if ($monitor_action =~ /WHISPER/) 
+		{
+		$stmtA = "INSERT INTO vicidial_manager values('','','$SQLdate','NEW','N','$VARserver_ip','','Redirect','$BEquery','Channel: $channel','Context: vici_monitor_whisper','Exten: 47378221$monitorsession','Priority: 1','CallerID: $BEquery','','','','','');";
+		}
+	}
+
+$affected_rows = $dbhA->do($stmtA);
+if ($AGILOG) {$agi_string = "MANAGER INSERT $channel|$affected_rows|$stmtA|";   &agi_output;}
+
+
+exit;
+
+
+
+sub agi_output
+	{
+	($Lsec,$Lmin,$Lhour,$Lmday,$Lmon,$Lyear,$Lwday,$Lyday,$Lisdst) = localtime(time);
+	if ($Lhour < 10) {$Lhour = "0$Lhour";}
+	if ($Lmin < 10) {$Lmin = "0$Lmin";}
+	if ($Lsec < 10) {$Lsec = "0$Lsec";}
+	$LOGtime = "$Lhour:$Lmin:$Lsec";
+
+	if ($AGILOG >=2)
+		{
+		### open the log file for writing ###
+		open(Lout, ">>$AGILOGfile")
+				|| die "Can't open $AGILOGfile: $!\n";
+		print Lout "$LOGtime|$LOGtime|$script|$agi_string\n";
+		close(Lout);
+		}
+		### send to STDERR writing ###
+	if ( ($AGILOG == '1') || ($AGILOG == '3') )
+		{print STDERR "$LOGtime|$LOGtime|$script|$agi_string\n";}
+	$agi_string='';
+	}

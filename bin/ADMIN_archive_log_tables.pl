@@ -20,7 +20,7 @@
 # Based on perl scripts in ViciDial from Matt Florell and post:
 # http://www.vicidial.org/VICIDIALforum/viewtopic.php?p=22506&sid=ca5347cffa6f6382f56ce3db9fb3d068#22506
 #
-# Copyright (C) 2024  I. Taushanov, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  I. Taushanov, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 90615-1701 - First version
@@ -73,6 +73,11 @@
 # 231126-2227 - Added vicidial_hci_log archiving
 # 240916-2159 - Added --extended-log-only
 # 240924-2041 - Added --vicidial-log-only
+# 250914-1537 - Added archiving of recording_log_stereo and recording_log_parallel tables
+# 251011-2048 - Added archiving of recording_live_log table
+# 251024-1518 - Added --vicidial-dial-log-only flag
+# 260111-2138 - Added --agent-log-only flag
+# 260516-2149 - Added internal logging
 #
 
 $CALC_TEST=0;
@@ -86,6 +91,9 @@ $api_log_only=0;
 $api_archive_only=0;
 $url_log_only=0;
 $url_log_archive=0;
+$agent_log_only=0;
+$script_name = 'ADMIN_archive_log_tables.pl';
+
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -120,8 +128,11 @@ if (length($ARGV[0])>1)
 		print "       [--api-log-days=XX] = REQUIRED FOR --api-only, number of days to archive vicidial_api_log table only past\n";
 		print "  [--vicidial-log-only] = OPTIONAL, only archive vicidial_log table then exit\n";
 		print "       [--vicidial-log-days=XX] = REQUIRED FOR --vicidial-log-only, number of days to archive vicidial_log table only past\n";
+		print "  [--vicidial-dial-log-only] = OPTIONAL, only archive vicidial_dial_log table then exit\n";
+		print "       [--vicidial-dial-log-days=XX] = REQUIRED FOR --vicidial-dial-log-only, number of days to archive vicidial_dial_log table only past\n";
 		print "  [--extended-log-only] = OPTIONAL, only archive vicidial_log_extended table then exit\n";
 		print "       [--extended-log-days=XX] = REQUIRED FOR --extended-log-only, number of days to archive vicidial_log_extended table only past\n";
+		print "  [--agent-log-only] = OPTIONAL, only archive vicidial_agent_log table then exit\n";
 		print "  [--api-archive-only] = OPTIONAL, only purge vicidial_api_log_archive table then exit\n";
 		print "       [--api-archive-days=XX] = REQUIRED FOR --api-archive-only, number of days to purge vicidial_api_log_archive table only past\n";
 		print "  [--url-log-only] = OPTIONAL, only purge vicidial_url_log table then exit\n";
@@ -292,7 +303,6 @@ if (length($ARGV[0])>1)
 			if ($Q < 1) 
 				{print "\n----- VICIDIAL LOG ARCHIVE ONLY $vicidial_log_only -----\n\n";}
 			}
-
 		if ($args =~ /--vicidial-log-days=/i)
 			{
 			$vicidial_log_only++;
@@ -306,13 +316,31 @@ if (length($ARGV[0])>1)
 				{print "\n----- VICIDIAL LOG ARCHIVE ACTIVE, DAYS: $extendeddays -----\n\n";}
 			}
 
+		if ($args =~ /--vicidial-dial-log-only/i)
+			{
+			$vicidial_dial_log_only++;
+			if ($Q < 1) 
+				{print "\n----- VICIDIAL DIAL LOG ARCHIVE ONLY $vicidial_dial_log_only -----\n\n";}
+			}
+		if ($args =~ /--vicidial-dial-log-days=/i)
+			{
+			$vicidial_dial_log_only++;
+			@data_in = split(/--vicidial-dial-log-days=/,$args);
+			$extendeddays = $data_in[1];
+			$extendeddays =~ s/ .*$//gi;
+			$extendeddays =~ s/\D//gi;
+			if ($extendeddays > 999999)
+				{$extendeddays=1825;}
+			if ($Q < 1) 
+				{print "\n----- VICIDIAL DIAL LOG ARCHIVE ACTIVE, DAYS: $extendeddays -----\n\n";}
+			}
+
 		if ($args =~ /--extended-log-only/i)
 			{
 			$extended_log_only++;
 			if ($Q < 1) 
 				{print "\n----- EXTENDED LOG ARCHIVE ONLY $extended_log_only -----\n\n";}
 			}
-
 		if ($args =~ /--extended-log-days=/i)
 			{
 			$extended_log_only++;
@@ -332,7 +360,6 @@ if (length($ARGV[0])>1)
 			if ($Q < 1) 
 				{print "\n----- API ARCHIVE PURGE ONLY -----\n\n";}
 			}
-
 		if ($args =~ /--api-archive-days=/i)
 			{
 			$api_log_archive_purge++;
@@ -352,7 +379,6 @@ if (length($ARGV[0])>1)
 			if ($Q < 1) 
 				{print "\n----- URL LOG PURGE ONLY -----\n\n";}
 			}
-
 		if ($args =~ /--url-log-days=/i)
 			{
 			$url_log_only++;
@@ -364,6 +390,13 @@ if (length($ARGV[0])>1)
 				{$urldays=1825;}
 			if ($Q < 1) 
 				{print "\n----- URL LOG PURGE ACTIVE, DAYS: $urldays -----\n\n";}
+			}
+
+		if ($args =~ /--agent-log-only/i)
+			{
+			$agent_log_only++;
+			if ($Q < 1) 
+				{print "\n----- AGENT LOG ONLY: |$agent_log_only| -----\n\n";}
 			}
 
 		if ($args =~ /--cpd-log-purge-days=/i)
@@ -503,7 +536,7 @@ if ($url_log_only > 0)
 	if ($URLsec < 10) {$URLsec = "0$URLsec";}
 	$URLdel_time = "$URLyear-$URLmon-$URLmday $URLhour:$URLmin:$URLsec";
 	}
-if ( ($extended_log_only > 0) || ($vicidial_log_only > 0) )
+if ( ($extended_log_only > 0) || ($vicidial_log_only > 0) || ($vicidial_dial_log_only > 0) )
 	{
 	$EXTENDEDdel_epoch = ($secX - (86400 * $extendeddays));   # X days ago
 	($EXTENDEDsec,$EXTENDEDmin,$EXTENDEDhour,$EXTENDEDmday,$EXTENDEDmon,$EXTENDEDyear,$EXTENDEDwday,$EXTENDEDyday,$EXTENDEDisdst) = localtime($EXTENDEDdel_epoch);
@@ -593,6 +626,8 @@ $server_ip = $VARserver_ip;		# Asterisk server IP
 use DBI;
 $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
  or die "Couldn't connect to database: " . DBI->errstr;
+
+$action='start';   $stage='LOGGED INTO MYSQL SERVER';   &internal_logger;
 
 #############################################
 ##### Gather system_settings #####
@@ -2109,6 +2144,122 @@ if (!$T)
 		exit;
 		}
 	########## END --vicidial-log-only flag processing ##########
+
+
+	########## BEGIN --vicidial-dial-log-only flag processing ##########
+	if ($vicidial_dial_log_only > 0)
+		{
+		##### vicidial_dial_log
+		$stmtA = "SELECT count(*) from vicidial_dial_log;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$vicidial_dial_log_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		$stmtA = "SELECT count(*) from vicidial_dial_log_archive;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$vicidial_dial_log_archive_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		if (!$Q) {print "\nProcessing vicidial_dial_log table...  ($vicidial_dial_log_count|$vicidial_dial_log_archive_count)\n";}
+		$stmtA = "INSERT IGNORE INTO vicidial_dial_log_archive SELECT * from vicidial_dial_log;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		
+		$sthArows = $sthA->rows;
+		if (!$Q) {print "$sthArows rows inserted into vicidial_dial_log_archive table \n";}
+		
+		$rv = $sthA->err();
+		if (!$rv) 
+			{
+			if ($wipe_all > 0)
+				{$stmtA = "DELETE FROM vicidial_dial_log;";}
+			else
+				{$stmtA = "DELETE FROM vicidial_dial_log WHERE call_date < '$EXTENDEDdel_time';";}
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			if (!$Q) {print "$sthArows rows deleted from vicidial_dial_log table \n";}
+
+			$stmtA = "optimize table vicidial_dial_log;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			}
+
+		if (!$Q) {print "\nProcessing vicidial_dial_log table finished:  ($sthArows rows deleted) \n";}
+		
+		exit;
+		}
+	########## END --vicidial-dial-log-only flag processing ##########
+
+
+	########## BEGIN --agent-log-only flag processing ##########
+	if ($agent_log_only > 0)
+		{
+		##### vicidial_agent_log
+		$stmtA = "SELECT count(*) from vicidial_agent_log;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$vicidial_agent_log_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		$stmtA = "SELECT count(*) from vicidial_agent_log_archive;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$vicidial_agent_log_archive_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		if (!$Q) {print "\nProcessing vicidial_agent_log table...  ($vicidial_agent_log_count|$vicidial_agent_log_archive_count)\n";}
+		$stmtA = "INSERT IGNORE INTO vicidial_agent_log_archive SELECT * from vicidial_agent_log;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		
+		$sthArows = $sthA->rows;
+		if (!$Q) {print "$sthArows rows inserted into vicidial_agent_log_archive table \n";}
+		
+		$rv = $sthA->err();
+		if (!$rv) 
+			{
+			if ($wipe_all > 0)
+				{$stmtA = "DELETE FROM vicidial_agent_log;";}
+			else
+				{$stmtA = "DELETE FROM vicidial_agent_log WHERE event_time < '$del_time';";}
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			if (!$Q) {print "$sthArows rows deleted from vicidial_agent_log table \n";}
+
+			$stmtA = "optimize table vicidial_agent_log;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			}
+
+		if (!$Q) {print "\nProcessing vicidial_agent_log table finished:  ($sthArows rows deleted) \n";}
+		
+		exit;
+		}
+	########## END --agent-log-only flag processing ##########
 
 
 	if ($queue_log > 0)
@@ -4067,6 +4218,153 @@ if (!$T)
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 			}
+
+		##### recording_log_stereo
+		$stmtA = "SELECT count(*) from recording_log_stereo;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$recording_log_stereo_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		$stmtA = "SELECT count(*) from recording_log_stereo_archive;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$recording_log_stereo_archive_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		if (!$Q) {print "\nProcessing recording_log_stereo table...  ($recording_log_stereo_count|$recording_log_stereo_archive_count)\n";}
+		$stmtA = "INSERT IGNORE INTO recording_log_stereo_archive SELECT * from recording_log_stereo;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		
+		$sthArows = $sthA->rows;
+		if (!$Q) {print "$sthArows rows inserted into recording_log_stereo_archive table \n";}
+		
+		$rv = $sthA->err();
+		if (!$rv) 
+			{	
+			$stmtA = "DELETE FROM recording_log_stereo WHERE start_time < '$RECdel_time';";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			if (!$Q) {print "$sthArows rows deleted from recording_log_stereo table \n";}
+
+			$stmtA = "optimize table recording_log_stereo;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+
+			$stmtA = "optimize table recording_log_stereo_archive;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			}
+
+		##### recording_log_parallel
+		$stmtA = "SELECT count(*) from recording_log_parallel;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$recording_log_parallel_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		$stmtA = "SELECT count(*) from recording_log_parallel_archive;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$recording_log_parallel_archive_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		if (!$Q) {print "\nProcessing recording_log_parallel table...  ($recording_log_parallel_count|$recording_log_parallel_archive_count)\n";}
+		$stmtA = "INSERT IGNORE INTO recording_log_parallel_archive SELECT * from recording_log_parallel;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		
+		$sthArows = $sthA->rows;
+		if (!$Q) {print "$sthArows rows inserted into recording_log_parallel_archive table \n";}
+		
+		$rv = $sthA->err();
+		if (!$rv) 
+			{	
+			$stmtA = "DELETE FROM recording_log_parallel WHERE start_time < '$RECdel_time';";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			if (!$Q) {print "$sthArows rows deleted from recording_log_parallel table \n";}
+
+			$stmtA = "optimize table recording_log_parallel;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+
+			$stmtA = "optimize table recording_log_parallel_archive;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			}
+
+		##### recording_live_log
+		$stmtA = "SELECT count(*) from recording_live_log;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$recording_live_log_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		$stmtA = "SELECT count(*) from recording_live_log_archive;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		if ($sthArows > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$recording_live_log_archive_count =	$aryA[0];
+			}
+		$sthA->finish();
+
+		if (!$Q) {print "\nProcessing recording_live_log table...  ($recording_live_log_count|$recording_live_log_archive_count)\n";}
+		$stmtA = "INSERT IGNORE INTO recording_live_log_archive SELECT * from recording_live_log;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		
+		$sthArows = $sthA->rows;
+		if (!$Q) {print "$sthArows rows inserted into recording_live_log_archive table \n";}
+		
+		$rv = $sthA->err();
+		if (!$rv) 
+			{	
+			$stmtA = "DELETE FROM recording_live_log WHERE start_time < '$RECdel_time';";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			if (!$Q) {print "$sthArows rows deleted from recording_live_log table \n";}
+
+			$stmtA = "optimize table recording_live_log;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+
+			$stmtA = "optimize table recording_live_log_archive;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			}
 		}
 
 
@@ -4216,4 +4514,17 @@ $secZ = ($secY - $secX);
 $secZm = ($secZ /60);
 if (!$Q) {print "\nscript execution time in seconds: $secZ     minutes: $secZm\n";}
 
+$stmtA = "UPDATE vicidial_internal_log SET up_time=NOW(), action='finished', stage='Run seconds: $secZ' WHERE process='$script_name' and server_ip='$server_ip' order by db_time desc limit 1;";
+if($DB){print STDERR "|$stmtA|";}
+my $affected_rows = $dbhA->do($stmtA);
+if($DB){print STDERR "$affected_rows|\n";}
+
 exit;
+
+sub internal_logger
+	{
+	$stmtA = "INSERT INTO vicidial_internal_log SET db_time=NOW(), up_time=NOW(), process='$script_name', server_ip='$server_ip', action='$action', stage='$stage';";
+	if($DB){print STDERR "|$stmtA|";}
+	my $affected_rows = $dbhA->do($stmtA);
+	if($DB){print STDERR "$affected_rows|\n";}
+	}

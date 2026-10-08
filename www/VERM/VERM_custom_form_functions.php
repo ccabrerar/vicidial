@@ -1,11 +1,13 @@
 <?php
 # VERM_custom_form_functions.php - Vicidial Enhanced Reporting Javascript functions 
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
+# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>, Joe Johnson <joej@vicidial.com>    LICENSE: AGPLv2
 # 
 # CHANGELOG:
 # 220825-1607 - First build
 # 230123-1735 - Changed require files to local dbconnect/function files
+# 231214-1622 - time_of_day_end variable fix
+# 241118-1640 - added active agent toggle function
 #
 
 require("dbconnect_mysqli.php");
@@ -14,7 +16,81 @@ require("functions.php");
 require("VERM_options.php");
 
 header('Content-Type: application/javascript');
+if ($toggle_inactive_agents)
+	{
+
+	$DLAllAgents="var AllAgentDatalist=\"";
+	$DLActiveAgents="var ActiveAgentDatalist=\"";
+
+	$AllA_array="var AllAgentArray=new Array(";
+	$AllUID_array="var AllUIDArray=new Array(";
+	$AA_array="var ActiveAgentArray=new Array(";
+	$AUID_array="var ActiveUIDArray=new Array(";
+	$user_stmt="select user, full_name, active from vicidial_users $whereLOGadmin_viewable_groupsSQL order by full_name";
+	$user_rslt=mysql_to_mysqli($user_stmt, $link);
+	while ($user_row=mysqli_fetch_array($user_rslt))
+		{
+		$AllA_array.="'$user_row[full_name] ($user_row[full_name])',";
+		$AllUID_array.="'$user_row[user]',";
+		$DLAllAgents.="<option data-value='$user_row[user]' value='$user_row[full_name] ($user_row[user])'/>";
+
+		if (preg_match('/^Y/', $user_row["active"]))
+			{
+			$AA_array.="'$user_row[full_name]',";
+			$AUID_array.="'$user_row[user]',";
+			$DLActiveAgents.="<option data-value='$user_row[user]' value='$user_row[full_name] ($user_row[user])'/>";
+			}
+		}
+	$AllA_array=preg_replace('/,$/', "", $AllA_array).");\n";
+	$AllUID_array=preg_replace('/,$/', "", $AllUID_array).");\n";
+	$AA_array=preg_replace('/,$/', "", $AA_array).");\n";
+	$AUID_array=preg_replace('/,$/', "", $AUID_array).");\n";
+	$DLAllAgents.="\";\n";
+	$DLActiveAgents.="\";\n";
+	
+	echo $AllA_array;
+	echo $AllUID_array;
+	echo $AA_array;
+	echo $AUID_array;
+	echo $DLAllAgents;
+	echo $DLActiveAgents;
+	}
 ?>
+function ToggleAgents(button_text, button_id, agent_datalist)
+	{
+	var button_str="<?php echo _QXZ("HIDE"); ?>";
+
+	var agent_field=document.getElementById(agent_datalist);
+
+	// alert(agent_field.type);
+
+	if (agent_field.type=='select-one')
+		{
+		for(i=agent_field.options.length-1; i>=0; i--) 
+			{
+			agent_field.remove(i);
+			}
+		}
+
+	if(button_text.match(button_str))
+		{
+		document.getElementById(button_id).value="<?php echo _QXZ("SHOW ALL AGENTS"); ?>";
+
+		if (agent_field.type=='select-one')
+			{
+			}
+		else
+			{
+			document.getElementById(agent_datalist).innerHTML=ActiveAgentDatalist;
+			}
+		}
+	else
+		{
+		document.getElementById(button_id).value="<?php echo _QXZ("HIDE INACTIVE AGENTS"); ?>";
+
+		document.getElementById(agent_datalist).innerHTML=AllAgentDatalist;
+		}
+	}
 function GoToReport(selected_report, realtime_override)
 	{
 	// alert(selected_report);

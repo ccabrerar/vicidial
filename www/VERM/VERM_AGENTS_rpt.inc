@@ -7,6 +7,7 @@
 # 220825-1631 - First build
 # 230106-1304 - Added data flushing for large page outputs
 # 240801-1130 - Code updates for PHP8 compatibility
+# 241001-1803 - Added agent pause code breakdown
 #
 
 # NANQUE, not an unanswered call?
@@ -314,6 +315,9 @@ while ($vicidial_user_row=mysqli_fetch_row($vicidial_user_rslt))
 	}
 
 # Do round of calculations for agents logged in
+# Store agent pause codes for pause code breakdown
+$agent_pause_codes=array();
+$agent_pause_codes_time=array();
 foreach ($agent_sessions_array as $user => $sessions)
 	{
 	# Purge agents with no start_hours (this is remote agents)
@@ -357,6 +361,13 @@ foreach ($agent_sessions_array as $user => $sessions)
 					$agent_sessions_array["$user"]["$start_event_date"]["billable"]+=$billable_row["total_pause"];		
 					# $campaign_sessions_array["$campaign_id"]["$start_event_date"]["billable"]+=$billable_row["total_pause"];		
 					}
+				
+				if (!in_array($sub_status, $agent_pause_codes))
+					{
+					array_push($agent_pause_codes, $sub_status);
+					}
+
+				$agent_pause_codes_time["$user"]["$sub_status"]+=$billable_row["total_pause"];
 				}
 			
 			## GET CALLS, TALK AND WAIT TIME
@@ -734,6 +745,7 @@ $CSV_output["agent_pause_detail"]="\""._QXZ("Agent")."\",\""._QXZ("Sessions")."\
 $grand_total_duration=0;
 $grand_total_calls=0;
 $max_agent_duration=0;
+$last_agent_groups=array();
 foreach ($agent_sessions_array as $user => $sessions)
 	{
 	$total_calls=array_sum(array_column($sessions,'calls'));
@@ -748,6 +760,11 @@ foreach ($agent_sessions_array as $user => $sessions)
 	$total_contacts=array_sum(array_column($sessions,'contacts'));
 	$total_dispo_time=array_sum(array_column($sessions,'dispo_sec'));
 	$total_ALL_billable_time=($total_talk_time+$total_wait_time+$total_billable_time+$total_dispo_time);
+
+	foreach($sessions as $event_date => $session_details)
+		{
+		$last_agent_groups["$user"]=$session_details["user_group"];
+		}
 
 	$average_pause_time=sprintf('%02d', floor(MathZDC($total_pause_time, $total_pauses)/3600)).gmdate(":i:s", round(MathZDC($total_pause_time, $total_pauses)));
 	$total_sessions=count($sessions);
@@ -798,6 +815,79 @@ $HTML_output.="</table>";
 
 if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
 ########################################
+
+######### AGENT PAUSE CODE BREAKDOWN ###########
+# print_r($agent_sessions_array);
+$HTML_output.="<BR><h2 class='rpt_header'>"._QXZ("Agent Pause Code Breakdown")." $NWB#VERM_AGENTS-pause_detail$NWE</h2>"; 
+$HTML_output.="<hr style='height:2px;border-width:0;color:#ddd;background-color:#ddd;margin-bottom: 2em;'>";
+$HTML_output.="<table width='100%' id='rpt_table'>";
+$HTML_output.="<tr>\n";
+$HTML_output.="<th>"._QXZ("Agent")."</th>";
+$HTML_output.="<th>"._QXZ("Current User Group")."</th>";
+$HTML_output.="<th>"._QXZ("Most Recent User Group")."</th>";
+$HTML_output.="<th>"._QXZ("Login Time")."</th>";
+$HTML_output.="<th>"._QXZ("Non-pause")."</th>";
+$HTML_output.="<th>"._QXZ("Pause")."</th>";
+
+$CSV_output["agent_pause_code_breakdown"]="\""._QXZ("Agent")."\",\""._QXZ("Current User Group")."\",\""._QXZ("Most Recent User Group")."\",\""._QXZ("Login Time")."\",\""._QXZ("Non-Pause")."\",\""._QXZ("Pause")."\"";
+
+sort($agent_pause_codes);
+for ($i=0; $i<count($agent_pause_codes); $i++)
+	{
+	$HTML_output.="<th>".$agent_pause_codes[$i]."</th>";
+	$CSV_output["agent_pause_code_breakdown"].=",\"".$agent_pause_codes[$i]."\"";
+	}
+$CSV_output["agent_pause_code_breakdown"].="\n";
+$HTML_output.="</tr>\n";
+
+# sort($agent_pause_codes_time);
+ksort($agent_pause_codes_time, SORT_NATURAL | SORT_FLAG_CASE);
+
+$agent_pause_codes_time["$user"]["$sub_status"]+=$billable_row["total_pause"];
+foreach ($agent_pause_codes_time as $agent => $agent_pause_breakdown)
+	{
+	$agentName=($show_full_agent_info ? "$agent - ".$fullname_info["$agent"] : $fullname_info["$agent"]);
+	$total_pause_time=array_sum(array_column($agent_sessions_array["$agent"],'pause_sec'));
+	$total_duration=array_sum(array_column($agent_sessions_array["$agent"],'duration'));
+	$total_pause_His=sprintf('%02d', floor($total_pause_time/3600)).gmdate(":i:s", $total_pause_time);
+	$total_duration_His=sprintf('%02d', floor($total_duration/3600)).gmdate(":i:s", $total_duration);
+	$total_nonpause_time=$total_duration-$total_pause_time;
+	$total_nonpause_His=sprintf('%02d', floor($total_nonpause_time/3600)).gmdate(":i:s", $total_nonpause_time);
+
+	$HTML_output.="<tr>\n";
+	$HTML_output.="<td>".$agentName."</td>";
+	$HTML_output.="<td>".$users_group_info["$agent"]."</td>";
+	$HTML_output.="<td>".$last_agent_groups["$agent"]."</td>";
+	$HTML_output.="<td>".$total_duration_His."</td>";
+	$HTML_output.="<td>".$total_nonpause_His."</td>";
+	$HTML_output.="<td>".$total_pause_His."</td>";
+
+	$CSV_output["agent_pause_code_breakdown"].="\"".$agentName."\",\"".$users_group_info["$agent"]."\",\"".$last_agent_groups["$agent"]."\",\"".$total_duration_His."\",\"".$total_nonpause_His."\",\"".$total_pause_His."\"";
+
+	for ($i=0; $i<count($agent_pause_codes); $i++)
+		{
+		$sub_status=$agent_pause_codes[$i];
+		$agent_pause_breakdown["$sub_status"]+=0;
+		$sub_status_His=sprintf('%02d', floor($agent_pause_breakdown["$sub_status"]/3600)).gmdate(":i:s", $agent_pause_breakdown["$sub_status"]);		
+
+		$HTML_output.="<td>".$sub_status_His."</td>";
+		$CSV_output["agent_pause_code_breakdown"].=",\"".$sub_status_His."\"";
+		}
+
+#		}
+	$HTML_output.="</tr>\n";
+	$CSV_output["agent_pause_code_breakdown"].="\n";
+	}
+
+
+$HTML_output.="<tr class='export_row'>\n";
+$HTML_output.="<td class='export_row_cell' colspan='".(6+count($agent_pause_codes))."'>"._QXZ("Export as")."...<input type='button' class='download_button' onClick=\"DownloadReport('AGENTS', 'agent_pause_code_breakdown')\" title=\"Export as a CSV file\" value='CSV'></td>";
+$HTML_output.="</tr>\n";
+$HTML_output.="</table>";
+
+if (!$download_rpt) {echo $HTML_output; ob_flush(); flush(); $HTML_output="";}
+########################################
+
 
 ######### AGENT AVAILABILITY ###########
 $HTML_output.="<BR><h2 class='rpt_header'>"._QXZ("Agent availability (for all the campaign/ingroups they are members of)")." $NWB#VERM_AGENTS-agent_availability$NWE</h2>"; # Inbound

@@ -580,9 +580,9 @@ if ($SUBMIT && $server_ip_ct>0) {
 		if ($lower_limit+999>=mysqli_num_rows($rpt_rslt)) {$upper_limit=($lower_limit+mysqli_num_rows($rpt_rslt)%1000)-1;} else {$upper_limit=$lower_limit+999;}
 		
 		$TEXT.="\n\n--- "._QXZ("AMD LOG RECORDS FOR")." $query_date, $query_date_D "._QXZ("TO")." $query_date_T $server_rpt_string, $HC_rpt_string, $DS_rpt_string\n --- "._QXZ("RECORDS")." #$lower_limit-$upper_limit               <a href=\"$PHP_SELF?SUBMIT=$SUBMIT&DB=$DB&type=$type&query_date=$query_date&query_date_D=$query_date_D&query_date_T=$query_date_T$server_ipQS$AMDSTATUSQS$AMDRESPONSEQS&lower_limit=$lower_limit&upper_limit=$upper_limit&file_download=1\">["._QXZ("DOWNLOAD")."]</a>\n\n";
-		$carrier_rpt.="+---------------------+--------------------------------+-----------+----------------------+------------------------------------------+-----------------+------------+----------------------+--------------------------------+----------------------+------------------------------------------+----------------------+\n";
-		$carrier_rpt.="| "._QXZ("CALL DATE",19)." | "._QXZ("CALLER CODE",30)." | "._QXZ("LEAD ID",9)." | "._QXZ("UNIQUE ID",20)." | "._QXZ("CHANNEL",40)." | "._QXZ("SERVER IP",15)." | "._QXZ("AMD STATUS",10)." | "._QXZ("AMD RESPONSE",20)." | "._QXZ("AMD CAUSE",30)." | "._QXZ("RUN TIME",20)." | "._QXZ("AMD STATS",40)." | "._QXZ("PHONE NUMBER",20)." |\n";
-		$carrier_rpt.="+---------------------+--------------------------------+-----------+----------------------+------------------------------------------+-----------------+------------+----------------------+--------------------------------+----------------------+------------------------------------------+----------------------+\n";
+		$carrier_rpt.="+---------------------+--------------------------------+-----------+--------+----------------------+------------------------------------------+-----------------+------------+----------------------+--------------------------------+----------------------+------------------------------------------------------------------------------------------------------+----------------------+\n";
+		$carrier_rpt.="| "._QXZ("CALL DATE",19)." | "._QXZ("CALLER CODE",30)." | "._QXZ("LEAD ID",9)." | "._QXZ("STATUS",6)." | "._QXZ("UNIQUE ID",20)." | "._QXZ("CHANNEL",40)." | "._QXZ("SERVER IP",15)." | "._QXZ("AMD STATUS",10)." | "._QXZ("AMD RESPONSE",20)." | "._QXZ("AMD CAUSE",30)." | "._QXZ("RUN TIME",20)." | "._QXZ("AMD STATS",100)." | "._QXZ("PHONE NUMBER",20)." |\n";
+		$carrier_rpt.="+---------------------+--------------------------------+-----------+--------+----------------------+------------------------------------------+-----------------+------------+----------------------+--------------------------------+----------------------+------------------------------------------------------------------------------------------------------+----------------------+\n";		
 		$CSV_text="\""._QXZ("CALL DATE")."\",\""._QXZ("CALLER CODE")."\",\""._QXZ("LEAD ID")."\",\""._QXZ("UNIQUE ID")."\",\""._QXZ("CHANNEL")."\",\""._QXZ("SERVER IP")."\",\""._QXZ("AMD STATUS")."\",\""._QXZ("AMD RESPONSE")."\",\""._QXZ("AMD CAUSE")."\",\""._QXZ("RUN TIME")."\",\""._QXZ("AMD STATS")."\",\""._QXZ("PHONE NUMBER")."\"\n";
 
 		$HTML.="<table border='0' cellpadding='3' cellspacing='1'>";
@@ -609,10 +609,12 @@ if ($SUBMIT && $server_ip_ct>0) {
 			$row=mysqli_fetch_array($rpt_rslt);
 			$phone_number=""; $phone_note="";
 
-			$stmt2="SELECT phone_number, alt_phone, address3 from vicidial_list where lead_id='$row[lead_id]'";
+			$stmt2="SELECT status, phone_number, alt_phone, address3 from vicidial_list where lead_id='$row[lead_id]'";
 			$rslt2=mysql_to_mysqli($stmt2, $link);
 			$channel=$row["channel"];
+                        $status='';
 			while ($row2=mysqli_fetch_array($rslt2)) {
+                                $status=$row2["status"];
 				if (strlen($row2["alt_phone"])>=7 && preg_match("/$row2[alt_phone]/", $channel)) {$phone_number=$row2["alt_phone"]; $phone_note="ALT";}
 				else if (strlen($row2["address3"])>=7 && preg_match("/$row2[address3]/", $channel)) {$phone_number=$row2["address3"]; $phone_note="ADDR3";}
 				else {$phone_number=$row2["phone_number"];}
@@ -624,7 +626,8 @@ if ($SUBMIT && $server_ip_ct>0) {
 				if (strlen($row["channel"])>37) {$row["channel"]=substr($row["channel"],0,37)."...";}
 				$carrier_rpt.="| ".sprintf("%-20s", $row["call_date"]); 
 				$carrier_rpt.="| ".sprintf("%-31s", $row["caller_code"]); 
-				$carrier_rpt.="| <a href=\"./admin_modify_lead.php?lead_id=".$row["lead_id"]."&CIDdisplay=Yes\">".sprintf("%-10s", $row["lead_id"])."</a>"; 
+				$carrier_rpt.="| <a href=\"./admin_modify_lead.php?lead_id=".$row["lead_id"]."&CIDdisplay=Yes\">".sprintf("%-10s", $row["lead_id"])."</a>";
+                                $carrier_rpt.="| ".sprintf("%-7s", $status);
 				$carrier_rpt.="| ".sprintf("%-21s", $row["uniqueid"]); 
 				$carrier_rpt.="| ".sprintf("%-41s", $row["channel"]); 
 				$carrier_rpt.="| ".sprintf("%-16s", $row["server_ip"]); 
@@ -632,7 +635,7 @@ if ($SUBMIT && $server_ip_ct>0) {
 				$carrier_rpt.="| ".sprintf("%-21s", $row["AMDRESPONSE"]); 
 				$carrier_rpt.="| ".sprintf("%-31s", $row["AMDCAUSE"]); 
 				$carrier_rpt.="| ".sprintf("%-21s", $row["run_time"]); 
-				$carrier_rpt.="| ".sprintf("%-41s", $row["AMDSTATS"]); 
+				$carrier_rpt.="| ".sprintf("%-101s", $row["AMDSTATS"]); 
 				$carrier_rpt.="| ".sprintf("%-21s", $phone_number)."|\n"; 
 
 				$HTML.="<tr bgcolor='#".$SSstd_row2_background."'>";
@@ -651,7 +654,7 @@ if ($SUBMIT && $server_ip_ct>0) {
 				$HTML.="</tr>\n";
 			}
 		}
-		$carrier_rpt.="+---------------------+--------------------------------+-----------+----------------------+------------------------------------------+-----------------+------------+----------------------+--------------------------------+----------------------+------------------------------------------+----------------------+\n";
+		$carrier_rpt.="+---------------------+--------------------------------+-----------+--------+----------------------+------------------------------------------+-----------------+------------+----------------------+--------------------------------+----------------------+------------------------------------------------------------------------------------------------------+----------------------+\n";
 
 		$carrier_rpt_hf="";
 		$ll=$lower_limit-1000;

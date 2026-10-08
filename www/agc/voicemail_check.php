@@ -1,7 +1,7 @@
 <?php
 # voicemail_check.php    version 2.14
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed purely to check whether the voicemail box on the server defined has new and old messages
 # This script depends on the server_ip being sent and also needs to have a valid user/pass from the vicidial_users table
@@ -34,10 +34,11 @@
 # 210616-2109 - Added optional CORS support, see options.php for details
 # 210825-0910 - Fix for XSS security issue
 # 220220-0855 - Added allow_web_debug system setting
+# 260302-1150 - Code updates for PHP8 compatibility
 #
 
-$version = '2.14-17';
-$build = '220220-0855';
+$version = '2.14-18';
+$build = '260302-1150';
 $php_script = 'voicemail_check.php';
 $SSagent_debug_logging=0;
 $startMS = microtime();
@@ -48,16 +49,21 @@ require_once("functions.php");
 ### If you have globals turned off uncomment these lines
 if (isset($_GET["user"]))					{$user=$_GET["user"];}
 	elseif (isset($_POST["user"]))			{$user=$_POST["user"];}
+	else {$user="";}
 if (isset($_GET["pass"]))					{$pass=$_GET["pass"];}
 	elseif (isset($_POST["pass"]))			{$pass=$_POST["pass"];}
+	else {$pass="";}
 if (isset($_GET["server_ip"]))				{$server_ip=$_GET["server_ip"];}
 	elseif (isset($_POST["server_ip"]))		{$server_ip=$_POST["server_ip"];}
+	else {$server_ip="";}
 if (isset($_GET["session_name"]))			{$session_name=$_GET["session_name"];}
 	elseif (isset($_POST["session_name"]))	{$session_name=$_POST["session_name"];}
+	else {$session_name="";}
 if (isset($_GET["format"]))					{$format=$_GET["format"];}
 	elseif (isset($_POST["format"]))		{$format=$_POST["format"];}
 if (isset($_GET["vmail_box"]))				{$vmail_box=$_GET["vmail_box"];}
 	elseif (isset($_POST["vmail_box"]))		{$vmail_box=$_POST["vmail_box"];}
+	else {$vmail_box="";}
 
 $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
@@ -68,7 +74,8 @@ if (!isset($format))   {$format="text";}
 $StarTtime = date("U");
 $NOW_DATE = date("Y-m-d");
 $NOW_TIME = date("Y-m-d H:i:s");
-if (!isset($query_date)) {$query_date = $NOW_DATE;}
+# 3/28/25 - Removed, never used
+# if (!isset($query_date)) {$query_date = $NOW_DATE;}
 
 # if options file exists, use the override values for the above variables
 #   see the options-example.php file for more information
@@ -105,24 +112,33 @@ if ($qm_conf_ct > 0)
 	$SSagent_debug_logging =	$row[3];
 	$SSallow_web_debug =		$row[4];
 	}
-if ($SSallow_web_debug < 1) {$DB=0;}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;}
+$DB=preg_replace("/[^0-9]/","",$DB);
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
-$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
-$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
-$vmail_box = preg_replace('/[^-_0-9\p{L}]/u',"",$vmail_box);
-$format = preg_replace('/[^-_0-9a-zA-Z]/','',$format);
+# $session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
+# $server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
+# $vmail_box = preg_replace('/[^-_0-9\p{L}]/u',"",$vmail_box);
+# $format = preg_replace('/[^-_0-9a-zA-Z]/','',$format);
 
 if ($non_latin < 1)
 	{
 	$user=preg_replace("/[^-_0-9a-zA-Z]/","",$user);
 	$pass=preg_replace("/[^-\.\+\/\=_0-9a-zA-Z]/","",$pass);
+	$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
+	$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
+	$vmail_box = preg_replace('/[^-_0-9a-zA-Z]/',"",$vmail_box);
+	$format = preg_replace('/[^-_0-9a-zA-Z]/','',$format);
 	}
 else
 	{
 	$user = preg_replace('/[^-_0-9\p{L}]/u','',$user);
 	$pass = preg_replace('/[^-\.\+\/\=_0-9\p{L}]/u','',$pass);
+	$session_name = preg_replace('/[^-\.\:\_0-9\p{L}]/u','',$session_name);
+	$server_ip = preg_replace('/[^-\.\:\_0-9\p{L}]/u','',$server_ip);
+	$vmail_box = preg_replace('/[^-_0-9\p{L}]/u',"",$vmail_box);
+	$format = preg_replace('/[^-_0-9\p{L}]/u','',$format);
 	}
 
 $auth=0;
@@ -212,7 +228,7 @@ if ($format=='debug')
 	echo "\n</body>\n</html>\n";
 	}
 
-if ($SSagent_debug_logging > 0) {vicidial_ajax_log($NOW_TIME,$startMS,$link,$ACTION,$php_script,$user,$stage,$lead_id,$session_name,$stmt);}
+if ($SSagent_debug_logging > 0) {vicidial_ajax_log($NOW_TIME,$startMS,$link,"",$php_script,$user,"",0,$session_name,$stmt);} # ACTION, stage, and lead_id are never used in this script
 exit; 
 
 ?>

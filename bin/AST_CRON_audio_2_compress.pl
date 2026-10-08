@@ -12,8 +12,8 @@
 # ### recording mixing/compressing/ftping scripts
 ##0,3,6,9,12,15,18,21,24,27,30,33,36,39,42,45,48,51,54,57 * * * * /usr/share/astguiclient/AST_CRON_audio_1_move_mix.pl
 # 0,3,6,9,12,15,18,21,24,27,30,33,36,39,42,45,48,51,54,57 * * * * /usr/share/astguiclient/AST_CRON_audio_1_move_VDonly.pl
-# 1,4,7,10,13,16,19,22,25,28,31,34,37,40,43,46,49,52,55,58 * * * * /usr/share/astguiclient/AST_CRON_audio_2_compress.pl --GSM
-# 2,5,8,11,14,17,20,23,26,29,32,35,38,41,44,47,50,53,56,59 * * * * /usr/share/astguiclient/AST_CRON_audio_3_ftp.pl --GSM
+# 1,4,7,10,13,16,19,22,25,28,31,34,37,40,43,46,49,52,55,58 * * * * /usr/share/astguiclient/AST_CRON_audio_2_compress.pl --MP3
+# 2,5,8,11,14,17,20,23,26,29,32,35,38,41,44,47,50,53,56,59 * * * * /usr/share/astguiclient/AST_CRON_audio_3_ftp.pl --MP3
 #
 # FLAGS FOR COMPRESSION CODECS
 # --GSM = GSM 6.10 codec
@@ -28,7 +28,7 @@
 #
 # This program assumes that recordings are saved by Asterisk as .wav
 # 
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # 
 # 80302-1958 - First Build
@@ -40,6 +40,7 @@
 # 170212-0732 - Added --file-sorting option to put files into dated directories (THIS WILL NOT ALLOW FTP ARCHIVING)
 # 230201-0007 - Allowed for handling of stereo gateway recordings
 # 240213-1146 - Added --GATEWAY option
+# 250909-1030 - Added code to detect stereo audio files for MP3 stereo processing
 #
 
 $GSM=0;   $MP3=0;   $OGG=0;   $GSW=0;
@@ -251,6 +252,22 @@ if ( ($GSM > 0) || ($OGG > 0) || ($GSW > 0) )
 		}
 	}
 
+### find soxi to gather the length/channels info if needed
+$soxibin = '';
+if ( -e ('/usr/bin/soxi')) {$soxibin = '/usr/bin/soxi';}
+else 
+	{
+	if ( -e ('/usr/local/bin/soxi')) {$soxibin = '/usr/local/bin/soxi';}
+	else
+		{
+		if ( -e ('/usr/sbin/soxi')) {$soxibin = '/usr/sbin/soxi';}
+		else 
+			{
+			if ($DB) {print "Can't find soxi binary! No length calculations will be available...\n";}
+			}
+		}
+	}
+
 if ($MP3 > 0)
 	{
 	### find lame mp3 encoder binary to do the compression
@@ -381,9 +398,18 @@ foreach(@FILES)
 				$MP3file =~ s/-all\.wav/-all.mp3/gi;
 				$MP3file =~ s/\.wav|\.gsm/.mp3/gi;
 
+				$soxi_channels=1;
+				if (length($soxibin) > 3)
+					{
+					@soxi_output = `$soxibin -c $dir2/$ALLfile`;
+					$soxi_channels = $soxi_output[0];
+					$soxi_channels =~ s/\D//gi;
+					$soxi_channels = ($soxi_channels + 0);
+					}
+
 				if ($DB) {print "|$recording_id|$ALLfile|$dir2/$location$MP3file|     |$SQLfile|\n";}
 
-				if ($GATEWAY > 0) 
+				if ( ($GATEWAY > 0) || ($soxi_channels > 1) )
 					{
 					`$lamebin -b 16 -m s --silent "$dir2/$ALLfile" "$dir2/$location$MP3file"`;
 					}

@@ -1,7 +1,7 @@
 <?php
 # launch.php - launches vicidial.php in restricted window
 # 
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # For launch validation to work, the options.php file must have
 # window_validation = 1 and win_valid_name set to window_name below
@@ -12,6 +12,7 @@
 # 141216-2134 - Added language settings lookups and user/pass variable standardization
 # 210825-0909 - Fix for XSS security issue
 # 220220-0911 - Added allow_web_debug system setting
+# 260302-1208 - Code updates for PHP8 compatibility
 #
 
 $window_name = 'subwindow_launch';
@@ -22,34 +23,37 @@ require_once("dbconnect_mysqli.php");
 ### do not edit below this line ###
 
 if (isset($_GET["DB"]))						    {$DB=$_GET["DB"];}
-        elseif (isset($_POST["DB"]))            {$DB=$_POST["DB"];}
+	elseif (isset($_POST["DB"]))            {$DB=$_POST["DB"];}
 if (isset($_GET["JS_browser_width"]))				{$JS_browser_width=$_GET["JS_browser_width"];}
-        elseif (isset($_POST["JS_browser_width"]))  {$JS_browser_width=$_POST["JS_browser_width"];}
+	elseif (isset($_POST["JS_browser_width"]))  {$JS_browser_width=$_POST["JS_browser_width"];}
+	else {$JS_browser_width="";}
 if (isset($_GET["JS_browser_height"]))				{$JS_browser_height=$_GET["JS_browser_height"];}
-        elseif (isset($_POST["JS_browser_height"])) {$JS_browser_height=$_POST["JS_browser_height"];}
+	elseif (isset($_POST["JS_browser_height"])) {$JS_browser_height=$_POST["JS_browser_height"];}
+	else {$JS_browser_height="";}
 if (isset($_GET["phone_login"]))                {$phone_login=$_GET["phone_login"];}
-        elseif (isset($_POST["phone_login"]))   {$phone_login=$_POST["phone_login"];}
+	elseif (isset($_POST["phone_login"]))   {$phone_login=$_POST["phone_login"];}
 if (isset($_GET["phone_pass"]))					{$phone_pass=$_GET["phone_pass"];}
-        elseif (isset($_POST["phone_pass"]))    {$phone_pass=$_POST["phone_pass"];}
+	elseif (isset($_POST["phone_pass"]))    {$phone_pass=$_POST["phone_pass"];}
 if (isset($_GET["VD_login"]))					{$VD_login=$_GET["VD_login"];}
-        elseif (isset($_POST["VD_login"]))      {$VD_login=$_POST["VD_login"];}
+	elseif (isset($_POST["VD_login"]))      {$VD_login=$_POST["VD_login"];}
+	else {$VD_login="";}
 if (isset($_GET["VD_pass"]))					{$VD_pass=$_GET["VD_pass"];}
-        elseif (isset($_POST["VD_pass"]))       {$VD_pass=$_POST["VD_pass"];}
+	elseif (isset($_POST["VD_pass"]))       {$VD_pass=$_POST["VD_pass"];}
+	else {$VD_pass="";}
 if (isset($_GET["VD_campaign"]))                {$VD_campaign=$_GET["VD_campaign"];}
-        elseif (isset($_POST["VD_campaign"]))   {$VD_campaign=$_POST["VD_campaign"];}
-if (isset($_GET["relogin"]))					{$relogin=$_GET["relogin"];}
-        elseif (isset($_POST["relogin"]))       {$relogin=$_POST["relogin"];}
-if (isset($_GET["MGR_override"]))				{$MGR_override=$_GET["MGR_override"];}
-        elseif (isset($_POST["MGR_override"]))  {$MGR_override=$_POST["MGR_override"];}
+	elseif (isset($_POST["VD_campaign"]))   {$VD_campaign=$_POST["VD_campaign"];}
+	else {$VD_campaign="";}
 if (!isset($phone_login)) 
 	{
 	if (isset($_GET["pl"]))            {$phone_login=$_GET["pl"];}
 		elseif (isset($_POST["pl"]))   {$phone_login=$_POST["pl"];}
+		else {$phone_login="";}
 	}
 if (!isset($phone_pass))
 	{
 	if (isset($_GET["pp"]))            {$phone_pass=$_GET["pp"];}
 		elseif (isset($_POST["pp"]))   {$phone_pass=$_POST["pp"];}
+		else {$phone_pass="";}
 	}
 if (isset($VD_campaign))
 	{
@@ -63,16 +67,14 @@ if (!isset($flag_channels))
 	}
 
 ### security strip all non-alphanumeric characters out of the variables ###
-$DB=preg_replace("/[^0-9a-z]/","",$DB);
+$VD_login=preg_replace('/[^-_0-9\p{L}]/u',"",$VD_login);
+/* 3/27/25 - Moved further down
 $phone_login=preg_replace('/[^-_0-9\p{L}]/u',"",$phone_login);
 $phone_pass=preg_replace('/[^-_0-9\p{L}]/u',"",$phone_pass);
-$VD_login=preg_replace('/[^-_0-9\p{L}]/u',"",$VD_login);
 $VD_pass=preg_replace('/[^-_0-9\p{L}]/u',"",$VD_pass);
 $VD_campaign = preg_replace('/[^-_0-9\p{L}]/u',"",$VD_campaign);
 $JS_browser_width = preg_replace('/[^-_0-9\p{L}]/u',"",$JS_browser_width);
 $JS_browser_height = preg_replace('/[^-_0-9\p{L}]/u',"",$JS_browser_height);
-$relogin = preg_replace('/[^-_0-9\p{L}]/u',"",$relogin);
-$MGR_override = preg_replace('/[^-_0-9\p{L}]/u',"",$MGR_override);
 
 $login_string='';
 
@@ -88,6 +90,7 @@ if (strlen($VD_campaign)>0)
 	{$login_string .= "VD_campaign=$VD_campaign";}
 if (strlen($login_string)>0)
 	{$login_string = "?$login_string";}
+ */
 
 $US='_';
 $CL=':';
@@ -105,8 +108,8 @@ if (($server_port == '80') or ($server_port == '443') ) {$server_port='';}
 else {$server_port = "$CL$server_port";}
 $agcPAGE = "$HTTPprotocol$server_name$server_port$script_name";
 $agcDIR = preg_replace("/launch\.php/",'',$agcPAGE);
-if (strlen($static_agent_url) > 5)
-	{$agcPAGE = $static_agent_url;}
+# if (strlen($static_agent_url) > 5)
+# 	{$agcPAGE = $static_agent_url;}
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
@@ -125,7 +128,8 @@ if ($qm_conf_ct > 0)
 	$SSlanguage_method =	$row[4];
 	$SSallow_web_debug =	$row[5];
 	}
-if ($SSallow_web_debug < 1) {$DB=0;}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;}
+$DB=preg_replace("/[^0-9]/","",$DB);
 
 $VUselected_language = '';
 $stmt="SELECT selected_language from vicidial_users where user='$VD_login';";
@@ -145,8 +149,37 @@ if ($non_latin < 1)
 	{
 	$VD_login=preg_replace("/[^-_0-9a-zA-Z]/","",$VD_login);
 	$VD_pass=preg_replace("/[^-_0-9a-zA-Z]/","",$VD_pass);
+	$phone_login=preg_replace('/[^-_0-9a-zA-Z]/',"",$phone_login);
+	$phone_pass=preg_replace('/[^-_0-9a-zA-Z]/',"",$phone_pass);
+	$VD_campaign = preg_replace('/[^-_0-9a-zA-Z]/',"",$VD_campaign);
+	$JS_browser_width = preg_replace('/[^-_0-9a-zA-Z]/',"",$JS_browser_width);
+	$JS_browser_height = preg_replace('/[^-_0-9a-zA-Z]/',"",$JS_browser_height);
+	}
+else
+	{
+	$VD_login=preg_replace("/[^-_0-9\p{L}]/u","",$VD_login);
+	$VD_pass=preg_replace("/[^-_0-9\p{L}]/u","",$VD_pass);
+	$phone_login=preg_replace('/[^-_0-9\p{L}]/u',"",$phone_login);
+	$phone_pass=preg_replace('/[^-_0-9\p{L}]/u',"",$phone_pass);
+	$VD_campaign = preg_replace('/[^-_0-9\p{L}]/u',"",$VD_campaign);
+	$JS_browser_width = preg_replace('/[^-_0-9\p{L}]/u',"",$JS_browser_width);
+	$JS_browser_height = preg_replace('/[^-_0-9\p{L}]/u',"",$JS_browser_height);
 	}
 
+$login_string='';
+
+if (strlen($phone_login)>0)
+	{$login_string .= "phone_login=$phone_login&";}
+if (strlen($phone_pass)>0)
+	{$login_string .= "phone_pass=$phone_pass&";}
+if (strlen($VD_login)>0)
+	{$login_string .= "VD_login=$VD_login&";}
+if (strlen($VD_pass)>0)
+	{$login_string .= "VD_pass=$VD_pass&";}
+if (strlen($VD_campaign)>0)
+	{$login_string .= "VD_campaign=$VD_campaign";}
+if (strlen($login_string)>0)
+	{$login_string = "?$login_string";}
 ?>
 
 <html>

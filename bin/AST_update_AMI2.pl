@@ -5,7 +5,7 @@
 # This script uses the Asterisk Manager interface to update the live_channels
 # tables and verify the parked_channels table in the asterisk MySQL database
 #
-# Copyright (C) 2022  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 170915-2110 - Initial version for Asterisk 13, based upon AST_update.pl
@@ -19,12 +19,16 @@
 # 210315-1045 - Populate the CIDname in live_sip_channels/live_channels tables, Issue #1255
 # 210827-0930 - Added PJSIP compatibility
 # 220310-1136 - Fix for issue dealing with bad carrier 'P-Asserted-Identity' input
+# 251008-2114 - Added code for recording_dtmf_detection and recording_dtmf_muting
+# 251203-2218 - Added server_live_partitions inserts/updates
+# 260515-1939 - Added internal logging
 #
 
 # constants
 $DB=0;  # Debug flag, set to 0 for no debug messages, lots of output
 $DBX=0;
 $run_check=1; # concurrency check
+$script_name = 'AST_update_AMI2.pl';
 
 # loop time in seconds
 $loop_time = 0.4;
@@ -37,6 +41,9 @@ $server_stats_update_interval = 30;
 
 # how often performance logging is triggered
 $performance_logging_interval = 5;
+
+# dtmf-check last second
+$dtmf_check_last_time = 999999;
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -154,6 +161,8 @@ if (try_load($module))
 $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
 or die "Couldn't connect to database: " . DBI->errstr;
 
+$action='start';   $stage='LOGGED INTO MYSQL SERVER '.$build;   &internal_logger;
+
 ### Grab Server values from the database
 $stmtA = "SELECT telnet_host,telnet_port,ASTmgrUSERNAME,ASTmgrSECRET,ASTmgrUSERNAMEupdate,ASTmgrUSERNAMElisten,ASTmgrUSERNAMEsend,max_vicidial_trunks,answer_transfer_agent,local_gmt,ext_context,vd_server_logs,asterisk_version FROM servers where server_ip = '$server_ip';";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
@@ -191,6 +200,19 @@ if ($sthArows > 0)
 	}
 
 if (!$telnet_port) {$telnet_port = '5038';}
+
+### Grab System Settings values from the database
+$stmtA = "SELECT recording_dtmf_detection,recording_dtmf_muting FROM system_settings;";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+if ($sthArows > 0)
+	{
+	@aryA = $sthA->fetchrow_array;
+	$SSrecording_dtmf_detection =	$aryA[0];
+	$SSrecording_dtmf_muting =		$aryA[1];
+	}
+$sthA->finish();
 
 
 ##### Check for a server_updater record, and if not present, insert one
@@ -253,7 +275,7 @@ else
 	}
 print STDERR "$CCRrec|$cid_channels_recent|$stmtA\n";
 
-$event_string='TABLE CHECK cid_channels_recent_$PADserver_ip complete|$CCRrec|$affected_rowsCCR|';
+$event_string="TABLE CHECK cid_channels_recent_$PADserver_ip complete|$CCRrec|$affected_rowsCCR|";
 event_logger($SYSLOG,$event_string);
 ##### END Check for a cid_channels_recent_IPXXXXX... table, and if not present, create one
 
@@ -323,6 +345,8 @@ else
 	### BEGIN manager event handling for asterisk version >= 13
 	$endless_loop = 1;
 	$loop_count = 0;
+	$iLog_ct=0;
+	$iLog_calls=0;
 
 	# get the number of microseconds the loop is supposed to take
 	$loop_time_usec = $loop_time * 1000000;
@@ -642,7 +666,6 @@ else
 			}
 		else
 			{
-
 			# Process the channel list
 			$counts = process_channels($dbhA,$chan_array_ref,$phones_ref,$db_trunks_ref,$db_clients_ref,$server_ip,$old_counts);
 
@@ -661,6 +684,18 @@ else
 				{
 				server_perf_log( $dbhA, $server_ip, $counts, $server_load, $mem_free, $mem_used, $num_processes, $cpu_user_percent, $cpu_sys_percent, $cpu_idle_percent, $reads, $writes );
 				$last_perf_log = time();
+				}
+
+			# check for if dtmf-muted recordings to stop, if recording_dtmf_detection and recording_dtmf_muting are active
+			if ( ($SSrecording_dtmf_detection > 0) && ($SSrecording_dtmf_muting > 0) ) 
+				{
+				if ($dtmf_check_last_time != $current_time_sec)
+					{
+					# dtmf muting stop check hasn't run this second, so check for them
+					&dtmf_muting_stop_check;
+
+					$dtmf_check_last_time = $current_time_sec;
+					}
 				}
 
 			# figure out how long that loop took.
@@ -688,6 +723,15 @@ else
 				usleep($sleep_usec);
 
 				}
+			}
+		# update internal process log
+		$iLog_ct++;
+		if ($iLog_ct =~ /000$|500$/) 
+			{
+			$stmtA = "UPDATE vicidial_internal_log SET up_time=NOW(), action='running', stage='Loops: $iLog_ct' WHERE process='$script_name' and server_ip='$server_ip' order by db_time desc limit 1;";
+			if($DB){print STDERR "|$stmtA|";}
+			my $affected_rows = $dbhA->do($stmtA);
+			if($DB){print STDERR "$affected_rows|\n";}
 			}
 		}
 	}
@@ -1462,8 +1506,102 @@ sub get_time_now	#get the current date and time and epoch for logging call lengt
 	$now_date_epoch = time();
 	$now_date = "$year-$mon-$mday $hour:$min:$sec";
 	$action_log_date = "$year-$mon-$mday";
+	$current_time_sec = "$hour$min$sec";
+	$current_time_sec = ($current_time_sec + 0);
 	}
 
+sub dtmf_muting_stop_check
+	{
+	$mute_to_stop_count=0;
+	### Get count of dtmf muted recordings that should be un-muted
+	$stmtA = "SELECT count(*) FROM recording_live WHERE mute_state='2' and dtmf_muting_end_time <= '$now_date' and recording_status='STARTED' and server_ip='$server_ip';";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows=$sthA->rows;
+	if ($sthArows > 0)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$mute_to_stop_count =	$aryA[0];
+		}
+	$sthA->finish();
+
+	if ($DB) {print "DEBUG: DTMF Mute Stop Check: $mute_to_stop_count   |$sthArows|$stmtA|\n";}
+
+	if ($mute_to_stop_count > 0) 
+		{
+		# gather details on all recordings that need to be un-muted
+		$stmtA = "SELECT recording_id,channel,dtmf_detected,dtmf_muting,dtmf_muting_seconds,mute_state,recording_type,filename,lead_id FROM recording_live where mute_state='2' and dtmf_muting_end_time <= '$now_date' and dtmf_muting_end_time != '2020-12-31 23:59:59' and recording_status='STARTED' and server_ip='$server_ip' order by recording_id limit 1;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArowsRECdetail=$sthA->rows;
+		$rl_ct=0;
+		while ($sthArowsRECdetail > $rl_ct)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$temp_recording_id[$rl_ct] =	$aryA[0];
+			$rec_channel[$rl_ct] =			$aryA[1];
+			$dtmf_detected[$rl_ct] =		$aryA[2];
+			$dtmf_muting[$rl_ct] =			$aryA[3];
+			$dtmf_muting_seconds[$rl_ct] =	$aryA[4];
+			$mute_state[$rl_ct] =			$aryA[5];
+			$recording_type[$rl_ct] =		$aryA[6];
+			$recording_filename[$rl_ct] =	$aryA[7];
+			$rec_lead_id[$rl_ct] =			$aryA[8];
+
+			$rl_ct++;
+			}
+		$sthA->finish();
+
+		# go through each recording and un-mute the recording
+		$rl_ct=0;
+		while ($sthArowsRECdetail > $rl_ct)
+			{
+			# update recording_live record, trigger dtmf muting and increment dtmf_detected counter
+			$stmtA = "UPDATE recording_live SET mute_state='3' where recording_id='$temp_recording_id[$rl_ct]';";
+			my $affected_rows = $dbhA->do($stmtA);
+			if($DBX){print STDERR "$affected_rows|$stmtA|\n";}
+
+			$channel_to_mute = $rec_channel[$rl_ct];
+			$dtmf_mute_id=0;
+			### Get channel name of channel that should be un-muted
+			$stmtA = "SELECT channel_to_mute,dtmf_mute_id FROM recording_dtmf_muting_log WHERE recording_id='$temp_recording_id[$rl_ct]' and mute_state='2' order by dtmf_mute_id desc limit 1;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+			if ($sthArows > 0)
+				{
+				@aryA = $sthA->fetchrow_array;
+				$channel_to_mute =	$aryA[0];
+				$dtmf_mute_id =		$aryA[1];
+				}
+			$sthA->finish();
+
+			$mute_direction = 'both';
+			if ( ($recording_type[$rl_ct] eq 'MONO_LEGACY') || ($recording_type[$rl_ct] eq 'MONO_LEGACY_RIR') )
+				{$mute_direction = 'both';}
+			if ( ($recording_type[$rl_ct] !~ /PARALLEL/) && ($recording_type[$rl_ct] =~ /CUSTOMER_ONLY|SACCO|SACICO|SACRCO/) )
+				{$mute_direction = 'read';}
+			if ( ($recording_type[$rl_ct] !~ /PARALLEL/) && ($recording_type[$rl_ct] =~ /CUSTOMER_MUTE|SACCM|SACICM|SACRCM/) )
+				{$mute_direction = 'write';}
+			$vmgr_callerid = substr($recording_filename[$rl_ct], -15) . 'DTMFU';
+			$stmtE="INSERT INTO vicidial_manager values('','','$now_date','NEW','N','$server_ip','','MixMonitorMute','$vmgr_callerid','ActionID: $vmgr_callerid','Channel: $channel_to_mute','Direction: $mute_direction','State: 0','','','','','','');";
+			my $affected_rowsVM = $dbhA->do($stmtE);
+			if($DBX){print STDERR "$affected_rowsVM|$stmtE|\n";}
+
+			$stmtC = "UPDATE recording_live SET mute_state='0', dtmf_muting_end_time='$now_date' where recording_id='$temp_recording_id[$rl_ct]';";
+			my $affected_rowsRL = $dbhA->do($stmtC);
+			if($DBX){print STDERR "$affected_rowsRL|$stmtC|\n";}
+
+			$stmtB = "UPDATE recording_dtmf_muting_log SET mute_state='4',dtmf_muting_end_time='$now_date' WHERE dtmf_mute_id='$dtmf_mute_id';";
+			my $affected_rowsML = $dbhA->do($stmtB);
+			if($DBX){print STDERR "$affected_rowsML|$stmtB|\n";}
+
+			if ($DB) {print "DEBUG: DTMF Mute Stopped: $temp_recording_id[$rl_ct]   $rl_ct\n";}
+
+			$rl_ct++;
+			}
+		}
+	}
 
 # try to load a module
 sub try_load 
@@ -1636,6 +1774,7 @@ sub get_disk_space
 	@serverDISK = `$dfbin -B 1048576 -x nfs -x cifs -x sshfs -x ftpfs`;
 	$ct=0;
 	$ct_PCT=0;
+	$part_order=0;
 	$disk_usage = '';
 	foreach(@serverDISK)
 		{
@@ -1645,6 +1784,23 @@ sub get_disk_space
 			$usage = $1;
 			$usage =~ s/\%//gi;
 			$disk_usage .= "$ct_PCT $usage|";
+			$partition_path = $serverDISK[$ct];
+			$partition_path =~ s/.*\% |\r|\n|\t//gi;
+			$partition_filesystem = $serverDISK[$ct];
+			$partition_filesystem =~ s/ .*|\r|\n|\t//gi;
+			$disk_data = $serverDISK[$ct];
+			$disk_data =~ s/\s+/ /gi;
+			@disk_dataARY = split(/ /,$disk_data);
+			$mb_used =		$disk_dataARY[2];
+			$mb_available = $disk_dataARY[3];
+
+			# insert/update server_live_drives record in the DB
+			$stmtA = "INSERT INTO server_live_partitions set server_ip='$server_ip',partition_path='$partition_path',update_time=NOW(),partition_order='$part_order',partition_filesystem='$partition_filesystem',use_pct='$usage',mb_used='$mb_used',mb_available='$mb_available' ON DUPLICATE KEY UPDATE update_time=NOW(),partition_order='$part_order',partition_filesystem='$partition_filesystem',use_pct='$usage',mb_used='$mb_used',mb_available='$mb_available';";
+			if($DB){print STDERR "\n$stmtA\n";}
+			$dbhA->do($stmtA);
+			$affected_rows = $dbhA->do($stmtA);
+
+			$part_order++;
 			}
 		$ct++;
 		}
@@ -1728,4 +1884,12 @@ sub get_disk_rw
 	$prev_total_writes = $total_writes;
 
 	return ( $reads, $writes );
+	}
+
+sub internal_logger
+	{
+	$stmtA = "INSERT INTO vicidial_internal_log SET db_time=NOW(), up_time=NOW(), process='$script_name', server_ip='$server_ip', action='$action', stage='$stage';";
+	if($DB){print STDERR "|$stmtA|";}
+	my $affected_rows = $dbhA->do($stmtA);
+	if($DB){print STDERR "$affected_rows|\n";}
 	}

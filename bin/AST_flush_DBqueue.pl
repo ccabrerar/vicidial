@@ -9,7 +9,7 @@
 # !!!!!!!! IMPORTANT !!!!!!!!!!!!!!!!!!
 # THIS SCRIPT SHOULD ONLY BE RUN ON ONE SERVER ON YOUR CLUSTER
 #
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 60717-1214 - changed to DBI by Marin Blu
@@ -36,6 +36,9 @@
 # 231228-1901 - Added optimizing of vicidial_3way_press_multi records
 # 240219-0811 - Added optimizing of server_live_... tables
 # 240709-1300 - Added Validate XFER vicidial_auto_calls: "--check-xfers" flag
+# 250914-1537 - Added archiving of recording_live table
+# 251003-0837 - Added --preserve-dtmf flag (DTMF logs would then be kept for 1-2 days)
+# 260515-2212 - Added internal logging
 #
 
 $session_flush=0;
@@ -43,7 +46,11 @@ $SSsip_event_logging=0;
 $reset_stuck_leads=0;
 $stuck_lists='';
 $stuck_listsSQL='';
+$preserve_dtmf=0;
 $check_xfers=0;
+$vicidial_recording_limit=60;
+$script_name = 'AST_flush_DBqueue.pl';
+$start_sec = time();
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -66,6 +73,7 @@ if (length($ARGV[0])>1)
 		print "  [--session-flush] = flush the vicidial_sessions_recent table\n";
 		print "  [--reset-stuck-leads] = reset status of ERI/INCALL leads to NEW if previewed but not called\n";
 		print "  [--stuck-lists=X] = restrict stuck leads check to these lists: X-Y-Z multiple lists separated by a single dash\n";
+		print "  [--preserve-dtmf] = do not purge dtmf log\n";
 		print "  [--check-xfers] = validates that XFER status vicidial_auto_calls records are live, if not, they are deleted\n";
 		print "\n";
 
@@ -103,6 +111,12 @@ if (length($ARGV[0])>1)
 			$reset_stuck_leads=1;
 			if ($Q < 1)
 				{print "\n----- RESET STUCK LEADS ----- $reset_stuck_leads \n\n";}
+			}
+		if ($args =~ /--preserve-dtmf/i)
+			{
+			$preserve_dtmf=1;
+			if ($Q < 1)
+				{print "\n----- PRESERVE DTMF LOGS ----- $preserve_dtmf \n\n";}
 			}
 		if ($args =~ /--check-xfers/i)
 			{
@@ -292,19 +306,34 @@ use DBI;
 $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
  or die "Couldn't connect to database: " . DBI->errstr;
 
+$action='start';   $stage='LOGGED INTO MYSQL SERVER';   &internal_logger;
+
 ### Grab Server values from the database
-$stmtA = "SELECT vd_server_logs FROM servers where server_ip = '$VARserver_ip';";
+$stmtA = "SELECT vd_server_logs,vicidial_recording_limit FROM servers where server_ip = '$VARserver_ip';";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
 if ($sthArows > 0)
 	{
 	@aryA = $sthA->fetchrow_array;
-	$DBvd_server_logs =			$aryA[0];
+	$DBvd_server_logs =				$aryA[0];
+	$vicidial_recording_limit =		$aryA[1];
 	if ($DBvd_server_logs =~ /Y/)	{$SYSLOG = '1';}
 	else {$SYSLOG = '0';}
 	}
 $sthA->finish();
+
+($Rsec,$Rmin,$Rhour,$Rmday,$Rmon,$Ryear,$Rwday,$Ryday,$Risdst) = localtime(time() - ($vicidial_recording_limit * 60));
+$Ryear = ($Ryear + 1900);
+$Ryy = $Ryear; $Ryy =~ s/^..//gi;
+$Rmon++;
+if ($Rmon < 10) {$Rmon = "0$Rmon";}
+if ($Rmday < 10) {$Rmday = "0$Rmday";}
+if ($Rhour < 10) {$Rhour = "0$Rhour";}
+if ($Rmin < 10) {$Rmin = "0$Rmin";}
+if ($Rsec < 10) {$Rsec = "0$Rsec";}
+$SQLdate_REC_limit="$Ryear-$Rmon-$Rmday $Rhour:$Rmin:$Rsec";
+
 
 ### Grab system_settings values from the database
 $stmtA = "SELECT sip_event_logging,enable_auto_reports FROM system_settings limit 1;";
@@ -329,10 +358,13 @@ if($DB){print STDERR "\n|$stmtA|\n";}
 if (!$T) {	$affected_rows = $dbhA->do($stmtA);}
 if (!$Q) {print " - vicidial_manager flush: $affected_rows rows\n";}
 
-$stmtA = "DELETE from vicidial_dtmf_log where dtmf_time < '$flush_time';";
-if($DB){print STDERR "\n|$stmtA|\n";}
-if (!$T) {      $affected_rows = $dbhA->do($stmtA);}
-if (!$Q) {print " - vicidial_dtmf_log flush: $affected_rows rows\n";}
+if ($preserve_dtmf < 1) 
+	{
+	$stmtA = "DELETE from vicidial_dtmf_log where dtmf_time < '$flush_time';";
+	if($DB){print STDERR "\n|$stmtA|\n";}
+	if (!$T) {      $affected_rows = $dbhA->do($stmtA);}
+	if (!$Q) {print " - vicidial_dtmf_log flush: $affected_rows rows\n";}
+	}
 
 $stmtA = "DELETE from routing_initiated_recordings where launch_time < '$flush_time';";
 if($DB){print STDERR "\n|$stmtA|\n";}
@@ -377,19 +409,21 @@ if (!$T)
 if (!$Q) {print " - OPTIMIZE vicidial_manager          \n";}
 
 
-$stmtA = "OPTIMIZE table vicidial_dtmf_log;";
-if($DB){print STDERR "\n|$stmtA|\n";}
-if (!$T)
-        {
-        $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
-        $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-        $sthArows=$sthA->rows;
-        @aryA = $sthA->fetchrow_array;
-        if (!$Q) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
-        $sthA->finish();
-        }
-if (!$Q) {print " - OPTIMIZE vicidial_dtmf_log          \n";}
-
+if ($preserve_dtmf < 1) 
+	{
+	$stmtA = "OPTIMIZE table vicidial_dtmf_log;";
+	if($DB){print STDERR "\n|$stmtA|\n";}
+	if (!$T)
+			{
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows=$sthA->rows;
+			@aryA = $sthA->fetchrow_array;
+			if (!$Q) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
+			$sthA->finish();
+			}
+	if (!$Q) {print " - OPTIMIZE vicidial_dtmf_log          \n";}
+	}
 
 $stmtA = "OPTIMIZE table routing_initiated_recordings;";
 if($DB){print STDERR "\n|$stmtA|\n";}
@@ -1002,6 +1036,120 @@ if ($check_xfers > 0)
 	}
 
 
+### BEGIN archive recording_live that are FINISHED ###
+$rl_count=0;
+$stmtA = "SELECT count(*) FROM recording_live;";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArowsACTIVE=$sthA->rows;
+if ($DBX) {print "DEBUG: $sthArowsACTIVE|$stmtA|\n";}
+if ($sthArowsACTIVE > 0)
+	{
+	@aryA = $sthA->fetchrow_array;
+	$rl_count =		$aryA[0];
+	}
+$sthA->finish();
+
+if ($rl_count > 0) 
+	{
+	$stmtA = "INSERT IGNORE INTO recording_live_log SELECT * FROM recording_live where end_time <= \"$SQLdate_NOW\" and end_time IS NOT NULL and recording_status LIKE \"FINISHED%\";";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArows = $sthA->rows;
+	if (!$Q) {print "$sthArows rows inserted into recording_live_log table\n";}
+
+	if ($sthArows > 0) 
+		{
+		$stmtA = "DELETE FROM recording_live where end_time <= \"$SQLdate_NOW\" and end_time IS NOT NULL and recording_status LIKE \"FINISHED%\";";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows = $sthA->rows;
+		if (!$Q) {print "$sthArows rows deleted from recording_live table\n";}
+		}
+
+	### Gather older STARTED recording_live records from the database to confirm they are still active
+	$stmtA = "SELECT user,lead_id,recording_id FROM recording_live where start_time <= \"$SQLdate_REC_limit\" and recording_status='STARTED';";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	$sthArowsRECS=$sthA->rows;
+	if ($DBX) {print "DEBUG: $sthArowsRECS|$stmtA|\n";}
+	$orc=0;
+	while ($sthArowsRECS > $orc)
+		{
+		@aryA = $sthA->fetchrow_array;
+		$OR_user[$orc] =			$aryA[0];
+		$OR_lead_id[$orc] =			$aryA[1];
+		$OR_recording_id[$orc] =	$aryA[2];
+		$orc++;
+		}
+	$sthA->finish();
+
+	$orc=0;
+	while ($sthArowsRECS > $orc)
+		{
+		$al_count=0;
+		$stmtA = "SELECT count(*) FROM vicidial_live_agents where user='$OR_user[$orc]' and lead_id='$OR_lead_id[$orc]';";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArowsAGNT=$sthA->rows;
+		if ($DBX) {print "DEBUG: $sthArowsAGNT|$stmtA|\n";}
+		if ($sthArowsAGNT > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$al_count =		$aryA[0];
+			}
+		$sthA->finish();
+
+		if ($al_count < 1)
+			{
+			$stmtA = "UPDATE recording_live SET recording_status='FINISHED CHECK' where recording_id='$OR_recording_id[$orc]';";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			if ($DBX) {print "$sthArows rows set to finished in recording_live table:   |$OR_recording_id[$orc]|$OR_user[$orc]|$OR_lead_id[$orc]|\n";}
+
+			$stmtA = "INSERT IGNORE INTO recording_live_log SELECT * FROM recording_live where recording_id='$OR_recording_id[$orc]';";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			if (!$Q) {print "$sthArows rows inserted into recording_live_log table:   |$OR_recording_id[$orc]|$OR_user[$orc]|$OR_lead_id[$orc]|\n";}
+
+			$stmtA = "DELETE FROM recording_live where recording_id='$OR_recording_id[$orc]';";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			if (!$Q) {print "$sthArows rows delete from recording_live table:   |$OR_recording_id[$orc]|$OR_user[$orc]|$OR_lead_id[$orc]|\n";}
+			}
+		$orc++;
+		}
+
+	# optimize recording_live table
+	$stmtA = "optimize table recording_live;";
+	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+
+	$sthA->finish();
+	}
+### END archive recording_live that are FINISHED ###
+
+# update internal process log
+$now_sec = time();
+$run_sec = ($now_sec - $start_sec);
+$stmtA = "UPDATE vicidial_internal_log SET up_time=NOW(), action='finished', stage='Run seconds: $run_sec' WHERE process='$script_name' and server_ip='$server_ip' order by db_time desc limit 1;";
+if($DB){print STDERR "|$stmtA|";}
+my $affected_rows = $dbhA->do($stmtA);
+if($DB){print STDERR "$affected_rows|\n";}
+
+
 $dbhA->disconnect();
 
 exit;
+
+
+sub internal_logger
+	{
+	$stmtA = "INSERT INTO vicidial_internal_log SET db_time=NOW(), up_time=NOW(), process='$script_name', server_ip='$server_ip', action='$action', stage='$stage';";
+	if($DB){print STDERR "|$stmtA|";}
+	my $affected_rows = $dbhA->do($stmtA);
+	if($DB){print STDERR "$affected_rows|\n";}
+	}

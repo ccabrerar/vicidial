@@ -22,7 +22,7 @@
 #  - S = Standard hopper load
 #  - D = Campaign Drop-Run
 #
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGELOG
 # 50810-1613 - Added database server variable definitions lookup
@@ -111,10 +111,11 @@
 # 231126-1748 - Added RQUEUE hopper status
 # 231129-1051 - Added daily_phone_number_call_limit campaign setting
 # 240225-0954 - Added AUTONEXT hopper_hold_inserts campaign option
+# 250224-1641 - Fix for drop_lockout_time issue with NULL last_local_call_time DROP leads
 #
 
 # constants
-$build = '240225-0954';
+$build = '250224-1641';
 $script='AST_VDhopper';
 $DB=0;  # Debug flag, set to 0 for no debug messages. Can be overriden with CLI --debug flag
 $US='__';
@@ -2839,7 +2840,7 @@ foreach(@campaign_id)
 		if ($drop_lockout_time[$i] > 0)
 			{
 			$DLseconds[$i] = ($drop_lockout_time[$i] * 3600);
-			$DLTsql[$i] = "and ( ( (status IN('DROP','XDROP')) and (last_local_call_time < CONCAT(DATE_ADD(NOW(), INTERVAL -$DLseconds[$i] SECOND),' ',CURTIME()) ) ) or (status NOT IN('DROP','XDROP')) )";
+			$DLTsql[$i] = "and ( ( (status IN('DROP','XDROP')) and ( (last_local_call_time < CONCAT(DATE_ADD(NOW(), INTERVAL -$DLseconds[$i] SECOND),' ',CURTIME()) ) or (last_local_call_time IS NULL) ) ) or (status NOT IN('DROP','XDROP')) )";
 			if ($DB) {print "     drop lockout time $drop_lockout_time[$i]($DLseconds[$i]) defined for $campaign_id[$i]\n";}
 			if ($DBX) {print "     |$DLTsql[$i]|\n";}
 			$hopper_begin_output .= "     drop lockout time $drop_lockout_time[$i]($DLseconds[$i]) defined for $campaign_id[$i] \n";

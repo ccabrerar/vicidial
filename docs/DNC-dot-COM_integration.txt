@@ -1,4 +1,4 @@
-DNC.COM INTEGRATION	  Started: 2015-12-02	Updated: 2022-04-21
+DNC.COM INTEGRATION	  Started: 2015-12-02	Updated: 2025-08-17
 
 NOTE: for DNC.COM integration of batch cellphone filtering, see this document:
 	CELLPHONE_USA_TCPA_FCC_COMPLIANCE.txt
@@ -55,6 +55,10 @@ CAMPAIGN_ID =>
 # numbers, if VoIP scrubbing is enabled, prior to Version 3 will be 
 # returned as W
 VERSION => 3
+
+# VICI_LISTS are the list ids of the lists in Vicidial you want to
+# scrub. Multiple list ids should be separated by a hyphen '-'
+VICI_LISTS => 105-106
 
 # VICI_STATUS_SKIP are the statuses within lists you do not want 
 # scrubbed. Multiple statuses should be separated by a hyphen '-'

@@ -15,7 +15,7 @@
 #  - Auto reset lists at defined times
 #  - Auto restarts Asterisk process if enabled in servers settings
 #
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 61011-1348 - First build
@@ -172,9 +172,22 @@
 # 231129-0849 - Added reset of vicidial_phone_number_call_daily_counts table
 # 240401-1810 - Added purging of vicidial_pending_ar records older than 7 days
 # 240420-2209 - Added Conference Updater option
+# 250103-0932 - Added ConfBridge code and enhanced_agent_monitoring system setting code
+# 250914-1601 - Added pruning of recording_live table entries over 7 days old, deletion of parallel recording source files 3+ days
+# 250924-2212 - Added code for deprecation of "Monitor" application after Asterisk 20
+# 251006-0832 - Added truncating of vicidial_dtmf_log older than 24 hours & If recording_dtmf_muting enabled, force use of MixMonitor for recording
+# 251011-1000 - Added archiving of recording_dtmf_muting_log, disabled purging of recording_live_log after 7 days
+# 251024-2222 - Added crashed table detection
+# 260126-1334 - Added check of reserved_extensions against dialplan numbers when building conf files
+# 260327-0846 - Added check of empty phone dialplan extensions when building conf files
+# 260402-1440 - Added reset of vicidial_max_inbound_cache table entries
+# 260515-1610 - Changed multi-listen-process kill section to only run if listen process is supposed to run on this server
+# 260515-2121 - Added truncating of vicidial_internal_log entries after 7 days, updating of some records
+# 260527-0142 - Added dialplan filtering
+# 260605-1002 - Added end-of-day log processing log entry for the vicidial_internal_log
 #
 
-$build = '240420-2209';
+$build = '260605-1002';
 
 $DB=0; # Debug flag
 $teodDB=0; # flag to log Timeclock End of Day processes to log file
@@ -188,6 +201,10 @@ $autodial_delay='';
 $adfill_delay='';
 $fill_staggered='';
 $recmon=0;
+$reserved_exten_skip=0;
+$reserved_exten_message='';
+$reserved_extensions = '8159,8160,8161,8162,8163,8164,8165,8166,8167,8168,8169,8300,8301,8302,8303,8304,8305,8306,8307,8308,8309,8310,8320,8352,8364,8365,8366,8367,8368,8369,8370,8371,8372,8373,8374,8375,8376,8377,8378,8379,8380,8381,8382,8383,8384,8385,8386,8387,8388,8389,8390,8391,8392,8393,8394,8395,8396,8397,8398,8399,8500,8501,138300,138301,138302,138303,138304,138305,138306,138307,138308,138309,138310,138311,138312,138313,138314,138315,138316,138317,138318,138319,138320,138321,138322,138323,138324,138325,138326,138327,138328,138329,138330,138331,138332,138333,138334,138335,138336,138337,138338,138339,138340,138341,138342,138343,138344,138345,138346,138347,138348,138349,138350,138351,138352,138353,138354,138355,138356,138357,138358,138359,138360,138361,138362,138363,138364,138365,138366,138367,138368,138369,138370,138371,138372,138373,138374,138375,138376,138377,138378,138379,138380,138381,138382,138383,138384,138385,138386,138387,138388,138389,138390,138391,138392,138393,138394,138395,138396,138397,138398,138399';
+$reserved_extensions = ",$reserved_extensions,";
 
 # time variable definitions
 ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
@@ -342,7 +359,7 @@ if (length($ARGV[0])>1)
 				$CLIautodialdelay = $CLIvarADARX[0];
 				$CLIautodialdelay =~ s/\/$| |\r|\n|\t//gi;
 				$CLIautodialdelay =~ s/\D//gi;
-				if ( ($CLIautodialdelay > 0) && (length($CLIautodialdelay)> 0) )
+				if ( ($CLIautodialdelay > 0) && (length($CLIautodialdelay)> 0) )	
 					{$autodial_delay = "--delay=$CLIautodialdelay";}
 				if ($DB > 0) {print "AD Delay set to $CLIautodialdelay $autodial_delay\n";}
 				}
@@ -357,7 +374,7 @@ if (length($ARGV[0])>1)
 				$CLIadfilldelay = $CLIvarADFARX[0];
 				$CLIadfilldelay =~ s/\/$| |\r|\n|\t//gi;
 				$CLIadfilldelay =~ s/\D//gi;
-				if ( ($CLIadfilldelay > 0) && (length($CLIadfilldelay)> 0) )
+				if ( ($CLIadfilldelay > 0) && (length($CLIadfilldelay)> 0) )	
 					{$adfill_delay = "--delay=$CLIadfilldelay";}
 				if ($DB > 0) {print "ADFILL Delay set to $CLIadfilldelay $adfill_delay\n";}
 				}
@@ -387,7 +404,7 @@ if (length($ARGV[0])>1)
 				$CLIdelay = $CLIvarARX[0];
 				$CLIdelay =~ s/\/$| |\r|\n|\t//gi;
 				$CLIdelay =~ s/\D//gi;
-				if ( ($CLIdelay > 0) && (length($CLIdelay)> 0) )
+				if ( ($CLIdelay > 0) && (length($CLIdelay)> 0) )	
 					{$cu3way_delay = "--delay=$CLIdelay";}
 				if ($DB > 0) {print "CU3 Delay set to $CLIdelay $cu3way_delay\n";}
 				}
@@ -443,6 +460,8 @@ foreach(@conf)
 		{$PATHlogs = $line;   $PATHlogs =~ s/.*=//gi;}
 	if ( ($line =~ /^PATHsounds/) && ($CLIsounds < 1) )
 		{$PATHsounds = $line;   $PATHsounds =~ s/.*=//gi;}
+	if ( ($line =~ /^PATHmonitor/) && ($CLImonitor < 1) )
+		{$PATHmonitor = $line;   $PATHmonitor =~ s/.*=//gi;}
 	if ( ($line =~ /^VARactive_keepalives/) && ($CLIactive_keepalives < 1) )
 		{$VARactive_keepalives = $line;   $VARactive_keepalives =~ s/.*=//gi;}
 	if ( ($line =~ /^VARserver_ip/) && ($CLIserver_ip < 1) )
@@ -486,14 +505,16 @@ $THISserver_voicemail=0;
 $voicemail_server_id='';
 if (!$VARDB_port) {$VARDB_port='3306';}
 
-use DBI;
+if ($DB) {print "ADMIN_keepalive_ALL.pl - Debug enabled: ($DB|$DBX|$DBXXX) version: $build\n";}
+
+use DBI;	  
 
 $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VARDB_user", "$VARDB_pass")
  or die "Couldn't connect to database: " . DBI->errstr;
 
 
 ##### Get the settings from system_settings #####
-$stmtA = "SELECT sounds_central_control_active,active_voicemail_server,custom_dialplan_entry,default_codecs,generate_cross_server_exten,voicemail_timezones,default_voicemail_timezone,call_menu_qualify_enabled,allow_voicemail_greeting,reload_timestamp,meetme_enter_login_filename,meetme_enter_leave3way_filename,allow_chats,enable_auto_reports,enable_drop_lists,expired_lists_inactive,sip_event_logging,call_quota_lead_ranking,inbound_answer_config,log_latency_gaps,demographic_quotas,weekday_resets,highest_lead_id,hopper_hold_inserts FROM system_settings;";
+$stmtA = "SELECT sounds_central_control_active,active_voicemail_server,custom_dialplan_entry,default_codecs,generate_cross_server_exten,voicemail_timezones,default_voicemail_timezone,call_menu_qualify_enabled,allow_voicemail_greeting,reload_timestamp,meetme_enter_login_filename,meetme_enter_leave3way_filename,allow_chats,enable_auto_reports,enable_drop_lists,expired_lists_inactive,sip_event_logging,call_quota_lead_ranking,inbound_answer_config,log_latency_gaps,demographic_quotas,weekday_resets,highest_lead_id,hopper_hold_inserts,stereo_recording,stereo_parallel_recording,recording_dtmf_muting,db_crashed_tables_check,max_inbound_auto_reenable FROM system_settings;";
 #	print "$stmtA\n";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -503,7 +524,7 @@ if ($sthArows > 0)
 	@aryA = $sthA->fetchrow_array;
 	$sounds_central_control_active =	$aryA[0];
 	$active_voicemail_server =			$aryA[1];
-	$SScustom_dialplan_entry =			$aryA[2];
+	$SScustom_dialplan_entry =			dialplan_filter_b($aryA[2]);
 	$SSdefault_codecs =					$aryA[3];
 	$SSgenerate_cross_server_exten =	$aryA[4];
 	$SSvoicemail_timezones =			$aryA[5];
@@ -525,6 +546,11 @@ if ($sthArows > 0)
 	$SSweekday_resets =					$aryA[21];
 	$SShighest_lead_id =				$aryA[22];
 	$SShopper_hold_inserts =			$aryA[23];
+	$SSstereo_recording =				$aryA[24];
+	$SSstereo_parallel_recording =		$aryA[25];
+	$SSrecording_dtmf_muting =			$aryA[26];
+	$SSdb_crashed_tables_check =		$aryA[27];
+	$SSmax_inbound_auto_reenable =		$aryA[28];
 	}
 $sthA->finish();
 if ($DBXXX > 0) {print "SYSTEM SETTINGS:     $sounds_central_control_active|$active_voicemail_server|$SScustom_dialplan_entry|$SSdefault_codecs\n";}
@@ -544,7 +570,7 @@ if ($sthArows > 0)
 	$asterisk_version =				$aryA[3];
 	$sounds_update =				$aryA[4];
 	$self_conf_secret =				$aryA[5];
-	$SERVERcustom_dialplan_entry =	$aryA[6];
+	$SERVERcustom_dialplan_entry =	dialplan_filter_b($aryA[6]);
 	$auto_restart_asterisk =		$aryA[7];
 	$asterisk_temp_no_restart =		$aryA[8];
 	$gather_asterisk_output =		$aryA[9];
@@ -592,55 +618,56 @@ else
 	$runningASTERISK=0;
 	$runningsip_logger=0;
 	$runningconf_updater=0;
+	$runningcrash_test=0;
 	$AST_conf_3way=0;
 	$AST_rec_monitor=0;
 
-	if ($VARactive_keepalives =~ /1/)
+	if ($VARactive_keepalives =~ /1/) 
 		{
 		$AST_update=1;
 		if ($DB) {print "AST_update set to keepalive\n";}
 		}
-	if ($VARactive_keepalives =~ /2/)
+	if ($VARactive_keepalives =~ /2/) 
 		{
 		$AST_send_listen=1;
 		if ($DB) {print "AST_send_listen set to keepalive\n";}
 		}
-	if ($VARactive_keepalives =~ /3/)
+	if ($VARactive_keepalives =~ /3/) 
 		{
 		$AST_VDauto_dial=1;
 		if ($DB) {print "AST_VDauto_dial set to keepalive\n";}
 		}
-	if ($VARactive_keepalives =~ /4/)
+	if ($VARactive_keepalives =~ /4/) 
 		{
 		$AST_VDremote_agents=1;
 		if ($DB) {print "AST_VDremote_agents set to keepalive\n";}
 		}
-	if ($VARactive_keepalives =~ /5/)
+	if ($VARactive_keepalives =~ /5/) 
 		{
 		$AST_VDadapt=1;
 		if ($DB) {print "AST_VDadapt set to keepalive\n";}
 		}
-	if ($VARactive_keepalives =~ /6/)
+	if ($VARactive_keepalives =~ /6/) 
 		{
 		$FastAGI_log=1;
 		if ($DB) {print "FastAGI_log set to keepalive\n";}
 		}
-	if ($VARactive_keepalives =~ /7/)
+	if ($VARactive_keepalives =~ /7/) 
 		{
 		$AST_VDauto_dial_FILL=1;
 		if ($DB) {print "AST_VDauto_dial_FILL set to keepalive\n";}
 		}
-	if ($VARactive_keepalives =~ /8/)
+	if ($VARactive_keepalives =~ /8/) 
 		{
 		$ip_relay=1;
 		if ($DB) {print "ip_relay set to keepalive\n";}
 		}
-	if ($VARactive_keepalives =~ /9/)
+	if ($VARactive_keepalives =~ /9/) 
 		{
 		$timeclock_auto_logout=1;
 		if ($DB) {print "Check to see if Timeclock auto logout should run\n";}
 		}
-	if ($VARactive_keepalives =~ /E/)
+	if ($VARactive_keepalives =~ /E/) 
 		{
 		$email_inbound=1;
 		if ($DB) {print "Check to see if email parser should run\n";}
@@ -655,7 +682,7 @@ else
 		$conf_updater=1;
 		if ($DB) {print "Check to see if conference updater should run\n";}
 		}
-	if ($cu3way > 0)
+	if ($cu3way > 0) 
 		{
 		$AST_conf_3way=1;
 		if ($DB) {print "AST_conf_3way set to keepalive\n";}
@@ -691,22 +718,22 @@ else
 		if ($DBX) {print "$i|$psoutput[$i]|     \n";}
 		@psline = split(/\/usr\/bin\/perl /,$psoutput[$i]);
 
-		if ($psoutput[$i] =~ /bin\/asterisk/)
+		if ($psoutput[$i] =~ /bin\/asterisk/) 
 			{
 			$runningASTERISK++;
 			if ($DB) {print "asterisk RUNNING:              |$psoutput[$i]|\n";}
 			}
-		if ($psline[1] =~ /$REGhome\/AST_update/)
+		if ($psline[1] =~ /$REGhome\/AST_update/) 
 			{
 			$runningAST_update++;
 			if ($DB) {print "AST_update RUNNING:              |$psline[1]|\n";}
 			}
-		if ($psline[1] =~ /AST_manager_se/)
+		if ($psline[1] =~ /AST_manager_se/) 
 			{
 			$runningAST_send++;
 			if ($DB) {print "AST_send RUNNING:                |$psline[1]|\n";}
 			}
-		if ($psline[1] =~ /AST_manager_li/)
+		if ($psline[1] =~ /AST_manager_li/) 
 			{
 			$psoutput[$i] =~ s/ .*|\n|\r|\t| //gi;
 			$listen_pid[$runningAST_listen] = $psoutput[$i];
@@ -723,42 +750,42 @@ else
 			$runningconf_updater++;
 			if ($DB) {print "Conference Updater RUNNING:	|$spline[1]\n";}
 			}
-		if ($psline[1] =~ /$REGhome\/AST_VDauto_dial\.pl/)
+		if ($psline[1] =~ /$REGhome\/AST_VDauto_dial\.pl/) 
 			{
 			$runningAST_VDauto_dial++;
 			if ($DB) {print "AST_VDauto_dial RUNNING:         |$psline[1]|\n";}
 			}
-		if ($psline[1] =~ /$REGhome\/AST_VDremote_agents\.pl/)
+		if ($psline[1] =~ /$REGhome\/AST_VDremote_agents\.pl/) 
 			{
 			$runningAST_VDremote_agents++;
 			if ($DB) {print "AST_VDremote_agents RUNNING:     |$psline[1]|\n";}
 			}
-		if ($psline[1] =~ /$REGhome\/AST_VDadapt\.pl/)
+		if ($psline[1] =~ /$REGhome\/AST_VDadapt\.pl/) 
 			{
 			$runningAST_VDadapt++;
 			if ($DB) {print "AST_VDadapt RUNNING:             |$psline[1]|\n";}
 			}
-		if ($psline[1] =~ /$REGhome\/FastAGI_log\.pl/)
+		if ($psline[1] =~ /$REGhome\/FastAGI_log\.pl/) 
 			{
 			$runningFastAGI_log++;
 			if ($DB) {print "FastAGI_log RUNNING:             |$psline[1]|\n";}
 			}
-		if ($psline[1] =~ /$REGhome\/AST_VDauto_dial_FILL\.pl/)
+		if ($psline[1] =~ /$REGhome\/AST_VDauto_dial_FILL\.pl/) 
 			{
 			$runningAST_VDauto_dial_FILL++;
 			if ($DB) {print "AST_VDauto_dial_FILL RUNNING:    |$psline[1]|\n";}
 			}
-		if ($psline[1] =~ /$REGhome\/VD_email_inbound\.pl/)
+		if ($psline[1] =~ /$REGhome\/VD_email_inbound\.pl/) 
 			{
 			$runningemail_inbound++;
 			if ($DB) {print "VD_email_inbound RUNNING:|$psline[1]|\n";}
 			}
-		if ($psoutput[$i] =~ / ip_relay /)
+		if ($psoutput[$i] =~ / ip_relay /) 
 			{
 			$runningip_relay++;
 			if ($DB) {print "ip_relay RUNNING:                |$psoutput[$i]|\n";}
 			}
-		if ($psline[1] =~ /$REGhome\/AST_conf_update_3way\.pl/)
+		if ($psline[1] =~ /$REGhome\/AST_conf_update_3way\.pl/) 
 			{
 			$runningAST_conf_3way++;
 			if ($DB) {print "AST_conf_3way RUNNING:           |$psline[1]|\n";}
@@ -768,10 +795,23 @@ else
 			$runningAST_rec_monitor++;
 			if ($DB) {print "AST_rec_monitor RUNNING:           |$psline[1]|\n";}
 			}
+		if ($psline[1] =~ /$REGhome\/AST_table_status\.pl/)
+			{
+			$runningcrash_test++;
+			if ($DB) {print "AST_table_status RUNNING:           |$psline[1]|\n";}
+			}
 
 		$i++;
 		}
 
+	# if $runningFastAGI_log running, update internal process log
+	if ( ($runningFastAGI_log > 0) && ($reset_test =~ /0$|5$/) )
+		{
+		$stmtA = "UPDATE vicidial_internal_log SET up_time=NOW(), action='running', stage=CONCAT((UNIX_TIMESTAMP(NOW())-UNIX_TIMESTAMP(db_time)),' seconds runtime') WHERE process='FastAGI_log.pl' and server_ip='$server_ip' order by db_time desc limit 1;";
+		if($DB){print STDERR "|$stmtA|";}
+		my $affected_rows = $dbhA->do($stmtA);
+		if($DB){print STDERR "$affected_rows|\n";}
+		}
 
 
 
@@ -780,46 +820,58 @@ else
 	@psline=@MT;
 	@psoutput=@MT;
 	@listen_pid=@MT;
-	if ($runningAST_listen > 1)
+	if ($AST_send_listen > 0)
 		{
-		$runningAST_listen=0;
-
-			sleep(1);
-
-		### you may have to use a different ps command if you're not using Slackware Linux
-		#	@psoutput = `ps -f -C AST_update --no-headers`;
-		#	@psoutput = `ps -f -C AST_updat* --no-headers`;
-		#	@psoutput = `/bin/ps -f --no-headers -A`;
-		#	@psoutput = `/bin/ps -o pid,args -A`; ### use this one for FreeBSD
-		@psoutput = `/bin/ps -o "%p %a" --no-headers -A`;
-
-		$i=0;
-		foreach (@psoutput)
-			{
-				chomp($psoutput[$i]);
-			if ($DBX) {print "$i|$psoutput[$i]|     \n";}
-			@psline = split(/\/usr\/bin\/perl /,$psoutput[$i]);
-			$psoutput[$i] =~ s/^ *//gi;
-			$psoutput[$i] =~ s/ .*|\n|\r|\t| //gi;
-
-			if ($psline[1] =~ /AST_manager_li/)
-				{
-				$listen_pid[$runningAST_listen] = $psoutput[$i];
-				if ($DB) {print "AST_listen RUNNING:              |$psline[1]|$listen_pid[$runningAST_listen]|\n";}
-				$runningAST_listen++;
-				}
-
-			$i++;
-			}
-
 		if ($runningAST_listen > 1)
 			{
-			if ($DB) {print "Killing AST_manager_listen... |$listen_pid[1]|\n";}
-			`/bin/kill -s 9 $listen_pid[1]`;
+			$runningAST_listen=0;
+
+				sleep(1);
+
+			### you may have to use a different ps command if you're not using Slackware Linux
+			#	@psoutput = `ps -f -C AST_update --no-headers`;
+			#	@psoutput = `ps -f -C AST_updat* --no-headers`;
+			#	@psoutput = `/bin/ps -f --no-headers -A`;
+			#	@psoutput = `/bin/ps -o pid,args -A`; ### use this one for FreeBSD
+			@psoutput = `/bin/ps -o "%p %a" --no-headers -A`;
+
+			$i=0;
+			foreach (@psoutput)
+				{
+				chomp($psoutput[$i]);
+				if ($DBX) {print "$i|$psoutput[$i]|     \n";}
+				@psline = split(/\/usr\/bin\/perl /,$psoutput[$i]);
+				$psoutput[$i] =~ s/^ *//gi;
+				$psoutput[$i] =~ s/ .*|\n|\r|\t| //gi;
+
+				if ($psline[1] =~ /AST_manager_li/) 
+					{
+					$listen_pid[$runningAST_listen] = $psoutput[$i];
+					if ($DB) {print "AST_listen RUNNING:              |$psline[1]|$listen_pid[$runningAST_listen]|\n";}
+					$runningAST_listen++;
+					}
+
+				$i++;
+				}
+
+			if ($runningAST_listen > 1)
+				{
+				if ($DB) {print "Killing AST_manager_listen... |$listen_pid[1]|\n";}
+				`/bin/kill -s 9 $listen_pid[1]`;
+
+				if (!$killLOGfile) {$killLOGfile = "$PATHlogs/listen_kill.$year-$mon-$mday";}
+				### open the log file for writing ###
+				open(Kout, ">>$killLOGfile")
+						|| die "Can't open $killLOGfile: $!\n";
+				print Kout "$now_date|Killing AST_manager_listen... |$listen_pid[1]||\n";
+				close(Kout);
+				}
 			}
 		}
-
-
+	else
+		{
+		if ($DB) {print "DEBUG: AST_manager_listen is not set to run on this server, so don't check if it's running\n";}
+		}
 
 
 
@@ -829,7 +881,7 @@ else
 	@psline=@MT;
 	@psoutput=@MT;
 
-	if (
+	if ( 
 		( ($AST_update > 0) && ($runningAST_update < 1) ) ||
 		( ($AST_send_listen > 0) && ($runningAST_send < 1) ) ||
 		( ($AST_send_listen > 0) && ($runningAST_listen < 1) ) ||
@@ -839,7 +891,7 @@ else
 		( ($FastAGI_log > 0) && ($runningFastAGI_log < 1) ) ||
 		( ($AST_VDauto_dial_FILL > 0) && ($runningAST_VDauto_dial_FILL < 1) ) ||
 		( ($ip_relay > 0) && ($runningip_relay < 1) ) ||
-		( ($AST_conf_3way > 0) && ($runningAST_conf_3way < 1) ) ||
+		( ($AST_conf_3way > 0) && ($runningAST_conf_3way < 1) ) || 
 		( ($AST_rec_monitor > 0) && ($runningAST_monitor < 1) ) ||
 		( ($email_inbound > 0) && ($runningemail_inbound < 1) ) ||
 		( ($sip_logger > 0) && ($runningsip_logger < 1) ) ||
@@ -866,22 +918,22 @@ else
 			if ($DBX) {print "$i|$psoutput2[$i]|     \n";}
 			@psline = split(/\/usr\/bin\/perl /,$psoutput2[$i]);
 
-			if ($psoutput2[$i] =~ /bin\/asterisk/)
+			if ($psoutput2[$i] =~ /bin\/asterisk/) 
 				{
 				$runningASTERISK++;
 				if ($DB) {print "asterisk RUNNING:              |$psoutput2[$i]|\n";}
 				}
-			if ($psline[1] =~ /$REGhome\/AST_update/)
+			if ($psline[1] =~ /$REGhome\/AST_update/) 
 				{
 				$runningAST_update++;
 				if ($DB) {print "AST_update RUNNING:              |$psline[1]|\n";}
 				}
-			if ($psline[1] =~ /AST_manager_se/)
+			if ($psline[1] =~ /AST_manager_se/) 
 				{
 				$runningAST_send++;
 				if ($DB) {print "AST_send RUNNING:                |$psline[1]|\n";}
 				}
-			if ($psline[1] =~ /AST_manager_li/)
+			if ($psline[1] =~ /AST_manager_li/) 
 				{
 				$runningAST_listen++;
 				if ($DB) {print "AST_listen RUNNING:              |$psline[1]|\n";}
@@ -896,42 +948,42 @@ else
 				$runningconf_updater++;
 				if ($DB) {print "Conference Updater RUNNING:	|$spline[1]\n";}
 				}
-			if ($psline[1] =~ /$REGhome\/AST_VDauto_dial\.pl/)
+			if ($psline[1] =~ /$REGhome\/AST_VDauto_dial\.pl/) 
 				{
 				$runningAST_VDauto_dial++;
 				if ($DB) {print "AST_VDauto_dial RUNNING:         |$psline[1]|\n";}
 				}
-			if ($psline[1] =~ /$REGhome\/AST_VDremote_agents\.pl/)
+			if ($psline[1] =~ /$REGhome\/AST_VDremote_agents\.pl/) 
 				{
 				$runningAST_VDremote_agents++;
 				if ($DB) {print "AST_VDremote_agents RUNNING:     |$psline[1]|\n";}
 				}
-			if ($psline[1] =~ /$REGhome\/AST_VDadapt\.pl/)
+			if ($psline[1] =~ /$REGhome\/AST_VDadapt\.pl/) 
 				{
 				$runningAST_VDadapt++;
 				if ($DB) {print "AST_VDadapt RUNNING:             |$psline[1]|\n";}
 				}
-			if ($psline[1] =~ /$REGhome\/FastAGI_log\.pl/)
+			if ($psline[1] =~ /$REGhome\/FastAGI_log\.pl/) 
 				{
 				$runningFastAGI_log++;
 				if ($DB) {print "FastAGI_log RUNNING:             |$psline[1]|\n";}
 				}
-			if ($psline[1] =~ /$REGhome\/AST_VDauto_dial_FILL\.pl/)
+			if ($psline[1] =~ /$REGhome\/AST_VDauto_dial_FILL\.pl/) 
 				{
 				$runningAST_VDauto_dial_FILL++;
 				if ($DB) {print "AST_VDauto_dial_FILL RUNNING:    |$psline[1]|\n";}
 				}
-			if ($psline[1] =~ /$REGhome\/VD_email_inbound\.pl/)
+			if ($psline[1] =~ /$REGhome\/VD_email_inbound\.pl/) 
 				{
 				$runningemail_inbound++;
 				if ($DB) {print "VD_email_inbound RUNNING:|$psline[1]|\n";}
 				}
-			if ($psoutput2[$i] =~ / ip_relay /)
+			if ($psoutput2[$i] =~ / ip_relay /) 
 				{
 				$runningip_relay++;
 				if ($DB) {print "ip_relay RUNNING:                |$psoutput2[$i]|\n";}
 				}
-			if ($psline[1] =~ /$REGhome\/AST_conf_update_3way\.pl/)
+			if ($psline[1] =~ /$REGhome\/AST_conf_update_3way\.pl/) 
 				{
 				$runningAST_conf_3way++;
 				if ($DB) {print "AST_conf_3way RUNNING:           |$psline[1]|\n";}
@@ -941,12 +993,17 @@ else
 				$runningAST_rec_monitor++;
 				if ($DB) {print "AST_rec_monitor RUNNING:           |$psline[1]|\n";}
 				}
+			if ($psline[1] =~ /$REGhome\/AST_table_status\.pl/)
+				{
+				$runningcrash_test++;
+				if ($DB) {print "AST_table_status RUNNING:           |$psline[1]|\n";}
+				}
 			$i++;
 			}
 
 
 		if ( ($AST_update > 0) && ($runningAST_update < 1) )
-			{
+			{ 
 			if ($DB) {print "starting AST_update...\n";}
 			# add a '-L' to the command below to activate logging
 			if (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} >= 12))
@@ -963,7 +1020,7 @@ else
 				}
 			}
 		if ( ($AST_send_listen > 0) && ($runningAST_send < 1) )
-			{
+			{ 
 			if ($DB) {print "starting AST_manager_send...\n";}
 			# add a '-L' to the command below to activate logging
 			`/usr/bin/screen -d -m -S ASTsend $PATHhome/AST_manager_send.pl $debug_string`;
@@ -974,14 +1031,14 @@ else
 				}
 			}
 		if ( ($AST_send_listen > 0) && ($runningAST_listen < 1) )
-			{
+			{ 
 			if ($DB) {print "starting AST_manager_listen...\n";}
 			# add a '-L' to the command below to activate logging
 			if (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} >= 12))
 				{`/usr/bin/screen -d -m -S ASTlisten $PATHhome/AST_manager_listen_AMI2.pl $debug_string`;}
 			else
 				{
-				if ($lstn_buffer > 0)
+				if ($lstn_buffer > 0) 
 					{`/usr/bin/screen -d -m -S ASTlisten $PATHhome/AST_manager_listenBUFFER.pl $debug_string`;}
 				else
 					{`/usr/bin/screen -d -m -S ASTlisten $PATHhome/AST_manager_listen.pl $debug_string`;}
@@ -993,7 +1050,7 @@ else
 				}
 			}
 		if ( ($AST_VDauto_dial > 0) && ($runningAST_VDauto_dial < 1) )
-			{
+			{ 
 			if ($DB) {print "starting AST_VDauto_dial...\n";}
 			# add a '-L' to the command below to activate logging
 			`/usr/bin/screen -d -m -S ASTVDauto $PATHhome/AST_VDauto_dial.pl $debug_string $autodial_delay`;
@@ -1028,7 +1085,7 @@ else
 			}
 
 		if ( ($AST_VDremote_agents > 0) && ($runningAST_VDremote_agents < 1) )
-			{
+			{ 
 			if ($DB) {print "starting AST_VDremote_agents...\n";}
 			# add a '-L' to the command below to activate logging
 			`/usr/bin/screen -d -m -S ASTVDremote $PATHhome/AST_VDremote_agents.pl --debug $debug_string`;
@@ -1039,7 +1096,7 @@ else
 				}
 			}
 		if ( ($AST_VDadapt > 0) && ($runningAST_VDadapt < 1) )
-			{
+			{ 
 			if ($DB) {print "starting AST_VDadapt...\n";}
 			# add a '-L' to the command below to activate logging
 			`/usr/bin/screen -d -m -S ASTVDadapt $PATHhome/AST_VDadapt.pl --debug $debug_string`;
@@ -1050,7 +1107,7 @@ else
 				}
 			}
 		if ( ($FastAGI_log > 0) && ($runningFastAGI_log < 1) )
-			{
+			{ 
 			if ($DB) {print "starting FastAGI_log...\n";}
 			# add a '-L' to the command below to activate logging
 			`/usr/bin/screen -d -m -S ASTfastlog $PATHhome/FastAGI_log.pl --debug $debug_string`;
@@ -1061,7 +1118,7 @@ else
 				}
 			}
 		if ( ($AST_VDauto_dial_FILL > 0) && ($runningAST_VDauto_dial_FILL < 1) )
-			{
+			{ 
 			if ($DB) {print "starting AST_VDauto_dial_FILL...\n";}
 			# add a '-L' to the command below to activate logging
 			`/usr/bin/screen -d -m -S ASTVDadFILL $PATHhome/AST_VDauto_dial_FILL.pl --debug $fill_staggered $adfill_delay $debug_string`;
@@ -1072,7 +1129,7 @@ else
 				}
 			}
 		if ( ($email_inbound > 0) && ($runningemail_inbound < 1) )
-			{
+			{ 
 			if ($DB) {print "starting VD_email_inbound...\n";}
 			# add a '-L' to the command below to activate logging
 			`/usr/bin/screen -d -m -S ASTemail $PATHhome/VD_email_inbound.pl $debug_string`;
@@ -1083,12 +1140,12 @@ else
 				}
 			}
 		if ( ($ip_relay > 0) && ($runningip_relay < 1) )
-			{
+			{ 
 			if ($DB) {print "starting ip_relay through relay_control...\n";}
 			`$PATHhome/ip_relay/relay_control start  2>/dev/null 1>&2`;
 			}
 		if ( ($AST_conf_3way > 0) && ($runningAST_conf_3way < 1) )
-			{
+			{ 
 			if ($DB) {print "starting AST_conf_3way...\n";}
 			# add a '-L' to the command below to activate logging
 			`/usr/bin/screen -d -m -S ASTconf3way $PATHhome/AST_conf_update_3way.pl --debug $cu3way_delay $debug_string`;
@@ -1118,7 +1175,7 @@ if ($timeclock_auto_logout > 0)
 	{
 	if ($DB) {print "running Timeclock auto-logout process...\n";}
 	`/usr/bin/screen -d -m -S Timeclock $PATHhome/ADMIN_timeclock_auto_logout.pl 2>/dev/null 1>&2`;
-	if ($teodDB)
+	if ($teodDB) 
 		{
 		$event_string = "running Timeclock auto-logout process $build|/usr/bin/screen -d -m -S Timeclock $PATHhome/ADMIN_timeclock_auto_logout.pl 2>/dev/null 1>&2";
 		&teod_logger;
@@ -1213,10 +1270,41 @@ if ($timeclock_end_of_day_NOW > 0)
 		}
 	if ($teodDB) {$event_string = "Empty $vicidial_conf_table entries cleared: $conf_cleared";   &teod_logger;}
 
+	### If stereo parallel recording is enabled on this system, delete parallel source files over 3 days old every night
+	if ( ($SSstereo_recording > 0) && ($SSstereo_parallel_recording > 0) )
+		{
+		### find 'find' to gather the list of files to delete
+		$findbin = '';
+		if ( -e ('/usr/bin/find')) {$findbin = '/usr/bin/find';}
+		else 
+			{
+			if ( -e ('/bin/find')) {$findbin = '/bin/find';}
+			else
+				{
+				if ( -e ('/usr/sbin/find')) {$findbin = '/usr/sbin/find';}
+				else 
+					{
+					if ($DB) {print "Can't find -find- binary! No file deletions will be possible...\n";}
+					}
+				}
+			}
+
+		$PATHmonitorTRASH =	$PATHmonitor.'TRASH';
+		$now_epoch = int(time());
+		# command to trigger old stereo parallel source file deletion:
+		$parallel_delete_command = "$findbin $PATHmonitorTRASH -maxdepth 2 -type f -mtime +3 | xargs rm -f ";
+		if (!$Q) {print "Triggering old Parallel source recording file deletion...   |$parallel_delete_command| \n";}
+		`/usr/bin/screen -d -m -S PD$reset_test $parallel_delete_command `;
+		$end_epoch = int(time());
+		$run_length = ($end_epoch - $now_epoch);
+		if (!$Q) {print "     Parallel source recording file deletion complete ($run_length sec) \n";}
+		if ($teodDB) {$event_string = "Old Parallel source recording file deletion complete ($run_length sec): $parallel_delete_command";   &teod_logger;}
+		}
 
 	### Only run the following on one server in the cluster, the one set as the active voicemail server ###
 	if ( ($active_voicemail_server =~ /$server_ip/) && ((length($active_voicemail_server)) eq (length($server_ip))) )
 		{
+		$secTCEODstart = time();
 		if ($DB) {print "Starting clear out system-wide daily reset tables...\n";}
 
 		$stmtA = "UPDATE vicidial_xfer_stats SET xfer_count='0';";
@@ -1480,6 +1568,39 @@ if ($timeclock_end_of_day_NOW > 0)
 		if ($DB) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
 		$sthA->finish();
 
+		if ($SSmax_inbound_auto_reenable >= 2) 
+			{
+			$stmtA = "UPDATE vicidial_max_inbound_cache SET status='OLD',notes=CONCAT(notes,'|TCEOD') WHERE status='NEW' and event_date >= \"$RMSQLdate\" and event_date < \"$FMSQLdate\";";
+			if($DBX){print STDERR "\n|$stmtA|\n";}
+			$affected_rows = $dbhA->do($stmtA);
+			if($DB){print STDERR "\n|$affected_rows vicidial_max_inbound_cache records archived|\n";}
+			if ($teodDB) {$event_string = "vicidial_max_inbound_cache records archived: $affected_rows";   &teod_logger;}
+			}
+
+		$stmtA = "delete from vicidial_max_inbound_cache where event_date < \"$RMSQLdate\";";
+		if($DBX){print STDERR "\n|$stmtA|\n";}
+		$affected_rows = $dbhA->do($stmtA);
+		if($DB){print STDERR "\n|$affected_rows vicidial_max_inbound_cache records deleted|\n";}
+		if ($teodDB) {$event_string = "vicidial_max_inbound_cache records deleted: $affected_rows";   &teod_logger;}
+
+		$stmtA = "optimize table vicidial_max_inbound_cache;";
+		if($DBX){print STDERR "\n|$stmtA|\n";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		@aryA = $sthA->fetchrow_array;
+		if ($DB) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
+		$sthA->finish();
+
+		$stmtA = "optimize table crashed_tables;";
+		if($DBX){print STDERR "\n|$stmtA|\n";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		@aryA = $sthA->fetchrow_array;
+		if ($DB) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
+		$sthA->finish();
+
 		if ($agents_calls_reset > 0)
 			{
 			$stmtA = "delete from vicidial_live_inbound_agents where last_call_finish < \"$TDSQLdate\";";
@@ -1639,8 +1760,8 @@ if ($timeclock_end_of_day_NOW > 0)
 		if ($teodDB) {&teod_logger;}
 
 		$rv = $sthA->err();
-		if (!$rv)
-			{
+		if (!$rv) 
+			{	
 			$stmtA = "DELETE FROM vicidial_campaign_hour_counts WHERE date_hour < '$today_start';";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -1665,8 +1786,8 @@ if ($timeclock_end_of_day_NOW > 0)
 		if ($teodDB) {&teod_logger;}
 
 		$rv = $sthA->err();
-		if (!$rv)
-			{
+		if (!$rv) 
+			{	
 			$stmtA = "DELETE FROM vicidial_carrier_hour_counts WHERE date_hour < '$yesterday_start';";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -1691,8 +1812,8 @@ if ($timeclock_end_of_day_NOW > 0)
 		if ($teodDB) {&teod_logger;}
 
 		$rv = $sthA->err();
-		if (!$rv)
-			{
+		if (!$rv) 
+			{	
 			$stmtA = "DELETE FROM vicidial_ingroup_hour_counts WHERE date_hour < '$today_start';";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -1717,8 +1838,8 @@ if ($timeclock_end_of_day_NOW > 0)
 		if ($teodDB) {&teod_logger;}
 
 		$rv = $sthA->err();
-		if (!$rv)
-			{
+		if (!$rv) 
+			{	
 			$stmtA = "DELETE FROM vicidial_inbound_callback_queue WHERE icbq_status IN('SENT','EXPIRED','DNCL','DNCC','ORPHAN');";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -1743,8 +1864,8 @@ if ($timeclock_end_of_day_NOW > 0)
 		if ($teodDB) {&teod_logger;}
 
 		$rv = $sthA->err();
-		if (!$rv)
-			{
+		if (!$rv) 
+			{	
 			$stmtA = "DELETE FROM vicidial_recent_ascb_calls WHERE call_date < \"$TDSQLdate\";";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -1770,8 +1891,8 @@ if ($timeclock_end_of_day_NOW > 0)
 		if ($teodDB) {&teod_logger;}
 
 		$rv = $sthA->err();
-		if (!$rv)
-			{
+		if (!$rv) 
+			{	
 			$stmtA = "DELETE FROM vicidial_sessions_recent WHERE call_date < \"$TDSQLdate\";";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -1797,8 +1918,8 @@ if ($timeclock_end_of_day_NOW > 0)
 		if ($teodDB) {&teod_logger;}
 
 		$rv = $sthA->err();
-		if (!$rv)
-			{
+		if (!$rv) 
+			{	
 			$stmtA = "DELETE FROM vicidial_ccc_log WHERE call_date < \"$RMSQLdate\";";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -2275,6 +2396,42 @@ if ($timeclock_end_of_day_NOW > 0)
 		##### END vicidial_two_factor_auth end of day process removing records older than 7 days #####
 
 
+		##### BEGIN vicidial_dtmf_log end of day process removing records older than 24 hours #####
+		$stmtA = "DELETE from vicidial_dtmf_log where dtmf_time < \"$RMSQLdate\";";
+		if($DBX){print STDERR "\n|$stmtA|\n";}
+		$affected_rows = $dbhA->do($stmtA);
+		if($DB){print STDERR "\n|$affected_rows vicidial_dtmf_log records older than 1 day purged|\n";}
+		if ($teodDB) {$event_string = "vicidial_dtmf_log records older than 1 day purged: |$stmtA|$affected_rows|";   &teod_logger;}
+
+		$stmtA = "optimize table vicidial_dtmf_log;";
+		if($DBX){print STDERR "\n|$stmtA|\n";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		@aryA = $sthA->fetchrow_array;
+		if ($DB) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
+		$sthA->finish();
+		##### END vicidial_dtmf_log end of day process removing records older than 24 hours #####
+
+
+		##### BEGIN vicidial_internal_log end of day process removing records older than 7 days #####
+		$stmtA = "DELETE from vicidial_internal_log where up_time < \"$SDSQLdate\";";
+		if($DBX){print STDERR "\n|$stmtA|\n";}
+		$affected_rows = $dbhA->do($stmtA);
+		if($DB){print STDERR "\n|$affected_rows vicidial_internal_log records older than 7 days purged|\n";}
+		if ($teodDB) {$event_string = "vicidial_internal_log records older than 7 days purged: |$stmtA|$affected_rows|";   &teod_logger;}
+
+		$stmtA = "optimize table vicidial_internal_log;";
+		if($DBX){print STDERR "\n|$stmtA|\n";}
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows=$sthA->rows;
+		@aryA = $sthA->fetchrow_array;
+		if ($DB) {print "|",$aryA[0],"|",$aryA[1],"|",$aryA[2],"|",$aryA[3],"|","\n";}
+		$sthA->finish();
+		##### END vicidial_internal_log end of day process removing records older than 7 days #####
+
+		
 		##### BEGIN vicidial_lead_messages end of day process removing records older than 1 day #####
 		$stmtA = "DELETE FROM vicidial_lead_messages WHERE call_date < \"$RMSQLdate\";";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
@@ -2303,6 +2460,62 @@ if ($timeclock_end_of_day_NOW > 0)
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		##### END vicidial_lead_24hour_calls end of day process removing records older than 1 day #####
+
+
+		##### BEGIN recording_live_log end of day process removing records older than 7 days #####
+	#	$stmtA = "DELETE FROM recording_live_log WHERE start_time < \"$SDSQLdate\";";
+	#	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	#	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+	#	$sthArows = $sthA->rows;
+	#	$event_string = "$sthArows rows deleted from recording_live_log table";
+	#	if (!$Q) {print "$event_string \n";}
+	#	if ($teodDB) {&teod_logger;}
+
+	#	$stmtA = "optimize table recording_live_log;";
+	#	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+	#	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		##### END recording_live_log end of day process removing records older than 7 days #####
+
+
+		# archive recording_dtmf_muting_log table every night
+		if (!$Q) {print "\nProcessing recording_dtmf_muting_log table...\n";}
+		$stmtA = "INSERT IGNORE INTO recording_dtmf_muting_log_archive SELECT * from recording_dtmf_muting_log;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows = $sthA->rows;
+		$event_string = "$sthArows rows inserted into recording_dtmf_muting_log_archive table";
+		if (!$Q) {print "$event_string \n";}
+		if ($teodDB) {&teod_logger;}
+
+		$rv = $sthA->err();
+		if (!$rv) 
+			{	
+			$stmtA = "DELETE FROM recording_dtmf_muting_log WHERE dtmf_muting_end_time < \"$now_date\";";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			$sthArows = $sthA->rows;
+			$event_string = "$sthArows rows deleted from in recording_dtmf_muting_log table";
+			if (!$Q) {print "$event_string \n";}
+			if ($teodDB) {&teod_logger;}
+
+			$stmtA = "optimize table recording_dtmf_muting_log;";
+			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+			}
+		
+		# delete recording_dtmf_muting_log_archive records older than 7 days old
+		$stmtA = "DELETE FROM recording_dtmf_muting_log_archive WHERE dtmf_muting_end_time < \"$SDSQLdate\";";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArows = $sthA->rows;
+		$event_string = "$sthArows old rows deleted from in recording_dtmf_muting_log_archive table ($SDSQLdate)";
+		if (!$Q) {print "$event_string \n";}
+		if ($teodDB) {&teod_logger;}
+
+		$stmtA = "optimize table recording_dtmf_muting_log_archive;";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+
 
 
 		#####  START latency log summary log inserts
@@ -2454,7 +2667,7 @@ if ($timeclock_end_of_day_NOW > 0)
 			}
 		$sthA->finish();
 
-
+		
 		##### BEGIN roll sip_event logs into one of the 7-day archive tables
 		if ($SSsip_event_logging > 0)
 			{
@@ -2484,8 +2697,8 @@ if ($timeclock_end_of_day_NOW > 0)
 			if ($teodDB) {&teod_logger;}
 
 			$rv = $sthA->err();
-			if (!$rv)
-				{
+			if (!$rv) 
+				{	
 				$stmtA = "DELETE FROM vicidial_sip_event_log;";
 				$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 				$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -2555,7 +2768,7 @@ if ($timeclock_end_of_day_NOW > 0)
 		##### END roll sip_event logs into one of the 7-day archive tables
 
 
-		##### BEGIN roll Call Quota Lead Ranking logs into the archive table after 7 days
+		##### BEGIN roll Call Quota Lead Ranking logs into the archive table after 7 days 
 		if ($SScall_quota_lead_ranking > 0)
 			{
 			if (!$Q) {print "\nProcessing vicidial_lead_call_quota_counts table...\n";}
@@ -2568,7 +2781,7 @@ if ($timeclock_end_of_day_NOW > 0)
 			if ($teodDB) {&teod_logger;}
 
 			$rv = $sthA->err();
-			if (!$rv)
+			if (!$rv) 
 				{
 				# Gather list of the leads that were just archived, set rank=0
 				$stmtA = "SELECT lead_id from vicidial_lead_call_quota_counts where ( (first_call_date < \"$SXSQLdate\") or (first_call_date IS NULL) );";
@@ -2623,6 +2836,14 @@ if ($timeclock_end_of_day_NOW > 0)
 			if ($teodDB) {&teod_logger;}
 			}
 		##### END roll Call Quota Lead Ranking logs into the archive table after 7 days
+
+		$secTCEODfinish = time();
+		$TCEODruntime = ($secTCEODfinish - $secTCEODstart);
+
+		$stmtA = "INSERT INTO vicidial_internal_log SET db_time=NOW(), up_time=NOW(), action='finished', stage='Run seconds: $TCEODruntime', process='end-of-day log processing', server_ip='$server_ip';";
+		if($DB){print STDERR "|$stmtA|";}
+		my $affected_rows = $dbhA->do($stmtA);
+		if($DB){print STDERR "$affected_rows|\n";}
 		}
 	}
 
@@ -2783,7 +3004,7 @@ if ( ($active_voicemail_server =~ /$server_ip/) && ((length($active_voicemail_se
 							}
 						$sthA->finish();
 						}
-					if ($sthArows < 1)
+					if ($sthArows < 1) 
 						{
 						if ($DB) {print "Mailbox not found: $mailbox     it will be removed from voicemail.conf\n";}
 						}
@@ -2796,7 +3017,7 @@ if ( ($active_voicemail_server =~ /$server_ip/) && ((length($active_voicemail_se
 				}
 			$i++;
 			}
-		if (length($SSvoicemail_timezones) != length($vm_zones_content))
+		if (length($SSvoicemail_timezones) != length($vm_zones_content)) 
 			{
 			$stmtA="UPDATE system_settings SET voicemail_timezones='$vm_zones_content';";
 			$affected_rows = $dbhA->do($stmtA);
@@ -2827,7 +3048,7 @@ if ( ($active_voicemail_server =~ /$server_ip/) && ((length($active_voicemail_se
 			{
 			$VG_voicemail_id =				$aVG_voicemail_id[$vmb_ct];
 			$VG_voicemail_greeting =		$aVG_voicemail_greeting[$vmb_ct];
-
+			
 			$gsm='.gsm';
 			$wav='.wav';
 			$audio_file_copied=0;
@@ -2980,7 +3201,7 @@ else
 	$sthA->finish();
 	}
 
-if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($rebuild_conf_files =~ /Y/) )
+if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($rebuild_conf_files =~ /Y/) ) 
 	{
 	if ($DB) {print "generating new auto-gen conf files\n";}
 
@@ -3100,10 +3321,67 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 		$Lext .= "exten => _473782189600XXX,n,GotoIf(\$[ \"\${agent_zap_channel}\" = \"101\" ]?fin)\n";
 		$Lext .= "exten => _473782189600XXX,n,ChanSpy(\${agent_zap_channel},qw)\n";
 		$Lext .= "exten => _473782189600XXX,n(fin),Hangup()\n";
+		$Lext .= "; Enhanced Agent Monitoring ConfBridge entry: MONITOR\n";
+		$Lext .= "exten => _473782199600XXX,1,Answer()\n";
+		$Lext .= "exten => _473782199600XXX,n,Wait(1)\n";
+		$Lext .= "exten => _473782199600XXX,n,AGI(getAGENTchannel.agi)\n";
+		$Lext .= "exten => _473782199600XXX,n,NoOp(\${monitorsession})\n";
+		$Lext .= "exten => _473782199600XXX,n,NoOp(\${agent_zap_channel})\n";
+		$Lext .= "exten => _473782199600XXX,n,NoOp(\${manager_zap_channel})\n";
+		$Lext .= "exten => _473782199600XXX,n,Playback(sip-silence)\n";
+		$Lext .= "exten => _473782199600XXX,n,ConfBridge(\${EXTEN:8},vici_agent_bridge,vici_monitor_user,vici_monitor_menu)\n";
+		$Lext .= "exten => _473782199600XXX,n,Hangup()\n";
+		$Lext .= "; Enhanced Agent Monitoring ConfBridge entry: BARGE\n";
+		$Lext .= "exten => _473782209600XXX,1,Answer()\n";
+		$Lext .= "exten => _473782209600XXX,n,Wait(1)\n";
+		$Lext .= "exten => _473782209600XXX,n,AGI(getAGENTchannel.agi)\n";
+		$Lext .= "exten => _473782209600XXX,n,NoOp(\${monitorsession})\n";
+		$Lext .= "exten => _473782209600XXX,n,NoOp(\${agent_zap_channel})\n";
+		$Lext .= "exten => _473782209600XXX,n,NoOp(\${manager_zap_channel})\n";
+		$Lext .= "exten => _473782209600XXX,n,Playback(sip-silence)\n";
+		$Lext .= "exten => _473782209600XXX,n,ConfBridge(\${EXTEN:8},vici_agent_bridge,vici_barge_user,vici_monitor_menu)\n";
+		$Lext .= "exten => _473782209600XXX,n,Hangup()\n";
+		$Lext .= "; Enhanced Agent Monitoring Whisper to agent channel GoTo\n";
+		$Lext .= "exten => _473782219600XXX,1,GoTo(vici_monitor_whisper,\${EXTEN},1)\n";
+
+		$confbridge_enhanced_monitoring = "[vici_monitor_menu_exec]\n";
+		$confbridge_enhanced_monitoring .= "; FastAGI for VICIDIAL/astGUIclient call logging\n";
+		$confbridge_enhanced_monitoring .= "$hangup_exten_line\n";
+
+		$confbridge_enhanced_monitoring .= "exten => 4,1,Verbose(\"Enhanced Agent Monitoring: Mute the manager channel\")\n";
+		$confbridge_enhanced_monitoring .= "exten => 4,n,AGI(enhancedMONITORswitch.agi,CMD-----MONITOR)\n";
+		$confbridge_enhanced_monitoring .= "exten => 5,1,Verbose(\"Enhanced Agent Monitoring: UnMute the manager channel\")\n";
+		$confbridge_enhanced_monitoring .= "exten => 5,n,AGI(enhancedMONITORswitch.agi,CMD-----BARGE)\n";
+		$confbridge_enhanced_monitoring .= "exten => 6,1,Verbose(\"Enhanced Agent Monitoring: Whisper to the agent channel\")\n";
+		$confbridge_enhanced_monitoring .= "exten => 6,n,AGI(enhancedMONITORswitch.agi,CMD-----WHISPER)\n";
+		$confbridge_enhanced_monitoring .= "\n\n";
+
+		$confbridge_enhanced_monitoring .= "[vici_monitor_whisper]\n";
+		$confbridge_enhanced_monitoring .= "; FastAGI for VICIDIAL/astGUIclient call logging\n";
+		$confbridge_enhanced_monitoring .= "$hangup_exten_line\n";
+
+		$confbridge_enhanced_monitoring .= "; Enhanced Agent Monitoring Whisper to agent channel entry\n";
+		$confbridge_enhanced_monitoring .= "exten => _473782219600XXX,1,Answer\n";
+		$confbridge_enhanced_monitoring .= "exten => _473782219600XXX,n,Wait(1)\n";
+		$confbridge_enhanced_monitoring .= "exten => _473782219600XXX,n,AGI(getAGENTchannel.agi)\n";
+		$confbridge_enhanced_monitoring .= "exten => _473782219600XXX,n,NoOp(\${monitorsession})\n";
+		$confbridge_enhanced_monitoring .= "exten => _473782219600XXX,n,NoOp(\${agent_zap_channel})\n";
+		$confbridge_enhanced_monitoring .= "exten => _473782219600XXX,n,NoOp(\${manager_zap_channel})\n";
+		$confbridge_enhanced_monitoring .= "exten => _473782219600XXX,n,GotoIf(\$[ \"\${agent_zap_channel}\" = \"101\" ]?fin)\n";
+		$confbridge_enhanced_monitoring .= "exten => _473782219600XXX,n,ChanSpy(\${agent_zap_channel},qwX)\n";
+		$confbridge_enhanced_monitoring .= "exten => _473782219600XXX,n(fin),Hangup()\n";
+
+		$confbridge_enhanced_monitoring .= "exten => 4,1,Verbose(\"Enhanced Agent Monitoring: Mute the manager channel\")\n";
+		$confbridge_enhanced_monitoring .= "exten => 4,n,GoTo(default,47378219\${monitorsession},1)\n";
+		$confbridge_enhanced_monitoring .= "exten => 5,1,Verbose(\"Enhanced Agent Monitoring: UnMute the manager channel\")\n";
+		$confbridge_enhanced_monitoring .= "exten => 5,n,GoTo(default,47378220\${monitorsession},1)\n";
+		$confbridge_enhanced_monitoring .= "exten => 6,1,Verbose(\"Enhanced Agent Monitoring: Whisper to the agent channel\")\n";
+		$confbridge_enhanced_monitoring .= "exten => 6,n,GoTo(vici_monitor_whisper,47378221\${monitorsession},1)\n";
+		$confbridge_enhanced_monitoring .= "\n\n";
 		}
 
 	$Lext .= "\n";
-	if ($SSinbound_answer_config > 0)
+	if ($SSinbound_answer_config > 0) 
 		{$Lext .= "; Inbound Answer Config ENABLED\n";}
 	else
 		{$Lext .= "; Inbound Answer Config DISABLED\n";}
@@ -3128,7 +3406,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	$Liax .= "permit=0.0.0.0/0.0.0.0\n";
 	$Liax .= "disallow=all\n";
 	$Liax .= "allow=ulaw\n";
-	if ($conf_qualify =~ /Y/)
+	if ($conf_qualify =~ /Y/) 
 		{$Liax .= "qualify=yes\n";}
 
 	$Liax .= "\n";
@@ -3143,7 +3421,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	$Liax .= "permit=0.0.0.0/0.0.0.0\n";
 	$Liax .= "disallow=all\n";
 	$Liax .= "allow=ulaw\n";
-	if ($conf_qualify =~ /Y/)
+	if ($conf_qualify =~ /Y/) 
 		{$Liax .= "qualify=yes\n";}
 
 	$Liax .= "\n";
@@ -3158,7 +3436,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	$Liax .= "permit=0.0.0.0/0.0.0.0\n";
 	$Liax .= "disallow=all\n";
 	$Liax .= "allow=ulaw\n";
-	if ($conf_qualify =~ /Y/)
+	if ($conf_qualify =~ /Y/) 
 		{$Liax .= "qualify=yes\n";}
 
 
@@ -3228,7 +3506,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 		$Liax .= "permit=0.0.0.0/0.0.0.0\n";
 		$Liax .= "disallow=all\n";
 		$Liax .= "allow=ulaw\n";
-		if ($conf_qualify =~ /Y/)
+		if ($conf_qualify =~ /Y/) 
 			{$Liax .= "qualify=yes\n";}
 
 		$i++;
@@ -3292,7 +3570,17 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	if ($asterisk_version =~ /^1.2/)
 		{$Vext .= "exten => 8309,2,Monitor(wav,\${CALLERIDNAME})\n";}
 	else
-		{$Vext .= "exten => 8309,2,Monitor(wav,\${CALLERID(name)})\n";}
+		{
+		if ( ($asterisk_version =~ /^2[1-9]|^3\d|^4\d/) || ($SSrecording_dtmf_muting > 0) )
+			{
+			# Deprecation of "Monitor" application after Asterisk 20
+			$Vext .= "exten => 8309,2,MixMonitor(,r($PATHmonitor/\${CALLERID(name)}-in.wav)t($PATHmonitor/\${CALLERID(name)}-out.wav))\n";
+			}
+		else
+			{
+			$Vext .= "exten => 8309,2,Monitor(wav,\${CALLERID(name)})\n";
+			}
+		}
 	$Vext .= "exten => 8309,3,Wait($vicidial_recording_limit)\n";
 	$Vext .= "exten => 8309,4,Hangup()\n";
 	$Vext .= ";     this is the GSM verison\n";
@@ -3300,7 +3588,17 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	if ($asterisk_version =~ /^1.2/)
 		{$Vext .= "exten => 8310,2,Monitor(gsm,\${CALLERIDNAME})\n";}
 	else
-		{$Vext .= "exten => 8310,2,Monitor(gsm,\${CALLERID(name)})\n";}
+		{
+		if ( ($asterisk_version =~ /^2[1-9]|^3\d|^4\d/) || ($SSrecording_dtmf_muting > 0) )
+			{
+			# Deprecation of "Monitor" application after Asterisk 20
+			$Vext .= "exten => 8309,2,MixMonitor(,r($PATHmonitor/\${CALLERID(name)}-in.wav)t($PATHmonitor/\${CALLERID(name)}-out.wav))\n";
+			}
+		else
+			{
+			$Vext .= "exten => 8310,2,Monitor(gsm,\${CALLERID(name)})\n";
+			}
+		}
 	$Vext .= "exten => 8310,3,Wait($vicidial_recording_limit)\n";
 	$Vext .= "exten => 8310,4,Hangup()\n";
 
@@ -3348,14 +3646,14 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	while ($sthArows > $i)
 		{
 		@aryA = $sthA->fetchrow_array;
-		$carrier_id[$i]	=			$aryA[0];
-		$carrier_name[$i]	=		$aryA[1];
-		$registration_string[$i] =	$aryA[2];
-		$template_id[$i] =			$aryA[3];
-		$account_entry[$i] =		$aryA[4];
-		$globals_string[$i] =		$aryA[5];
-		$dialplan_entry[$i] =		$aryA[6];
-		$carrier_description[$i] =	$aryA[7];
+		$carrier_id[$i]	=			dialplan_filter_a($aryA[0]);
+		$carrier_name[$i]	=		dialplan_filter_a($aryA[1]);
+		$registration_string[$i] =	dialplan_filter_a($aryA[2]);
+		$template_id[$i] =			dialplan_filter_a($aryA[3]);
+		$account_entry[$i] =		dialplan_filter_b($aryA[4]);
+		$globals_string[$i] =		dialplan_filter_a($aryA[5]);
+		$dialplan_entry[$i] =		dialplan_filter_b($aryA[6]);
+		$carrier_description[$i] =	dialplan_filter_a($aryA[7]);
 		$i++;
 		}
 	$sthA->finish();
@@ -3364,7 +3662,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	while ($sthArows > $i)
 		{
 		$template_contents[$i]='';
-		if ( (length($template_id[$i]) > 1) && ($template_id[$i] !~ /--NONE--/) )
+		if ( (length($template_id[$i]) > 1) && ($template_id[$i] !~ /--NONE--/) ) 
 			{
 			$stmtA = "SELECT template_contents FROM vicidial_conf_templates where template_id='$template_id[$i]';";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
@@ -3405,14 +3703,14 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	while ($sthArows > $i)
 		{
 		@aryA = $sthA->fetchrow_array;
-		$carrier_id[$i]	=			$aryA[0];
-		$carrier_name[$i]	=		$aryA[1];
-		$registration_string[$i] =	$aryA[2];
-		$template_id[$i] =			$aryA[3];
-		$account_entry[$i] =		$aryA[4];
-		$globals_string[$i] =		$aryA[5];
-		$dialplan_entry[$i] =		$aryA[6];
-		$carrier_description[$i] =	$aryA[7];
+		$carrier_id[$i]	=			dialplan_filter_a($aryA[0]);
+		$carrier_name[$i]	=		dialplan_filter_a($aryA[1]);
+		$registration_string[$i] =	dialplan_filter_a($aryA[2]);
+		$template_id[$i] =			dialplan_filter_a($aryA[3]);
+		$account_entry[$i] =		dialplan_filter_b($aryA[4]);
+		$globals_string[$i] =		dialplan_filter_a($aryA[5]);
+		$dialplan_entry[$i] =		dialplan_filter_b($aryA[6]);
+		$carrier_description[$i] =	dialplan_filter_a($aryA[7]);
 		$i++;
 		}
 	$sthA->finish();
@@ -3421,7 +3719,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	while ($sthArows > $i)
 		{
 		$template_contents[$i]='';
-		if ( (length($template_id[$i]) > 1) && ($template_id[$i] !~ /--NONE--/) )
+		if ( (length($template_id[$i]) > 1) && ($template_id[$i] !~ /--NONE--/) ) 
 			{
 			$stmtA = "SELECT template_contents FROM vicidial_conf_templates where template_id='$template_id[$i]';";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
@@ -3461,14 +3759,14 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	while ($sthArows > $i)
 		{
 		@aryA = $sthA->fetchrow_array;
-		$carrier_id[$i]	=			$aryA[0];
-		$carrier_name[$i]	=		$aryA[1];
-		$registration_string[$i] =	$aryA[2];
-		$template_id[$i] =			$aryA[3];
-		$account_entry[$i] =		$aryA[4];
-		$globals_string[$i] =		$aryA[5];
-		$dialplan_entry[$i] =		$aryA[6];
-		$carrier_description[$i] =	$aryA[7];
+		$carrier_id[$i]	=			dialplan_filter_a($aryA[0]);
+		$carrier_name[$i]	=		dialplan_filter_a($aryA[1]);
+		$registration_string[$i] =	dialplan_filter_a($aryA[2]);
+		$template_id[$i] =			dialplan_filter_a($aryA[3]);
+		$account_entry[$i] =		dialplan_filter_b($aryA[4]);
+		$globals_string[$i] =		dialplan_filter_a($aryA[5]);
+		$dialplan_entry[$i] =		dialplan_filter_b($aryA[6]);
+		$carrier_description[$i] =	dialplan_filter_a($aryA[7]);
 		$i++;
 		}
 	$sthA->finish();
@@ -3518,14 +3816,14 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	while ($sthArows > $i)
 		{
 		@aryA = $sthA->fetchrow_array;
-		$carrier_id[$i]	=			$aryA[0];
-		$carrier_name[$i]	=		$aryA[1];
-		$registration_string[$i] =	$aryA[2];
-		$template_id[$i] =			$aryA[3];
-		$account_entry[$i] =		$aryA[4];
-		$globals_string[$i] =		$aryA[5];
-		$dialplan_entry[$i] =		$aryA[6];
-		$carrier_description[$i] =	$aryA[7];
+		$carrier_id[$i]	=			dialplan_filter_a($aryA[0]);
+		$carrier_name[$i]	=		dialplan_filter_a($aryA[1]);
+		$registration_string[$i] =	dialplan_filter_a($aryA[2]);
+		$template_id[$i] =			dialplan_filter_a($aryA[3]);
+		$account_entry[$i] =		dialplan_filter_b($aryA[4]);
+		$globals_string[$i] =		dialplan_filter_a($aryA[5]);
+		$dialplan_entry[$i] =		dialplan_filter_b($aryA[6]);
+		$carrier_description[$i] =	dialplan_filter_a($aryA[7]);
 		$i++;
 		}
 	$sthA->finish();
@@ -3640,7 +3938,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 			}
 		if ($DBXXX > 0) {print "IAX|$extension[$i]|$codecs_list[$i]|$Pcodec\n";}
 
-		if ( (length($template_id[$i]) > 1) && ($template_id[$i] !~ /--NONE--/) )
+		if ( (length($template_id[$i]) > 1) && ($template_id[$i] !~ /--NONE--/) ) 
 			{
 			$stmtA = "SELECT template_contents FROM vicidial_conf_templates where template_id='$template_id[$i]';";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
@@ -3655,26 +3953,26 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 				$Piax .= "username=$extension[$i]\n";
 				$Piax .= "secret=$conf_secret[$i]\n";
 				$Piax .= "accountcode=$extension[$i]\n";
-				if ( (length($fullname[$i])>0) || (length($outbound_cid[$i])>0) )
+				if ( (length($fullname[$i])>0) || (length($outbound_cid[$i])>0) ) 
 					{
 					$Piax .= "callerid=\"$fullname[$i]\" <$outbound_cid[$i]>\n";
 					}
 				$Piax .= "mailbox=$voicemail[$i]\n";
-				if ($conf_qualify[$i] =~ /Y/)
+				if ($conf_qualify[$i] =~ /Y/) 
 					{$Piax .= "qualify=yes\n";}
-				if ($codecs_with_template[$i] > 0)
+				if ($codecs_with_template[$i] > 0) 
 					{$Piax .= "$Pcodec";}
 				if (length($mohsuggest[$i]) > 0)
 					{$Piax .= "mohsuggest=$mohsuggest[$i]\n";}
 				$Piax .= "$template_contents[$i]\n";
-
+				
 				$conf_entry_written++;
 				}
 			$sthA->finish();
 			}
 		if (length($conf_override[$i]) > 10)
 			{
-			if ($conf_entry_written < 1)
+			if ($conf_entry_written < 1) 
 				{$Piax .= "\n\[$extension[$i]\]\n";}
 			$Piax .= "$conf_override[$i]\n";
 			$conf_entry_written++;
@@ -3685,7 +3983,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 			$Piax .= "username=$extension[$i]\n";
 			$Piax .= "secret=$conf_secret[$i]\n";
 			$Piax .= "accountcode=$extension[$i]\n";
-			if ( (length($fullname[$i])>0) || (length($outbound_cid[$i])>0) )
+			if ( (length($fullname[$i])>0) || (length($outbound_cid[$i])>0) ) 
 				{
 				$Piax .= "callerid=\"$fullname[$i]\" <$outbound_cid[$i]>\n";
 				}
@@ -3696,40 +3994,64 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 			$Piax .= "type=friend\n";
 			$Piax .= "auth=md5\n";
 			$Piax .= "host=dynamic\n";
-			if ($conf_qualify[$i] =~ /Y/)
+			if ($conf_qualify[$i] =~ /Y/) 
 				{$Piax .= "qualify=yes\n";}
 			if (length($mohsuggest[$i]) > 0)
 				{$Piax .= "mohsuggest=$mohsuggest[$i]\n";}
 			}
-		%ast_ver_str = parse_asterisk_version($asterisk_version);
-		if (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 6))
+		### check against $reserved_extensions before building dialplan entry for this phone
+		$tempdp = $dialplan[$i];
+		if ( ($reserved_extensions =~ /,$tempdp,/) || (length($tempdp) < 1) )
 			{
-			$Pext .= "exten => $dialplan[$i],1,Dial(IAX2/$extension[$i]|$phone_ring_timeout[$i]|)\n";
-			}
-		else
-			{
-			$Pext .= "exten => $dialplan[$i],1,Dial(IAX2/$extension[$i],$phone_ring_timeout[$i],)\n";
-			}
-		if (length($unavail_dialplan_fwd_exten[$i]) > 0)
-			{
-			if (length($unavail_dialplan_fwd_context[$i]) < 1)
-				{$unavail_dialplan_fwd_context[$i] = 'default';}
-			$Pext .= "exten => $dialplan[$i],2,Goto($unavail_dialplan_fwd_context[$i],$unavail_dialplan_fwd_exten[$i],1)\n";
-			}
-		else
-			{
-			if ($voicemail_instructions[$i] =~ /Y/)
+			if (length($tempdp) < 1) 
 				{
-				$Pext .= "exten => $dialplan[$i],2,Goto(default,85026666666666$voicemail[$i],1)\n";
+				# empty extension found, do not build dialplan, collect data for error to populate in admin log
+				$reserved_exten_skip++;
+				$reserved_exten_message .= "EMPTY EXTEN IAX SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";
+				if ($DBX) {print "EMPTY EXTEN IAX SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";}
+				$Pext .= "; EMPTY EXTEN IAX SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";
 				}
 			else
 				{
-				$Pext .= "exten => $dialplan[$i],2,Goto(default,85026666666667$voicemail[$i],1)\n";
+				# reserved_extensions match, do not build dialplan, collect data for error to populate in admin log
+				$reserved_exten_skip++;
+				$reserved_exten_message .= "RESERVED MATCH IAX SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";
+				if ($DBX) {print "RESERVED MATCH IAX SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";}
+				$Pext .= "; RESERVED MATCH IAX SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";
 				}
 			}
-		if (!(( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 6)))
+		else
 			{
-			$Pext .= "exten => $dialplan[$i],3,Hangup()\n";
+			%ast_ver_str = parse_asterisk_version($asterisk_version);
+			if (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 6))
+				{
+				$Pext .= "exten => $dialplan[$i],1,Dial(IAX2/$extension[$i]|$phone_ring_timeout[$i]|)\n";
+				}
+			else
+				{
+				$Pext .= "exten => $dialplan[$i],1,Dial(IAX2/$extension[$i],$phone_ring_timeout[$i],)\n";
+				}
+			if (length($unavail_dialplan_fwd_exten[$i]) > 0) 
+				{
+				if (length($unavail_dialplan_fwd_context[$i]) < 1) 
+					{$unavail_dialplan_fwd_context[$i] = 'default';}
+				$Pext .= "exten => $dialplan[$i],2,Goto($unavail_dialplan_fwd_context[$i],$unavail_dialplan_fwd_exten[$i],1)\n";
+				}
+			else
+				{
+				if ($voicemail_instructions[$i] =~ /Y/)
+					{
+					$Pext .= "exten => $dialplan[$i],2,Goto(default,85026666666666$voicemail[$i],1)\n";
+					}
+				else
+					{
+					$Pext .= "exten => $dialplan[$i],2,Goto(default,85026666666667$voicemail[$i],1)\n";
+					}
+				}
+			if (!(( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 6)))
+				{
+				$Pext .= "exten => $dialplan[$i],3,Hangup()\n";
+				}
 			}
 
 		if ($delete_vm_after_email[$i] =~ /Y/)
@@ -3811,7 +4133,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 			}
 		if ($DBXXX > 0) {print "SIP|$extension[$i]|$codecs_list[$i]|$Pcodec\n";}
 
-		if ( (length($template_id[$i]) > 1) && ($template_id[$i] !~ /--NONE--/) )
+		if ( (length($template_id[$i]) > 1) && ($template_id[$i] !~ /--NONE--/) ) 
 			{
 			$stmtA = "SELECT template_contents FROM vicidial_conf_templates where template_id='$template_id[$i]';";
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
@@ -3826,24 +4148,24 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 				$Psip .= "username=$extension[$i]\n";
 				$Psip .= "secret=$conf_secret[$i]\n";
 				$Psip .= "accountcode=$extension[$i]\n";
-				if ( (length($fullname[$i])>0) || (length($outbound_cid[$i])>0) )
+				if ( (length($fullname[$i])>0) || (length($outbound_cid[$i])>0) ) 
 					{
 					$Psip .= "callerid=\"$fullname[$i]\" <$outbound_cid[$i]>\n";
 					}
 				$Psip .= "mailbox=$voicemail[$i]\n";
-				if ($codecs_with_template[$i] > 0)
+				if ($codecs_with_template[$i] > 0) 
 					{$Psip .= "$Pcodec";}
 				if (length($mohsuggest[$i]) > 0)
 					{$Psip .= "mohsuggest=$mohsuggest[$i]\n";}
 				$Psip .= "$template_contents[$i]\n";
-
+				
 				$conf_entry_written++;
 				}
 			$sthA->finish();
 			}
 		if (length($conf_override[$i]) > 10)
 			{
-			if ($conf_entry_written < 1)
+			if ($conf_entry_written < 1) 
 				{$Psip .= "\n\[$extension[$i]\]\n";}
 			$Psip .= "$conf_override[$i]\n";
 			$conf_entry_written++;
@@ -3854,7 +4176,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 			$Psip .= "username=$extension[$i]\n";
 			$Psip .= "secret=$conf_secret[$i]\n";
 			$Psip .= "accountcode=$extension[$i]\n";
-			if ( (length($fullname[$i])>0) || (length($outbound_cid[$i])>0) )
+			if ( (length($fullname[$i])>0) || (length($outbound_cid[$i])>0) ) 
 				{
 				$Psip .= "callerid=\"$fullname[$i]\" <$outbound_cid[$i]>\n";
 				}
@@ -3866,35 +4188,59 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 			if (length($mohsuggest[$i]) > 0)
 				{$Psip .= "mohsuggest=$mohsuggest[$i]\n";}
 			}
-		%ast_ver_str = parse_asterisk_version($asterisk_version);
-		if (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 6))
+		### check against $reserved_extensions before building dialplan entry for this phone
+		$tempdp = $dialplan[$i];
+		if ( ($reserved_extensions =~ /,$tempdp,/) || (length($tempdp) < 1) )
 			{
-			$Pext .= "exten => $dialplan[$i],1,Dial(SIP/$extension[$i]|$phone_ring_timeout[$i]|)\n";
-			}
-		else
-			{
-			$Pext .= "exten => $dialplan[$i],1,Dial(SIP/$extension[$i],$phone_ring_timeout[$i],)\n";
-			}
-		if (length($unavail_dialplan_fwd_exten[$i]) > 0)
-			{
-			if (length($unavail_dialplan_fwd_context[$i]) < 1)
-				{$unavail_dialplan_fwd_context[$i] = 'default';}
-			$Pext .= "exten => $dialplan[$i],2,Goto($unavail_dialplan_fwd_context[$i],$unavail_dialplan_fwd_exten[$i],1)\n";
-			}
-		else
-			{
-			if ($voicemail_instructions[$i] =~ /Y/)
+			if (length($tempdp) < 1) 
 				{
-				$Pext .= "exten => $dialplan[$i],2,Goto(default,85026666666666$voicemail[$i],1)\n";
+				# empty extension found, do not build dialplan, collect data for error to populate in admin log
+				$reserved_exten_skip++;
+				$reserved_exten_message .= "EMPTY EXTEN SIP SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";
+				if ($DBX) {print "EMPTY EXTEN SIP SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";}
+				$Pext .= "; EMPTY EXTEN SIP SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";
 				}
 			else
 				{
-				$Pext .= "exten => $dialplan[$i],2,Goto(default,85026666666667$voicemail[$i],1)\n";
+				# $reserved_extensions match, do not build dialplan, collect data for error to populate in admin log
+				$reserved_exten_skip++;
+				$reserved_exten_message .= "RESERVED MATCH SIP SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";
+				if ($DBX) {print "RESERVED MATCH SIP SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";}
+				$Pext .= "; RESERVED MATCH SIP SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";
 				}
 			}
-		if (!(( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 6)))
+		else
 			{
-			$Pext .= "exten => $dialplan[$i],3,Hangup()\n";
+			%ast_ver_str = parse_asterisk_version($asterisk_version);
+			if (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 6))
+				{
+				$Pext .= "exten => $dialplan[$i],1,Dial(SIP/$extension[$i]|$phone_ring_timeout[$i]|)\n";
+				}
+			else
+				{
+				$Pext .= "exten => $dialplan[$i],1,Dial(SIP/$extension[$i],$phone_ring_timeout[$i],)\n";
+				}
+			if (length($unavail_dialplan_fwd_exten[$i]) > 0) 
+				{
+				if (length($unavail_dialplan_fwd_context[$i]) < 1) 
+					{$unavail_dialplan_fwd_context[$i] = 'default';}
+				$Pext .= "exten => $dialplan[$i],2,Goto($unavail_dialplan_fwd_context[$i],$unavail_dialplan_fwd_exten[$i],1)\n";
+				}
+			else
+				{
+				if ($voicemail_instructions[$i] =~ /Y/)
+					{
+					$Pext .= "exten => $dialplan[$i],2,Goto(default,85026666666666$voicemail[$i],1)\n";
+					}
+				else
+					{
+					$Pext .= "exten => $dialplan[$i],2,Goto(default,85026666666667$voicemail[$i],1)\n";
+					}
+				}
+			if (!(( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 6)))
+				{
+				$Pext .= "exten => $dialplan[$i],3,Hangup()\n";
+				}
 			}
 
 		if ($delete_vm_after_email[$i] =~ /Y/)
@@ -4058,35 +4404,59 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 			}
 			
 		### Dialplan generation :
-		%ast_ver_str = parse_asterisk_version($asterisk_version);
-		if (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 6))
+		### check against $reserved_extensions before building dialplan entry for this phone
+		$tempdp = $dialplan[$i];
+		if ( ($reserved_extensions =~ /,$tempdp,/) || (length($tempdp) < 1) )
 			{
-			$Pext .= "exten => $dialplan[$i],1,Dial(PJSIP/$extension[$i]|$phone_ring_timeout[$i]|)\n";
-			}
-		else
-			{
-			$Pext .= "exten => $dialplan[$i],1,Dial(PJSIP/$extension[$i],$phone_ring_timeout[$i],)\n";
-			}
-		if (length($unavail_dialplan_fwd_exten[$i]) > 0) 
-			{
-			if (length($unavail_dialplan_fwd_context[$i]) < 1) 
-				{$unavail_dialplan_fwd_context[$i] = 'default';}
-			$Pext .= "exten => $dialplan[$i],2,Goto($unavail_dialplan_fwd_context[$i],$unavail_dialplan_fwd_exten[$i],1)\n";
-			}
-		else
-			{
-			if ($voicemail_instructions[$i] =~ /Y/)
+			if (length($tempdp) < 1) 
 				{
-				$Pext .= "exten => $dialplan[$i],2,Goto(default,85026666666666$voicemail[$i],1)\n";
+				# empty extension found, do not build dialplan, collect data for error to populate in admin log
+				$reserved_exten_skip++;
+				$reserved_exten_message .= "EMPTY EXTEN PJSIP SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";
+				if ($DBX) {print "EMPTY EXTEN PJSIP SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";}
+				$Pext .= "; EMPTY EXTEN PJSIP SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";
 				}
 			else
 				{
-				$Pext .= "exten => $dialplan[$i],2,Goto(default,85026666666667$voicemail[$i],1)\n";
+				# $reserved_extensions match, do not build dialplan, collect data for error to populate in admin log
+				$reserved_exten_skip++;
+				$reserved_exten_message .= "RESERVED MATCH PJSIP SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";
+				if ($DBX) {print "RESERVED MATCH PJSIP SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";}
+				$Pext .= "; RESERVED MATCH PJSIP SKIP!   dialplan: $dialplan[$i] phone: $extension[$i] server: $server_ip\n";
 				}
 			}
-		if (!(( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 6)))
+		else
 			{
-			$Pext .= "exten => $dialplan[$i],3,Hangup()\n";
+			%ast_ver_str = parse_asterisk_version($asterisk_version);
+			if (( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 6))
+				{
+				$Pext .= "exten => $dialplan[$i],1,Dial(PJSIP/$extension[$i]|$phone_ring_timeout[$i]|)\n";
+				}
+			else
+				{
+				$Pext .= "exten => $dialplan[$i],1,Dial(PJSIP/$extension[$i],$phone_ring_timeout[$i],)\n";
+				}
+			if (length($unavail_dialplan_fwd_exten[$i]) > 0) 
+				{
+				if (length($unavail_dialplan_fwd_context[$i]) < 1) 
+					{$unavail_dialplan_fwd_context[$i] = 'default';}
+				$Pext .= "exten => $dialplan[$i],2,Goto($unavail_dialplan_fwd_context[$i],$unavail_dialplan_fwd_exten[$i],1)\n";
+				}
+			else
+				{
+				if ($voicemail_instructions[$i] =~ /Y/)
+					{
+					$Pext .= "exten => $dialplan[$i],2,Goto(default,85026666666666$voicemail[$i],1)\n";
+					}
+				else
+					{
+					$Pext .= "exten => $dialplan[$i],2,Goto(default,85026666666667$voicemail[$i],1)\n";
+					}
+				}
+			if (!(( $ast_ver_str{major} = 1 ) && ($ast_ver_str{minor} < 6)))
+				{
+				$Pext .= "exten => $dialplan[$i],3,Hangup()\n";
+				}
 			}
 
 		### VM generation
@@ -4134,9 +4504,32 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 				$d = leading_zero($4);
 				$CXVARremDIALstr = "$a$S$b$S$c$S$d$S";
 				}
-			$Pext .= "; Remote Phone Entry $i: $CXextension[$i] $CXserver_ip[$i] $CXfullname[$i]\n";
-			$Pext .= "exten => $CXdialplan[$i],1,Goto(default,$CXVARremDIALstr$CXdialplan[$i],1)\n";
-
+			### check against $reserved_extensions before building dialplan entry for this phone
+			$tempdp = $CXdialplan[$i];
+			if ( ($reserved_extensions =~ /,$tempdp,/) || (length($tempdp) < 1) )
+				{
+				if (length($tempdp) < 1) 
+					{
+					# empty extension found, do not build dialplan, collect data for error to populate in admin log
+					$reserved_exten_skip++;
+					$reserved_exten_message .= "EMPTY EXTEN CX SKIP!   dialplan: $CXdialplan[$i] phone: $CXextension[$i] server: $CXserver_ip[$i]\n";
+					if ($DBX) {print "EMPTY EXTEN CX SKIP!   dialplan: $CXdialplan[$i] phone: $CXextension[$i] server: $CXserver_ip[$i]\n";}
+					$Pext .= "; EMPTY EXTEN CX SKIP!   dialplan: $CXdialplan[$i] phone: $CXextension[$i] server: $CXserver_ip[$i]\n";
+					}
+				else
+					{
+					# $reserved_extensions match, do not build dialplan, collect data for error to populate in admin log
+					$reserved_exten_skip++;
+					$reserved_exten_message .= "RESERVED MATCH CX SKIP!   dialplan: $CXdialplan[$i] phone: $CXextension[$i] server: $CXserver_ip[$i]\n";
+					if ($DBX) {print "RESERVED MATCH CX SKIP!   dialplan: $CXdialplan[$i] phone: $CXextension[$i] server: $CXserver_ip[$i]\n";}
+					$Pext .= "; RESERVED MATCH CX SKIP!   dialplan: $CXdialplan[$i] phone: $CXextension[$i] server: $CXserver_ip[$i]\n";
+					}
+				}
+			else
+				{
+				$Pext .= "; Remote Phone Entry $i: $CXextension[$i] $CXserver_ip[$i] $CXfullname[$i]\n";
+				$Pext .= "exten => $CXdialplan[$i],1,Goto(default,$CXVARremDIALstr$CXdialplan[$i],1)\n";
+				}
 			$i++;
 			}
 		##### END Generate the CROSS SERVER IAX and SIP phone entries #####
@@ -4168,7 +4561,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 		if ($DBX>0) {print "Custom Meetme login and leave3way entries generated: |$meetme_enter_login_filename|$meetme_enter_leave3way_filename|\n";}
 		}
 	##### END Generate custom meetme entries if set #####
-
+	
 	##### BEGIN Generate custom ConfBridge entries if set #####
 	$confbridge_custom_ext='';
 	if ( ($conf_engine eq "CONFBRIDGE") && ( (length($meetme_enter_login_filename) > 0) || (length($meetme_enter_leave3way_filename) > 0) ) )
@@ -4227,7 +4620,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 		$menu_time_check[$i] =		$aryA[7];
 		$call_time_id[$i] =			$aryA[8];
 		$track_in_vdac[$i] =		$aryA[9];
-		$custom_dialplan_entry[$i]= $aryA[10];
+		$custom_dialplan_entry[$i]= dialplan_filter_b($aryA[10]);
 		$tracking_group[$i] =		$aryA[11];
 		$dtmf_log[$i] =				$aryA[12];
 		$dtmf_field[$i] =			$aryA[13];
@@ -4394,21 +4787,21 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 					}
 				if ($option_route[$j] =~ /AGI/)
 					{
-					if ($dtmf_log[$i] > 0)
+					if ($dtmf_log[$i] > 0) 
 						{$call_menu_line .= "exten => $option_value[$j],$PRI,AGI(cm.agi,$tracking_group[$i]-----$option_value[$j]-----$dtmf_field[$i]-----$alt_dtmf_log[$i]-----$question[$i])\n";   $PRI++;}
 					$call_menu_line .= "exten => $option_value[$j],$PRI,AGI($option_route_value[$j])\n";   $PRI++;
 					$call_menu_line .= "exten => $option_value[$j],$PRI,Hangup()\n";
 					}
 				if ($option_route[$j] =~ /CALLMENU/)
 					{
-					if ($dtmf_log[$i] > 0)
+					if ($dtmf_log[$i] > 0) 
 						{$call_menu_line .= "exten => $option_value[$j],$PRI,AGI(cm.agi,$tracking_group[$i]-----$option_value[$j]-----$dtmf_field[$i]-----$alt_dtmf_log[$i]-----$question[$i])\n";   $PRI++;}
 					$call_menu_line .= "exten => $option_value[$j],$PRI,Goto($option_route_value[$j],s,1)\n";   $PRI++;
 					$call_menu_line .= "exten => $option_value[$j],$PRI,Hangup()\n";
 					}
 				if ($option_route[$j] =~ /DID/)
 					{
-					if ($dtmf_log[$i] > 0)
+					if ($dtmf_log[$i] > 0) 
 						{$call_menu_line .= "exten => $option_value[$j],$PRI,AGI(cm.agi,$tracking_group[$i]-----$option_value[$j]-----$dtmf_field[$i]-----$alt_dtmf_log[$i]-----$question[$i])\n";   $PRI++;}
 					$call_menu_line .= "exten => $option_value[$j],$PRI,Goto(trunkinbound,$option_route_value[$j],1)\n";   $PRI++;
 					$call_menu_line .= "exten => $option_value[$j],$PRI,Hangup()\n";
@@ -4427,7 +4820,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 					$IGvid_validate_digits =	$IGoption_route_value_context[8];
 					$IGvid_container =			$IGoption_route_value_context[9];
 
-					if ($dtmf_log[$i] > 0)
+					if ($dtmf_log[$i] > 0) 
 						{$call_menu_line .= "exten => $option_value[$j],$PRI,AGI(cm.agi,$tracking_group[$i]-----$option_value[$j]-----$dtmf_field[$i]-----$alt_dtmf_log[$i]-----$question[$i])\n";   $PRI++;}
 					if ($IGhandle_method =~ /VIDPROMPTSPECIAL/) 
 						{
@@ -4437,19 +4830,19 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 					else
 						{
 						if ($option_route_value[$j] =~ /DYNAMIC_INGROUP_VAR/) 
-						{
-						$call_menu_line .= "exten => $option_value[$j],$PRI,AGI(agi-VDAD_ALL_inbound.agi,$IGhandle_method-----$IGsearch_method-----\$\{ingroupvar\}-----$menu_id[$i]--------------------$IGlist_id-----$IGphone_code-----$IGcampaign_id---------------$IGvid_enter_filename-----$IGvid_id_number_filename-----$IGvid_confirm_filename-----$IGvid_validate_digits)\n";   $PRI++;
-						}
-					else
-						{
-						$call_menu_line .= "exten => $option_value[$j],$PRI,AGI(agi-VDAD_ALL_inbound.agi,$IGhandle_method-----$IGsearch_method-----$option_route_value[$j]-----$menu_id[$i]--------------------$IGlist_id-----$IGphone_code-----$IGcampaign_id---------------$IGvid_enter_filename-----$IGvid_id_number_filename-----$IGvid_confirm_filename-----$IGvid_validate_digits)\n";   $PRI++;
-						}
+							{
+							$call_menu_line .= "exten => $option_value[$j],$PRI,AGI(agi-VDAD_ALL_inbound.agi,$IGhandle_method-----$IGsearch_method-----\$\{ingroupvar\}-----$menu_id[$i]--------------------$IGlist_id-----$IGphone_code-----$IGcampaign_id---------------$IGvid_enter_filename-----$IGvid_id_number_filename-----$IGvid_confirm_filename-----$IGvid_validate_digits)\n";   $PRI++;
+							}
+						else
+							{
+							$call_menu_line .= "exten => $option_value[$j],$PRI,AGI(agi-VDAD_ALL_inbound.agi,$IGhandle_method-----$IGsearch_method-----$option_route_value[$j]-----$menu_id[$i]--------------------$IGlist_id-----$IGphone_code-----$IGcampaign_id---------------$IGvid_enter_filename-----$IGvid_id_number_filename-----$IGvid_confirm_filename-----$IGvid_validate_digits)\n";   $PRI++;
+							}
 						}
 					$call_menu_line .= "exten => $option_value[$j],$PRI,Hangup()\n";
 					}
 				if ($option_route[$j] =~ /EXTENSION/)
 					{
-					if ($dtmf_log[$i] > 0)
+					if ($dtmf_log[$i] > 0) 
 						{$call_menu_line .= "exten => $option_value[$j],$PRI,AGI(cm.agi,$tracking_group[$i]-----$option_value[$j]-----$dtmf_field[$i]-----$alt_dtmf_log[$i]-----$question[$i])\n";   $PRI++;}
 					if (length($option_route_value_context[$j])>0) {$option_route_value_context[$j] = "$option_route_value_context[$j],";}
 					$call_menu_line .= "exten => $option_value[$j],$PRI,Goto($option_route_value_context[$j]$option_route_value[$j],1)\n";   $PRI++;
@@ -4457,7 +4850,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 					}
 				if ($option_route[$j] =~ /VOICEMAIL|VMAIL_NO_INST/)
 					{
-					if ($dtmf_log[$i] > 0)
+					if ($dtmf_log[$i] > 0) 
 						{$call_menu_line .= "exten => $option_value[$j],$PRI,AGI(cm.agi,$tracking_group[$i]-----$option_value[$j]-----$dtmf_field[$i]-----$alt_dtmf_log[$i]-----$question[$i])\n";   $PRI++;}
 					if ($option_route[$j] =~ /VMAIL_NO_INST/)
 						{
@@ -4495,13 +4888,13 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 							}
 
 						$call_menu_line .= "$hangup_prompt_ext";
-						if ($dtmf_log[$i] > 0)
+						if ($dtmf_log[$i] > 0) 
 							{$call_menu_line .= "exten => $option_value[$j],$PRI,AGI(cm.agi,$tracking_group[$i]-----$option_value[$j]-----$dtmf_field[$i]-----$alt_dtmf_log[$i]-----$question[$i])\n";   $PRI++;}
 						$call_menu_line .= "exten => $option_value[$j],n,Hangup()\n";
 						}
 					else
 						{
-						if ($dtmf_log[$i] > 0)
+						if ($dtmf_log[$i] > 0) 
 							{$call_menu_line .= "exten => $option_value[$j],$PRI,AGI(cm.agi,$tracking_group[$i]-----$option_value[$j]-----$dtmf_field[$i]-----$alt_dtmf_log[$i]-----$question[$i])\n";   $PRI++;}
 						$call_menu_line .= "exten => $option_value[$j],$PRI,Hangup()\n";
 						}
@@ -4523,13 +4916,13 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 						$S='*';
 						if( $Pserver_ip =~ m/(\S+)\.(\S+)\.(\S+)\.(\S+)/ )
 							{
-							$a = leading_zero($1);
-							$b = leading_zero($2);
-							$c = leading_zero($3);
+							$a = leading_zero($1); 
+							$b = leading_zero($2); 
+							$c = leading_zero($3); 
 							$d = leading_zero($4);
 							$DIALstring = "$a$S$b$S$c$S$d$S";
 							}
-						if ($dtmf_log[$i] > 0)
+						if ($dtmf_log[$i] > 0) 
 							{$call_menu_line .= "exten => $option_value[$j],$PRI,AGI(cm.agi,$tracking_group[$i]-----$option_value[$j]-----$dtmf_field[$i]-----$alt_dtmf_log[$i]-----$question[$i])\n";   $PRI++;}
 						$call_menu_line .= "exten => $option_value[$j],$PRI,Goto(default,$DIALstring$Pdialplan,1)\n";   $PRI++;
 						$call_menu_line .= "exten => $option_value[$j],$PRI,Hangup()\n";
@@ -4543,7 +4936,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 					}
 				if ($option_value[$j] =~ /i/)
 					{
-					if ($cm_invalid_set > 1)
+					if ($cm_invalid_set > 1) 
 						{$call_menu_invalid_ext .= "; COMMENTED OUT...\n";}
 					else
 						{$call_menu_invalid_ext = "$call_menu_line";}
@@ -4647,7 +5040,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 		$call_menu_ext .= "\n";
 		$call_menu_ext .= "; $menu_name[$i]\n";
 		$call_menu_ext .= "[$menu_id[$i]]\n";
-		if ( ($SSinbound_answer_config > 0) && ($answer_signal[$i] =~ /N/i) )
+		if ( ($SSinbound_answer_config > 0) && ($answer_signal[$i] =~ /N/i) ) 
 			{
 			$call_menu_ext .= "exten => s,1,NoOp(NoAnswer-Call-Menu-Start)\n";
 			$call_menu_ext .= "exten => s,n,AGI(agi-VDAD_inbound_calltime_check.agi,$tracking_group[$i]-----$track_in_vdac[$i]-----$menu_id[$i]-----$time_check_scheme-----$time_check_route-----$time_check_route_value-----$time_check_route_context-----$qualify_sql_active[$i]-----NO)\n";
@@ -4657,13 +5050,13 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 			$call_menu_ext .= "exten => s,1,Answer\n";
 			$call_menu_ext .= "exten => s,n,AGI(agi-VDAD_inbound_calltime_check.agi,$tracking_group[$i]-----$track_in_vdac[$i]-----$menu_id[$i]-----$time_check_scheme-----$time_check_route-----$time_check_route_value-----$time_check_route_context-----$qualify_sql_active[$i]-----YES)\n";
 			}
-
+		
 		$call_menu_ext .= "exten => s,n,Set(INVCOUNT=0) \n";
 		$call_menu_ext .= "$menu_prompt_ext";
 		if ($menu_timeout[$i] > 0)
 			{$call_menu_ext .= "exten => s,n,WaitExten($menu_timeout[$i])\n";}
 		$k=0;
-		while ($k < $menu_repeat[$i])
+		while ($k < $menu_repeat[$i]) 
 			{
 			$call_menu_ext .= "$menu_prompt_ext";
 			if ($menu_timeout[$i] > 0)
@@ -4720,7 +5113,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 		$call_menu_ext .= "; hangup\n";
 		$call_menu_ext .= $hangup_exten_line;
 
-		if (length($custom_dialplan_entry[$i]) > 4)
+		if (length($custom_dialplan_entry[$i]) > 4) 
 			{
 			$call_menu_ext .= "\n\n";
 			$call_menu_ext .= "; custom dialplan entries\n";
@@ -4824,59 +5217,217 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	##### END generate voicemail accounts for all distinct phones on dedicated voicemail server
 
 
-
+	
 	##### BEGIN generate meetme entries for this server
 	if ($conf_engine eq "MEETME")
 		{
-	$mm = "; ViciDial Conferences:\n";
+		$mm = "; ViciDial Conferences:\n";
+	
+		### Find vicidial_conferences on this server
+		$stmtA = "SELECT conf_exten FROM vicidial_conferences where server_ip='$server_ip';";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArowsVC=$sthA->rows;
+		$j=0;
+		while ($sthArowsVC > $j)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$vc_meetme[$j] =	$aryA[0];
+			$j++;
+			}
+		$sthA->finish();
+	
+		$j=0;
+		while ($sthArowsVC > $j)
+			{
+			$mm .= "conf => $vc_meetme[$j]\n";
+			$j++;
+			}
+	
+		$mm .= "\n";
+		$mm .= "; Conferences:\n";
 
-	### Find vicidial_conferences on this server
-	$stmtA = "SELECT conf_exten FROM vicidial_conferences where server_ip='$server_ip';";
-	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
-	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-	$sthArowsVC=$sthA->rows;
-	$j=0;
-	while ($sthArowsVC > $j)
-		{
-		@aryA = $sthA->fetchrow_array;
-		$vc_meetme[$j] =	$aryA[0];
-		$j++;
-		}
-	$sthA->finish();
+		### Find conferences on this server
+		$stmtA = "SELECT conf_exten FROM conferences where server_ip='$server_ip';";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArowsC=$sthA->rows;
+		$j=0;
+		while ($sthArowsC > $j)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$meetme[$j] =	$aryA[0];
+			$j++;
+			}
+		$sthA->finish();
 
-	$j=0;
-	while ($sthArowsVC > $j)
-		{
-		$mm .= "conf => $vc_meetme[$j]\n";
-		$j++;
-		}
-
-	$mm .= "\n";
-	$mm .= "; Conferences:\n";
-
-	### Find conferences on this server
-	$stmtA = "SELECT conf_exten FROM conferences where server_ip='$server_ip';";
-	$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
-	$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
-	$sthArowsC=$sthA->rows;
-	$j=0;
-	while ($sthArowsC > $j)
-		{
-		@aryA = $sthA->fetchrow_array;
-		$meetme[$j] =	$aryA[0];
-		$j++;
-		}
-	$sthA->finish();
-
-	$j=0;
-	while ($sthArowsC > $j)
-		{
-		$mm .= "conf => $meetme[$j]\n";
-		$j++;
-		}
+		$j=0;
+		while ($sthArowsC > $j)
+			{
+			$mm .= "conf => $meetme[$j]\n";
+			$j++;
+			}
 		}
 	##### END generate meetme entries for this server
 
+	##### BEGIN generate ConfBridge conf for this server
+	if ($conf_engine eq "CONFBRIDGE")
+		{
+		$cb = "; ViciDial ConfBridge config:\n";
+
+		$cb .= "; Bridge Profile for agent conferences\n";
+		$cb .= "[vici_agent_bridge]\n";
+		$cb .= "type=bridge\n";
+		$cb .= "max_members=10\n";
+		$cb .= "record_conference=no\n";
+		$cb .= "internal_sample_rate=8000\n";
+		$cb .= "mixing_interval=20\n";
+		$cb .= "video_mode=none\n";
+		$cb .= "sound_join=enter\n";
+		$cb .= "sound_leave=leave\n";
+		$cb .= "sound_has_joined=sip-silence\n";
+		$cb .= "sound_has_left=sip-silence\n";
+		$cb .= "sound_kicked=sip-silence\n";
+		$cb .= "sound_muted=sip-silence\n";
+		$cb .= "sound_unmuted=sip-silence\n";
+		$cb .= "sound_only_person=confbridge-only-participant\n";
+		$cb .= "sound_only_one=sip-silence\n";
+		$cb .= "sound_there_are=sip-silence\n";
+		$cb .= "sound_other_in_party=sip-silence\n";
+		$cb .= "sound_begin=sip-silence\n";
+		$cb .= "sound_wait_for_leader=sip-silence\n";
+		$cb .= "sound_leader_has_left=sip-silence\n";
+		$cb .= "sound_get_pin=sip-silence\n";
+		$cb .= "sound_invalid_pin=sip-silence\n";
+		$cb .= "sound_locked=sip-silence\n";
+		$cb .= "sound_locked_now=sip-silence\n";
+		$cb .= "sound_unlocked_now=sip-silence\n";
+		$cb .= "sound_error_menu=sip-silence\n";
+		$cb .= "sound_participants_muted=sip-silence\n\n";
+
+		$cb .= "; User Profile for agent channels\n";
+		$cb .= "[vici_agent_user]\n";
+		$cb .= "type=user\n";
+		$cb .= "admin=no\n";
+		$cb .= "quiet=no\n";
+		$cb .= "startmuted=no\n";
+		$cb .= "marked=yes\n";
+		$cb .= "dtmf_passthrough=yes\n";
+		$cb .= "hear_own_join_sound=yes\n";
+		$cb .= "dsp_drop_silence=yes\n\n";
+
+		$cb .= "; User Profile for admin channels\n";
+		$cb .= "[vici_admin_user]\n";
+		$cb .= "type=user\n";
+		$cb .= "admin=yes\n";
+		$cb .= "quiet=no\n";
+		$cb .= "startmuted=no\n";
+		$cb .= "marked=yes\n";
+		$cb .= "dtmf_passthrough=yes\n";
+		$cb .= "dsp_drop_silence=yes\n\n";
+
+		$cb .= "; User Profile for monitoring\n";
+		$cb .= "[vici_monitor_user]\n";
+		$cb .= "type=user\n";
+		$cb .= "admin=no\n";
+		$cb .= "quiet=yes\n";
+		$cb .= "startmuted=yes\n";
+		$cb .= "marked=no\n";
+		$cb .= "dtmf_passthrough=no\n";
+		$cb .= "dsp_drop_silence=yes\n\n";
+
+		$cb .= "; User Profile for barging\n";
+		$cb .= "[vici_barge_user]\n";
+		$cb .= "type=user\n";
+		$cb .= "admin=no\n";
+		$cb .= "quiet=no\n";
+		$cb .= "startmuted=no\n";
+		$cb .= "marked=no\n";
+		$cb .= "dtmf_passthrough=yes\n";
+		$cb .= "dsp_drop_silence=yes\n\n";
+
+		$cb .= "; User Profile for customers channels\n";
+		$cb .= "[vici_customer_user]\n";
+		$cb .= "type=user\n";
+		$cb .= "admin=no\n";
+		$cb .= "quiet=no\n";
+		$cb .= "startmuted=no\n";
+		$cb .= "marked=yes\n";
+		$cb .= "dtmf_passthrough=yes\n";
+		$cb .= "hear_own_join_sound=no\n";
+		$cb .= "dsp_drop_silence=yes\n\n";
+
+		$cb .= "; User Profile for call recording channels\n";
+		$cb .= "[vici_recording_user]\n";
+		$cb .= "type=user\n";
+		$cb .= "admin=no\n";
+		$cb .= "quiet=yes\n";
+		$cb .= "startmuted=yes\n";
+		$cb .= "marked=no\n";
+		$cb .= "dtmf_passthrough=no\n";
+		$cb .= "dsp_drop_silence=yes\n\n";
+
+		$cb .= "; User Profile for audio playback channels\n";
+		$cb .= "[vici_audio_user]\n";
+		$cb .= "type=user\n";
+		$cb .= "admin=no\n";
+		$cb .= "quiet=yes\n";
+		$cb .= "startmuted=no\n";
+		$cb .= "marked=no\n";
+		$cb .= "dtmf_passthrough=no\n";
+		$cb .= "dsp_drop_silence=yes\n\n";
+
+		$cb .= "; User Profile for triggering DTMF\n";
+		$cb .= "[vici_dtmf_user]\n";
+		$cb .= "type=user\n";
+		$cb .= "admin=no\n";
+		$cb .= "quiet=yes\n";
+		$cb .= "startmuted=yes\n";
+		$cb .= "marked=no\n";
+		$cb .= "dtmf_passthrough=yes\n";
+		$cb .= "dsp_drop_silence=yes\n\n";
+
+		$cb .= "; User Profile for RINGALL agent channels\n";
+		$cb .= "[vici_ringall_user]\n";
+		$cb .= "type=user\n";
+		$cb .= "admin=no\n";
+		$cb .= "quiet=no\n";
+		$cb .= "startmuted=no\n";
+		$cb .= "marked=yes\n";
+		$cb .= "dtmf_passthrough=yes\n";
+		$cb .= "announce_only_user=no\n";
+		$cb .= "hear_own_join_sound=no\n";
+		$cb .= "dsp_drop_silence=yes\n\n";
+
+		$cb .= "; Menu for changing how you are monitoring an agent\n";
+		$cb .= "[vici_monitor_menu]\n";
+		$cb .= "type=menu\n";
+		$cb .= "4=dialplan_exec(vici_monitor_menu_exec,4,1)\n";
+		$cb .= "5=dialplan_exec(vici_monitor_menu_exec,5,1)\n";
+		$cb .= "6=dialplan_exec(vici_monitor_menu_exec,6,1)\n";
+
+
+		# check if there are any ConfBridges defined for this server in the database, and if not, add 300 of them
+		$CB_ct=0;
+		$stmtA = "SELECT count(*) FROM vicidial_confbridges where server_ip='$server_ip';";
+		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+		$sthArowsCB=$sthA->rows;
+		if ($sthArowsCB > 0)
+			{
+			@aryA = $sthA->fetchrow_array;
+			$CB_ct =	$aryA[0];
+			}
+		$sthA->finish();
+
+		if ($CB_ct < 1) 
+			{
+			$stmtA = "INSERT IGNORE INTO vicidial_confbridges VALUES (9600000,'$server_ip','','0',NULL),(9600001,'$server_ip','','0',NULL),(9600002,'$server_ip','','0',NULL),(9600003,'$server_ip','','0',NULL),(9600004,'$server_ip','','0',NULL),(9600005,'$server_ip','','0',NULL),(9600006,'$server_ip','','0',NULL),(9600007,'$server_ip','','0',NULL),(9600008,'$server_ip','','0',NULL),(9600009,'$server_ip','','0',NULL),(9600010,'$server_ip','','0',NULL),(9600011,'$server_ip','','0',NULL),(9600012,'$server_ip','','0',NULL),(9600013,'$server_ip','','0',NULL),(9600014,'$server_ip','','0',NULL),(9600015,'$server_ip','','0',NULL),(9600016,'$server_ip','','0',NULL),(9600017,'$server_ip','','0',NULL),(9600018,'$server_ip','','0',NULL),(9600019,'$server_ip','','0',NULL),(9600020,'$server_ip','','0',NULL),(9600021,'$server_ip','','0',NULL),(9600022,'$server_ip','','0',NULL),(9600023,'$server_ip','','0',NULL),(9600024,'$server_ip','','0',NULL),(9600025,'$server_ip','','0',NULL),(9600026,'$server_ip','','0',NULL),(9600027,'$server_ip','','0',NULL),(9600028,'$server_ip','','0',NULL),(9600029,'$server_ip','','0',NULL),(9600030,'$server_ip','','0',NULL),(9600031,'$server_ip','','0',NULL),(9600032,'$server_ip','','0',NULL),(9600033,'$server_ip','','0',NULL),(9600034,'$server_ip','','0',NULL),(9600035,'$server_ip','','0',NULL),(9600036,'$server_ip','','0',NULL),(9600037,'$server_ip','','0',NULL),(9600038,'$server_ip','','0',NULL),(9600039,'$server_ip','','0',NULL),(9600040,'$server_ip','','0',NULL),(9600041,'$server_ip','','0',NULL),(9600042,'$server_ip','','0',NULL),(9600043,'$server_ip','','0',NULL),(9600044,'$server_ip','','0',NULL),(9600045,'$server_ip','','0',NULL),(9600046,'$server_ip','','0',NULL),(9600047,'$server_ip','','0',NULL),(9600048,'$server_ip','','0',NULL),(9600049,'$server_ip','','0',NULL),(9600050,'$server_ip','','0',NULL),(9600051,'$server_ip','','0',NULL),(9600052,'$server_ip','','0',NULL),(9600053,'$server_ip','','0',NULL),(9600054,'$server_ip','','0',NULL),(9600055,'$server_ip','','0',NULL),(9600056,'$server_ip','','0',NULL),(9600057,'$server_ip','','0',NULL),(9600058,'$server_ip','','0',NULL),(9600059,'$server_ip','','0',NULL),(9600060,'$server_ip','','0',NULL),(9600061,'$server_ip','','0',NULL),(9600062,'$server_ip','','0',NULL),(9600063,'$server_ip','','0',NULL),(9600064,'$server_ip','','0',NULL),(9600065,'$server_ip','','0',NULL),(9600066,'$server_ip','','0',NULL),(9600067,'$server_ip','','0',NULL),(9600068,'$server_ip','','0',NULL),(9600069,'$server_ip','','0',NULL),(9600070,'$server_ip','','0',NULL),(9600071,'$server_ip','','0',NULL),(9600072,'$server_ip','','0',NULL),(9600073,'$server_ip','','0',NULL),(9600074,'$server_ip','','0',NULL),(9600075,'$server_ip','','0',NULL),(9600076,'$server_ip','','0',NULL),(9600077,'$server_ip','','0',NULL),(9600078,'$server_ip','','0',NULL),(9600079,'$server_ip','','0',NULL),(9600080,'$server_ip','','0',NULL),(9600081,'$server_ip','','0',NULL),(9600082,'$server_ip','','0',NULL),(9600083,'$server_ip','','0',NULL),(9600084,'$server_ip','','0',NULL),(9600085,'$server_ip','','0',NULL),(9600086,'$server_ip','','0',NULL),(9600087,'$server_ip','','0',NULL),(9600088,'$server_ip','','0',NULL),(9600089,'$server_ip','','0',NULL),(9600090,'$server_ip','','0',NULL),(9600091,'$server_ip','','0',NULL),(9600092,'$server_ip','','0',NULL),(9600093,'$server_ip','','0',NULL),(9600094,'$server_ip','','0',NULL),(9600095,'$server_ip','','0',NULL),(9600096,'$server_ip','','0',NULL),(9600097,'$server_ip','','0',NULL),(9600098,'$server_ip','','0',NULL),(9600099,'$server_ip','','0',NULL),(9600100,'$server_ip','','0',NULL),(9600101,'$server_ip','','0',NULL),(9600102,'$server_ip','','0',NULL),(9600103,'$server_ip','','0',NULL),(9600104,'$server_ip','','0',NULL),(9600105,'$server_ip','','0',NULL),(9600106,'$server_ip','','0',NULL),(9600107,'$server_ip','','0',NULL),(9600108,'$server_ip','','0',NULL),(9600109,'$server_ip','','0',NULL),(9600110,'$server_ip','','0',NULL),(9600111,'$server_ip','','0',NULL),(9600112,'$server_ip','','0',NULL),(9600113,'$server_ip','','0',NULL),(9600114,'$server_ip','','0',NULL),(9600115,'$server_ip','','0',NULL),(9600116,'$server_ip','','0',NULL),(9600117,'$server_ip','','0',NULL),(9600118,'$server_ip','','0',NULL),(9600119,'$server_ip','','0',NULL),(9600120,'$server_ip','','0',NULL),(9600121,'$server_ip','','0',NULL),(9600122,'$server_ip','','0',NULL),(9600123,'$server_ip','','0',NULL),(9600124,'$server_ip','','0',NULL),(9600125,'$server_ip','','0',NULL),(9600126,'$server_ip','','0',NULL),(9600127,'$server_ip','','0',NULL),(9600128,'$server_ip','','0',NULL),(9600129,'$server_ip','','0',NULL),(9600130,'$server_ip','','0',NULL),(9600131,'$server_ip','','0',NULL),(9600132,'$server_ip','','0',NULL),(9600133,'$server_ip','','0',NULL),(9600134,'$server_ip','','0',NULL),(9600135,'$server_ip','','0',NULL),(9600136,'$server_ip','','0',NULL),(9600137,'$server_ip','','0',NULL),(9600138,'$server_ip','','0',NULL),(9600139,'$server_ip','','0',NULL),(9600140,'$server_ip','','0',NULL),(9600141,'$server_ip','','0',NULL),(9600142,'$server_ip','','0',NULL),(9600143,'$server_ip','','0',NULL),(9600144,'$server_ip','','0',NULL),(9600145,'$server_ip','','0',NULL),(9600146,'$server_ip','','0',NULL),(9600147,'$server_ip','','0',NULL),(9600148,'$server_ip','','0',NULL),(9600149,'$server_ip','','0',NULL),(9600150,'$server_ip','','0',NULL),(9600151,'$server_ip','','0',NULL),(9600152,'$server_ip','','0',NULL),(9600153,'$server_ip','','0',NULL),(9600154,'$server_ip','','0',NULL),(9600155,'$server_ip','','0',NULL),(9600156,'$server_ip','','0',NULL),(9600157,'$server_ip','','0',NULL),(9600158,'$server_ip','','0',NULL),(9600159,'$server_ip','','0',NULL),(9600160,'$server_ip','','0',NULL),(9600161,'$server_ip','','0',NULL),(9600162,'$server_ip','','0',NULL),(9600163,'$server_ip','','0',NULL),(9600164,'$server_ip','','0',NULL),(9600165,'$server_ip','','0',NULL),(9600166,'$server_ip','','0',NULL),(9600167,'$server_ip','','0',NULL),(9600168,'$server_ip','','0',NULL),(9600169,'$server_ip','','0',NULL),(9600170,'$server_ip','','0',NULL),(9600171,'$server_ip','','0',NULL),(9600172,'$server_ip','','0',NULL),(9600173,'$server_ip','','0',NULL),(9600174,'$server_ip','','0',NULL),(9600175,'$server_ip','','0',NULL),(9600176,'$server_ip','','0',NULL),(9600177,'$server_ip','','0',NULL),(9600178,'$server_ip','','0',NULL),(9600179,'$server_ip','','0',NULL),(9600180,'$server_ip','','0',NULL),(9600181,'$server_ip','','0',NULL),(9600182,'$server_ip','','0',NULL),(9600183,'$server_ip','','0',NULL),(9600184,'$server_ip','','0',NULL),(9600185,'$server_ip','','0',NULL),(9600186,'$server_ip','','0',NULL),(9600187,'$server_ip','','0',NULL),(9600188,'$server_ip','','0',NULL),(9600189,'$server_ip','','0',NULL),(9600190,'$server_ip','','0',NULL),(9600191,'$server_ip','','0',NULL),(9600192,'$server_ip','','0',NULL),(9600193,'$server_ip','','0',NULL),(9600194,'$server_ip','','0',NULL),(9600195,'$server_ip','','0',NULL),(9600196,'$server_ip','','0',NULL),(9600197,'$server_ip','','0',NULL),(9600198,'$server_ip','','0',NULL),(9600199,'$server_ip','','0',NULL),(9600200,'$server_ip','','0',NULL),(9600201,'$server_ip','','0',NULL),(9600202,'$server_ip','','0',NULL),(9600203,'$server_ip','','0',NULL),(9600204,'$server_ip','','0',NULL),(9600205,'$server_ip','','0',NULL),(9600206,'$server_ip','','0',NULL),(9600207,'$server_ip','','0',NULL),(9600208,'$server_ip','','0',NULL),(9600209,'$server_ip','','0',NULL),(9600210,'$server_ip','','0',NULL),(9600211,'$server_ip','','0',NULL),(9600212,'$server_ip','','0',NULL),(9600213,'$server_ip','','0',NULL),(9600214,'$server_ip','','0',NULL),(9600215,'$server_ip','','0',NULL),(9600216,'$server_ip','','0',NULL),(9600217,'$server_ip','','0',NULL),(9600218,'$server_ip','','0',NULL),(9600219,'$server_ip','','0',NULL),(9600220,'$server_ip','','0',NULL),(9600221,'$server_ip','','0',NULL),(9600222,'$server_ip','','0',NULL),(9600223,'$server_ip','','0',NULL),(9600224,'$server_ip','','0',NULL),(9600225,'$server_ip','','0',NULL),(9600226,'$server_ip','','0',NULL),(9600227,'$server_ip','','0',NULL),(9600228,'$server_ip','','0',NULL),(9600229,'$server_ip','','0',NULL),(9600230,'$server_ip','','0',NULL),(9600231,'$server_ip','','0',NULL),(9600232,'$server_ip','','0',NULL),(9600233,'$server_ip','','0',NULL),(9600234,'$server_ip','','0',NULL),(9600235,'$server_ip','','0',NULL),(9600236,'$server_ip','','0',NULL),(9600237,'$server_ip','','0',NULL),(9600238,'$server_ip','','0',NULL),(9600239,'$server_ip','','0',NULL),(9600240,'$server_ip','','0',NULL),(9600241,'$server_ip','','0',NULL),(9600242,'$server_ip','','0',NULL),(9600243,'$server_ip','','0',NULL),(9600244,'$server_ip','','0',NULL),(9600245,'$server_ip','','0',NULL),(9600246,'$server_ip','','0',NULL),(9600247,'$server_ip','','0',NULL),(9600248,'$server_ip','','0',NULL),(9600249,'$server_ip','','0',NULL),(9600250,'$server_ip','','0',NULL),(9600251,'$server_ip','','0',NULL),(9600252,'$server_ip','','0',NULL),(9600253,'$server_ip','','0',NULL),(9600254,'$server_ip','','0',NULL),(9600255,'$server_ip','','0',NULL),(9600256,'$server_ip','','0',NULL),(9600257,'$server_ip','','0',NULL),(9600258,'$server_ip','','0',NULL),(9600259,'$server_ip','','0',NULL),(9600260,'$server_ip','','0',NULL),(9600261,'$server_ip','','0',NULL),(9600262,'$server_ip','','0',NULL),(9600263,'$server_ip','','0',NULL),(9600264,'$server_ip','','0',NULL),(9600265,'$server_ip','','0',NULL),(9600266,'$server_ip','','0',NULL),(9600267,'$server_ip','','0',NULL),(9600268,'$server_ip','','0',NULL),(9600269,'$server_ip','','0',NULL),(9600270,'$server_ip','','0',NULL),(9600271,'$server_ip','','0',NULL),(9600272,'$server_ip','','0',NULL),(9600273,'$server_ip','','0',NULL),(9600274,'$server_ip','','0',NULL),(9600275,'$server_ip','','0',NULL),(9600276,'$server_ip','','0',NULL),(9600277,'$server_ip','','0',NULL),(9600278,'$server_ip','','0',NULL),(9600279,'$server_ip','','0',NULL),(9600280,'$server_ip','','0',NULL),(9600281,'$server_ip','','0',NULL),(9600282,'$server_ip','','0',NULL),(9600283,'$server_ip','','0',NULL),(9600284,'$server_ip','','0',NULL),(9600285,'$server_ip','','0',NULL),(9600286,'$server_ip','','0',NULL),(9600287,'$server_ip','','0',NULL),(9600288,'$server_ip','','0',NULL),(9600289,'$server_ip','','0',NULL),(9600290,'$server_ip','','0',NULL),(9600291,'$server_ip','','0',NULL),(9600292,'$server_ip','','0',NULL),(9600293,'$server_ip','','0',NULL),(9600294,'$server_ip','','0',NULL),(9600295,'$server_ip','','0',NULL),(9600296,'$server_ip','','0',NULL),(9600297,'$server_ip','','0',NULL),(9600298,'$server_ip','','0',NULL),(9600299,'$server_ip','','0',NULL);";
+			$affected_rows = $dbhA->do($stmtA) or die  "Couldn't execute query: |$stmtA|\n";
+			if ($DB) {print "ConfBridges DB populate: $CB_ct|$affected_rows|$stmtA|\n";}
+			}
+		}
+	##### END generate ConfBridge conf for this server
 
 
 	##### BEGIN generate music on hold entries for this server
@@ -4905,9 +5456,9 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 		$moh  .= "[$moh_id[$j]]\n";
 		$moh  .= "mode=files\n";
 		$moh  .= "directory=/var/lib/asterisk/$moh_id[$j]\n";
-		if ($random[$j] =~ /Y/)
+		if ($random[$j] =~ /Y/) 
 			{$moh  .= "random=yes\n";}
-		else
+		else 
 			{$moh  .= "sort=alpha\n";}
 		$moh  .= "\n";
 
@@ -4950,6 +5501,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	open(vm, ">/etc/asterisk/BUILDvoicemail-vicidial.conf") || die "can't open /etc/asterisk/BUILDvoicemail-vicidial.conf: $!\n";
 	open(moh, ">/etc/asterisk/BUILDmusiconhold-vicidial.conf") || die "can't open /etc/asterisk/BUILDmusiconhold-vicidial.conf: $!\n";
 	open(mm, ">/etc/asterisk/BUILDmeetme-vicidial.conf") || die "can't open /etc/asterisk/BUILDmeetme-vicidial.conf: $!\n";
+	open(cb, ">/etc/asterisk/BUILDconfbridge-vicidial.conf") || die "can't open /etc/asterisk/BUILDconfbridge-vicidial.conf: $!\n";
 
 	print ext "; WARNING- THIS FILE IS AUTO-GENERATED BY VICIDIAL, ANY EDITS YOU MAKE WILL BE LOST\n";
 	print ext "$ext\n";
@@ -4999,6 +5551,8 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	if (length($SScustom_dialplan_entry)>5)
 		{print ext "include => vicidial-auto-system-setting-custom\n";}
 	print ext "\n";
+	print ext "$confbridge_enhanced_monitoring";
+	print ext "\n";
 	print ext "\n; END OF FILE    Last Forced System Reload: $SSreload_timestamp\n";
 
 	print iax "; WARNING- THIS FILE IS AUTO-GENERATED BY VICIDIAL, ANY EDITS YOU MAKE WILL BE LOST\n";
@@ -5042,6 +5596,10 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	print mm "$mm\n";
 	print mm "\n; END OF FILE    Last Forced System Reload: $SSreload_timestamp\n";
 
+	print cb "; WARNING- THIS FILE IS AUTO-GENERATED BY VICIDIAL, ANY EDITS YOU MAKE WILL BE LOST\n";
+	print cb "$cb\n";
+	print cb "\n; END OF FILE    Last Forced System Reload: $SSreload_timestamp\n";
+
 	close(ext);
 	close(iax);
 	close(sip);
@@ -5050,14 +5608,15 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	close(vm);
 	close(moh);
 	close(mm);
+	close(cb);
 
 	### find cmp binary
 	$cmpbin = '';
 	if ( -e ('/bin/cmp')) {$cmpbin = '/bin/cmp';}
-	else
+	else 
 		{
 		if ( -e ('/usr/bin/cmp')) {$cmpbin = '/usr/bin/cmp';}
-		else
+		else 
 			{
 			if ( -e ('/usr/local/bin/cmp')) {$cmpbin = '/usr/local/bin/cmp';}
 			else
@@ -5092,6 +5651,9 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	if ( !-e ('/etc/asterisk/meetme-vicidial.conf'))
 		{`echo -e \"; END OF FILE\n\" > /etc/asterisk/meetme-vicidial.conf`;}
 
+	if ( !-e ('/etc/asterisk/confbridge-vicidial.conf'))
+		{`echo -e \"; END OF FILE\n\" > /etc/asterisk/confbridge-vicidial.conf`;}
+
 	use File::Compare;
 
 	$extCMP = compare("/etc/asterisk/BUILDextensions-vicidial.conf","/etc/asterisk/extensions-vicidial.conf");
@@ -5102,6 +5664,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 	$vmCMP =  compare("/etc/asterisk/BUILDvoicemail-vicidial.conf","/etc/asterisk/voicemail.conf");
 	$mohCMP = compare("/etc/asterisk/BUILDmusiconhold-vicidial.conf","/etc/asterisk/musiconhold-vicidial.conf");
 	$mmCMP =  compare("/etc/asterisk/BUILDmeetme-vicidial.conf","/etc/asterisk/meetme-vicidial.conf");
+	$cbCMP =  compare("/etc/asterisk/BUILDconfbridge-vicidial.conf","/etc/asterisk/confbridge-vicidial.conf");
 
 	sleep(1);
 
@@ -5115,6 +5678,14 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 			`screen -XS asterisk eval 'stuff "extensions reload\015"'`;
 			if ($DB) {print "extensions reload\n";}
 			sleep(1);
+			if ($reserved_exten_skip > 0) 
+				{
+				# log reserved_extensions skips to the admin log
+				if ($DB) {print "reserved_extensions skips being logged...\n";}
+				$stmtA="INSERT INTO vicidial_admin_log set event_date=NOW(), user='VDAD', ip_address='1.1.1.1', event_section='SERVERS', event_type='OTHER', record_id='$server_ip', event_code='RESTRICTED DIALPLAN SKIPS', event_sql='', event_notes='$reserved_exten_skip skips: $reserved_exten_message';";
+				$Iaffected_rows = $dbhA->do($stmtA);
+				if ($DBX) {print "reserved_extensions skips debug 1: |$reserved_exten_skip skips: $reserved_exten_message|\n";}
+				}
 			}
 		if ($sipCMP > 0)
 			{
@@ -5160,6 +5731,14 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 			`screen -XS asterisk eval 'stuff "dialplan reload\015"'`;
 			if ($DB) {print "dialplan reload\n";}
 			sleep(1);
+			if ($reserved_exten_skip > 0) 
+				{
+				# log reserved_extensions skips to the admin log
+				if ($DB) {print "reserved_extensions skips being logged...\n";}
+				$stmtA="INSERT INTO vicidial_admin_log set event_date=NOW(), user='VDAD', ip_address='1.1.1.1', event_section='SERVERS', event_type='OTHER', record_id='$server_ip', event_code='RESTRICTED DIALPLAN SKIPS', event_sql='', event_notes='$reserved_exten_skip skips: $reserved_exten_message';";
+				$Iaffected_rows = $dbhA->do($stmtA);
+				if ($DBX) {print "reserved_extensions skips debug 1: |$reserved_exten_skip skips: $reserved_exten_message|\n";}
+				}
 			}
 		if ($sipCMP > 0)
 			{
@@ -5210,6 +5789,13 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 			if ($DB) {print "module reload app_meetme.so\n";}
 			sleep(1);
 			}
+		if ($cbCMP > 0)
+			{
+			`cp -f /etc/asterisk/BUILDconfbridge-vicidial.conf /etc/asterisk/confbridge-vicidial.conf`;
+			`screen -XS asterisk eval 'stuff "reload app_confbridge.so\015"'`;
+			if ($DB) {print "reload app_confbridge.so\n";}
+			sleep(1);
+			}
 		}
 
 	`rm -f /etc/asterisk/BUILDextensions-vicidial.conf`;
@@ -5220,6 +5806,7 @@ if ( ($active_asterisk_server =~ /Y/) && ($generate_vicidial_conf =~ /Y/) && ($r
 #	`rm -f /etc/asterisk/BUILDvoicemail-vicidial.conf`;
 	`rm -f /etc/asterisk/BUILDmusiconhold-vicidial.conf`;
 	`rm -f /etc/asterisk/BUILDmeetme-vicidial.conf`;
+	`rm -f /etc/asterisk/BUILDconfbridge-vicidial.conf`;
 	}
 ################################################################################
 #####  END Creation of auto-generated conf files
@@ -5244,10 +5831,10 @@ $uptime_seconds=substr($uptime_seconds,0,index($uptime_seconds, ' '));
 
 ### find uptime binary
 if ( -e ('/bin/uptime')) {$uptimebin = '/bin/uptime';}
-else
+else 
 	{
 	if ( -e ('/usr/bin/uptime')) {$uptimebin = '/usr/bin/uptime';}
-	else
+	else 
 		{
 		if ( -e ('/usr/local/bin/uptime')) {$uptimebin = '/usr/local/bin/uptime';}
 		else
@@ -5257,7 +5844,7 @@ else
 		}
 	}
 
-if (length($uptimebin)>3)
+if (length($uptimebin)>3) 
 	{
 	@sysuptime = `$uptimebin`;
 	 # 18:26:14 up 153 days, 23:59,  4 users,  load average: 0.01, 0.01, 0.00
@@ -5297,7 +5884,7 @@ if (length($uptimebin)>3)
 ################################################################################
 #####  BEGIN Gathering asterisk output and peers/registry
 ################################################################################
-if ( ($active_asterisk_server =~ /Y/) && ($gather_asterisk_output =~ /Y/) && ($reset_test =~ /0$|5$/) )
+if ( ($active_asterisk_server =~ /Y/) && ($gather_asterisk_output =~ /Y/) && ($reset_test =~ /0$|5$/) ) 
 	{
 	if ($DB) {print "Gathering asterisk output and peers/registry\n";}
 	`/usr/bin/screen -d -m -S GatherOutput $PATHhome/AST_output_update.pl 2>/dev/null 1>&2`;
@@ -5327,14 +5914,14 @@ if ($active_asterisk_server =~ /Y/)
 			{
 			chomp($screenoutput[$i]);
 			if ($DBX) {print "$i|$screenoutput[$i]|     \n";}
-			if ($screenoutput[$i] =~ /\.asterisk/)
+			if ($screenoutput[$i] =~ /\.asterisk/) 
 				{
 				$asteriskSCREEN++;
 				if ($DB) {print "asterisk screen session open:              |$screenoutput[$i]|\n";}
 				}
 			$i++;
 			}
-
+		
 		if ($asteriskSCREEN > 0)
 			{
 			if ($DB) {print "restarting Asterisk process...\n";}
@@ -5343,6 +5930,11 @@ if ($active_asterisk_server =~ /Y/)
 			if ($DBX) {print "Restart asterisk debug 1: |$Iaffected_rows|$stmtA|\n";}
 
 			`screen -XS asterisk eval 'stuff "/usr/sbin/asterisk -vvvvgcT\015"'`;
+
+			$stmtA = "INSERT INTO vicidial_internal_log SET db_time=NOW(), up_time=NOW(), action='start', stage='restarted', process='asterisk auto-restart', server_ip='$server_ip';";
+			if($DB){print STDERR "|$stmtA|";}
+			my $affected_rows = $dbhA->do($stmtA);
+			if($DB){print STDERR "$affected_rows|\n";}
 			}
 		elsif ($uptime_seconds>300)
  			{
@@ -5485,13 +6077,13 @@ if ( ($active_voicemail_server =~ /$server_ip/) && ((length($active_voicemail_se
 			}
 		$sthA->finish();
 
-		if ($CBmoveCOUNT > 0)
+		if ($CBmoveCOUNT > 0) 
 			{
 			$stmtA = "UPDATE vicidial_callbacks SET recipient='ANYONE',status='ACTIVE' where campaign_id='$CBcampaign_id[$i]' and status='LIVE' and recipient='USERONLY' and callback_time < (NOW() - INTERVAL $CBcallback_useronly_move_minutes[$i] MINUTE);";
 			$affected_rows = $dbhA->do($stmtA) or die  "Couldn't execute query: |$stmtA|\n";
 			if ($DBX) {print "Callback USERONLY old move query: |$affected_rows|$stmtA|\n";}
 
-			if ($teodDB)
+			if ($teodDB) 
 				{
 				$event_string = "Callback USERONLY old moved: $affected_rows|$CBmoveCOUNT|$CBcampaign_id[$i]|$CBcallback_useronly_move_minutes[$i]|";
 				&teod_logger;
@@ -5584,7 +6176,7 @@ if ( ($active_voicemail_server =~ /$server_ip/) && ((length($active_voicemail_se
 			{
 			if ($DBX) {print "     DEBUG: CID Group rotate, recent campaign/list calls: $cid_group_id[$i]|$Rcampaign_id|$Rcampaign_calldate|  ($Rcampaign_calldate_epoch <> $FMtarget)|$Llist_id|$Lcampaign_calldate|($Lcampaign_calldate_epoch < $FMtarget)\n";}
 			$rotate_run_minutes = (($secX - $cid_last_auto_rotate_epoch[$i]) / 60);
-			if ($rotate_run_minutes < $cid_auto_rotate_minutes[$i])
+			if ($rotate_run_minutes < $cid_auto_rotate_minutes[$i]) 
 				{
 				if ($DB) {print "     skip CID Group rotate, too soon: $cid_group_id[$i]   ($rotate_run_minutes <> $cid_auto_rotate_minutes[$i])\n";}
 				}
@@ -5609,14 +6201,14 @@ if ( ($active_voicemail_server =~ /$server_ip/) && ((length($active_voicemail_se
 						}
 					$sthA->finish();
 
-					if ($CIDrotate_CIDs_count < 2)
+					if ($CIDrotate_CIDs_count < 2) 
 						{
 						if ($DB) {print "     skip CID Group rotate, too few CIDs available, must be at least 2: $cid_group_id[$i]   ($CIDrotate_CIDs_count)\n";}
 						}
 					else
 						{
 						### BEGIN if last-CID-used for this CID Group is blank or invalid, order the CIDs and set them all to inactive ###
-						if (length($cid_auto_rotate_cid[$i]) < 6 )
+						if (length($cid_auto_rotate_cid[$i]) < 6 ) 
 							{
 							@outbound_cid=@MT;
 							$stmtA = "SELECT outbound_cid from vicidial_campaign_cid_areacodes where campaign_id='$cid_group_id[$i]' and cid_description NOT IN('NOROTATE','NO-ROTATE','NO_ROTATE','INACTIVE','DONOTUSE') and cid_description NOT LIKE \"%NOROTATE%\" order by call_count_today limit 100000;";
@@ -5637,25 +6229,25 @@ if ( ($active_voicemail_server =~ /$server_ip/) && ((length($active_voicemail_se
 							while ($sthArows > $j)
 								{
 								$stmtA = "UPDATE vicidial_campaign_cid_areacodes SET cid_description='$j',active='N' where campaign_id='$cid_group_id[$i]' and outbound_cid='$outbound_cid[$j]';";
-								if ($j < 1)
+								if ($j < 1) 
 									{
 									$stmtA = "UPDATE vicidial_campaign_cid_areacodes SET cid_description='$dateint',active='Y' where campaign_id='$cid_group_id[$i]' and outbound_cid='$outbound_cid[$j]';";
 									}
 								$affected_rows = $dbhA->do($stmtA) or die  "Couldn't execute query: |$stmtA|\n";
 								if ($DBX) {print "     CID Group entry updated: $affected_rows|$j|$cid_group_id[$i]|$outbound_cid[$j]|$stmtA|\n";}
 
-								if ($j < 1)
+								if ($j < 1) 
 									{
 									$stmtB = "UPDATE vicidial_cid_groups SET cid_auto_rotate_calls='0',cid_last_auto_rotate=NOW(),cid_auto_rotate_cid='$outbound_cid[$j]' where cid_group_id='$cid_group_id[$i]';";
 									$affected_rowsB = $dbhA->do($stmtB) or die  "Couldn't execute query: |$stmtB|\n";
 									if ($DBX) {print "     CID Group entry updated: $affected_rows|$j|$cid_group_id[$i]|$outbound_cid[$j]|$stmtB|\n";}
-									if ($teodDB)
+									if ($teodDB) 
 										{
 										$event_string = "     CID Group entry updated: $affected_rowsB|$j|$cid_group_id[$i]|$outbound_cid[$j]|$stmtB|";
 										&teod_logger;
 										}
 									}
-								if ($teodDB)
+								if ($teodDB) 
 									{
 									$event_string = "CID Group entry updated: $affected_rows|$j|$cid_group_id[$i]|$outbound_cid[$j]|$stmtA|";
 									&teod_logger;
@@ -5680,7 +6272,7 @@ if ( ($active_voicemail_server =~ /$server_ip/) && ((length($active_voicemail_se
 								}
 							$sthA->finish();
 
-							if (length($outbound_cid_next) < 6)
+							if (length($outbound_cid_next) < 6) 
 								{
 								if ($DB) {print "     skip CID Group rotate, next CID could not be found: $cid_group_id[$i]   ($stmtA)\n";}
 								}
@@ -5698,7 +6290,7 @@ if ( ($active_voicemail_server =~ /$server_ip/) && ((length($active_voicemail_se
 								$affected_rowsC = $dbhA->do($stmtC) or die  "Couldn't execute query: |$stmtC|\n";
 								if ($DBX) {print "     CID Group entry updated: $affected_rows|$j|$cid_group_id[$i]|$cid_auto_rotate_cid[$i]|$stmtC|\n";}
 
-								if ($teodDB)
+								if ($teodDB) 
 									{
 									$event_string = "CID Group entry updated: $affected_rows|$j|$cid_group_id[$i]|$outbound_cid_next|$stmtA|\n";
 									$event_string .= "     CID Group entry updated: $affected_rowsB|$j|$cid_group_id[$i]|$outbound_cid_next|$stmtB|\n";
@@ -5942,7 +6534,7 @@ if ( ($active_voicemail_server =~ /$server_ip/) && ((length($active_voicemail_se
 			}
 		}
 	### start the chat timeout process
-	if ($SSallow_chats > 0)
+	if ($SSallow_chats > 0) 
 		{
 		if ($DB) {print "running chat timeout process...\n";}
 		`/usr/bin/screen -d -m -S ChatTimeout $PATHhome/AST_chat_timeout_cron.pl 2>/dev/null 1>&2`;
@@ -5954,7 +6546,7 @@ if ( ($active_asterisk_server =~ /Y/) && ( ($sounds_update =~ /Y/) || ($upload_a
 	if ($sounds_central_control_active > 0)
 		{
 		$gather_stats_flag='';
-		if ($THISserver_voicemail > 0)
+		if ($THISserver_voicemail > 0) 
 			{$gather_stats_flag='--gather-details';}
 		if ($DB) {print "running audio store sync process...\n";}
 		`/usr/bin/screen -d -m -S AudioStore $PATHhome/ADMIN_audio_store_sync.pl $upload_flag $gather_stats_flag 2>/dev/null 1>&2`;
@@ -6009,7 +6601,7 @@ if ($sthBrows > 0)
 			@output=@MT;
 			@output = `$triggers[$i]`;
 			$m=0;
-			foreach(@output)
+			foreach(@output) 
 				{
 				$trigger_results .= "$output[$m]";
 				$m++;
@@ -6169,7 +6761,7 @@ if ( ($SScall_quota_lead_ranking > 0) && ($THISserver_voicemail > 0) )
 				@aryA = $sthA->fetchrow_array;
 				$TEMPcontainer_entry = $aryA[0];
 				$TEMPcontainer_entry =~ s/\\//gi;
-				if (length($TEMPcontainer_entry) > 5)
+				if (length($TEMPcontainer_entry) > 5) 
 					{
 					@container_lines = split(/\n/,$TEMPcontainer_entry);
 					$c=0;
@@ -6183,7 +6775,7 @@ if ( ($SScall_quota_lead_ranking > 0) && ($THISserver_voicemail > 0) )
 								{
 								$call_quota_run_time = $container_lines[$c];
 								$call_quota_run_time =~ s/call_quota_run_time=>//gi;
-								if ( (length($call_quota_run_time) > 0) && (length($call_quota_run_time) <= 70) )
+								if ( (length($call_quota_run_time) > 0) && (length($call_quota_run_time) <= 70) ) 
 									{
 									$TESTcall_quota_run_time = ",$call_quota_run_time,";
 									}
@@ -6197,7 +6789,7 @@ if ( ($SScall_quota_lead_ranking > 0) && ($THISserver_voicemail > 0) )
 				}
 			$sthA->finish();
 
-			if ( (length($TESTcall_quota_run_time) >= 4) && ($TESTcall_quota_run_time =~ /,$min_test,/) )
+			if ( (length($TESTcall_quota_run_time) >= 4) && ($TESTcall_quota_run_time =~ /,$min_test,/) ) 
 				{
 				$temp_campaign = $CQcampaign_idARY[$r];
 				$cq_command = "$PATHhome/AST_VDcall_quotas.pl --debug --log-to-adminlog --campaign=$temp_campaign ";
@@ -6261,7 +6853,7 @@ if ($AST_VDadapt > 0)
 	$i=0;
 	while ($sthBrows > $i)
 		{
-		if ( ($daily_reset_limit[$i] > $resets_today[$i]) || ($daily_reset_limit[$i] < 0) )
+		if ( ($daily_reset_limit[$i] > $resets_today[$i]) || ($daily_reset_limit[$i] < 0) ) 
 			{
 			$stmtA="UPDATE vicidial_lists set resets_today=(resets_today + 1) where list_id='$list_id[$i]';";
 			$affected_rows = $dbhA->do($stmtA);
@@ -6441,6 +7033,49 @@ if ($AST_VDadapt > 0)
 
 
 
+################################################################################
+#####  BEGIN check for crashed tables
+################################################################################
+if ( ($THISserver_voicemail > 0) && ($SSdb_crashed_tables_check > 0) )
+	{
+	if ($DB) {print "Begin check for crashed table... |db_crashed_tables_check setting: $SSdb_crashed_tables_check| \n";}
+
+	if ($runningcrash_test > 0) 
+		{
+		if ($DB) {print "Previous crash test already running, do not start another one.\n";}
+		}
+	else
+		{
+		$start_crash_check_now=0;
+		if ($SSdb_crashed_tables_check >= 4) 
+			{$start_crash_check_now++;}
+		if ( ($SSdb_crashed_tables_check >= 3) && ($reset_test =~ /0$/) )
+			{$start_crash_check_now++;}
+		if ( ($SSdb_crashed_tables_check >= 2) && ($reset_test =~ /00$/) )
+			{$start_crash_check_now++;}
+		if ( ($SSdb_crashed_tables_check >= 1) && ($timeclock_end_of_day_NOW > 0) )
+			{$start_crash_check_now++;}
+
+		if ($start_crash_check_now > 0) 
+			{
+			if ($DB) {print "starting AST_table_status... |$start_crash_check_now| \n";}
+			# add a '-L' to the command below to activate logging
+			`/usr/bin/screen -d -m -S ASTcrash $PATHhome/AST_table_status.pl --debugX`;
+			if ($megaDB)
+				{
+				`/usr/bin/screen -S ASTcrash -X logfile $PATHlogs/ASTcrash-screenlog.0`;
+				`/usr/bin/screen -S ASTcrash -X log`;
+				}
+			}
+		}
+	}
+################################################################################
+#####  END check for crashed tables
+################################################################################
+
+
+
+
 
 
 if ($DB) {print "DONE\n";}
@@ -6460,13 +7095,28 @@ sub teod_logger
 	$event_string='';
 	}
 
-sub leading_zero($)
+sub leading_zero($) 
 	{
     $_ = $_[0];
     s/^(\d)$/0$1/;
     s/^(\d\d)$/0$1/;
     return $_;
 	} # End of the leading_zero() routine.
+
+sub dialplan_filter_a($) 
+	{
+    $temp_dp = $_[0];
+	$temp_dp =~ s/TrySystem\(|System\(|Shell\(|FILE\(|\[default\]|\[defaultlog\]|\[general\]|\[globals\]|\[loopback-no-log\]|\[monitor\]|\[monitor_exit\]|\[phones\]|\[SPEECH\]|\[trunkinbound\]|\[vici_monitor_menu_exec\]|\[vici_monitor_whisper\]|\[vicidial-auto-external\]|\[vicidial-auto-internal\]|\[vicidial-auto-phones\]|\[vicidial-auto-server-custom\]|\[vicidial-auto-system-setting-custom\]|\[vicidial-auto\]//gi;
+	$temp_dp =~ s/\r|\n|\t//gi;
+    return $temp_dp;
+	} # End of the dialplan_filter_a() routine.
+
+sub dialplan_filter_b($) 
+	{
+    $temp_dp = $_[0];
+	$temp_dp =~ s/TrySystem\(|System\(|Shell\(|FILE\(|\[default\]|\[defaultlog\]|\[general\]|\[globals\]|\[loopback-no-log\]|\[monitor\]|\[monitor_exit\]|\[phones\]|\[SPEECH\]|\[trunkinbound\]|\[vici_monitor_menu_exec\]|\[vici_monitor_whisper\]|\[vicidial-auto-external\]|\[vicidial-auto-internal\]|\[vicidial-auto-phones\]|\[vicidial-auto-server-custom\]|\[vicidial-auto-system-setting-custom\]|\[vicidial-auto\]//gi;
+    return $temp_dp;
+	} # End of the dialplan_filter_b() routine.
 
 # subroutine to parse the asterisk version
 # and return a hash with the various part

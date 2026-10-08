@@ -16,7 +16,7 @@
 # scalability over just using a single process. Also, this means that a single
 # action execution lock cannot bring the entire system down.
 # 
-# Copyright (C) 2017  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
 # 50823-1514 - Added commandline debug options with debug printouts
@@ -31,6 +31,7 @@
 # 91129-2146 - removed SELECT STAR and formatting fixes
 # 141113-1356 - Added more logging, check for number of running instances, processing of QUEUE but not SENT commands
 # 170920-1419 - Fix for issue with recordings beginning with CALLID variable
+# 260515-1940 - Added internal logging
 #
 
 $|++;
@@ -40,6 +41,7 @@ use Getopt::Long;
 use Time::HiRes ('gettimeofday','usleep','sleep');  # necessary to have perl sleep command of less than one second
 
 my $run_check=1; # concurrency check
+my $script_name = 'AST_manager_send.pl';
 
 # constants and globals
 my $servConf;
@@ -102,6 +104,8 @@ $conf{VARDB_port} = '3306' unless ($conf{VARDB_port});
 my $dbhA = DBI->connect("DBI:mysql:" . $conf{VARDB_database} . ":" . $conf{VARDB_server} . ":" . $conf{VARDB_port},
 	$conf{VARDB_user}, $conf{VARDB_pass}) or die "Couldn't connect to database: " . DBI->errstr;
 
+my $action='start';   my $stage='LOGGED INTO MYSQL SERVER';   my $server_ip = $conf{VARserver_ip}; &internal_logger;
+
 ### Grab Server values from the database
 $servConf = getServerConfig($dbhA, $conf{VARserver_ip});
 $SYSLOG = 1 if ($servConf->{vd_server_logs} =~ /Y/);
@@ -130,6 +134,8 @@ while ($one_day_interval > 0)
 	my $endless_loop = 1728000;		# 2 days at .10 seconds per loop
 	my $affected_rows;
 	my $NEW_actions;
+	my $iLog_ct=0;
+	my $iLog_calls=0;
 	while ($endless_loop > 0) 
 		{
 		my $stmtA = "SELECT count(*) from vicidial_manager where server_ip = '" . $conf{VARserver_ip} . "' and status = 'NEW';";
@@ -277,6 +283,7 @@ while ($one_day_interval > 0)
 					eventLogger($conf{'PATHlogs'}, 'process', $event_string);
 					}
 				$processed_actions++;
+				$iLog_calls++;
 				}
 			$sthA->finish();
 			}
@@ -285,11 +292,22 @@ while ($one_day_interval > 0)
 			{
 			### sleep for 1 hundredth of a second if just send an ACTION
 			usleep(1*10*1000);
+			$iLog_ct++;
 			}
 		else
 			{
 			### sleep for 10 hundredths of a second if no actions sent
 			usleep(1*100*1000);
+			$iLog_ct++;
+			}
+
+		# update internal process log
+		if ($iLog_ct =~ /000$/) 
+			{
+			$stmtA = "UPDATE vicidial_internal_log SET up_time=NOW(), action='running', stage='Loops: $iLog_ct   Events: $iLog_calls' WHERE process='$script_name' and server_ip='$server_ip' order by db_time desc limit 1;";
+			if($DB){print STDERR "|$stmtA|";}
+			my $affected_rows = $dbhA->do($stmtA);
+			if($DB){print STDERR "$affected_rows|\n";}
 			}
 
 		$endless_loop--;
@@ -438,3 +456,11 @@ sub logDate
 	}
 
 ### End of subs
+
+sub internal_logger
+	{
+	my $stmtA = "INSERT INTO vicidial_internal_log SET db_time=NOW(), up_time=NOW(), process='$script_name', server_ip='$server_ip', action='$action', stage='$stage';";
+	if($DB){print STDERR "|$stmtA|";}
+	my $affected_rows = $dbhA->do($stmtA);
+	if($DB){print STDERR "$affected_rows|\n";}
+	}

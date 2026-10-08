@@ -1,7 +1,7 @@
 <?php
 # manager_send.php    version 2.14
 # 
-# Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2026  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed purely to insert records into the vicidial_manager table to signal Actions to an asterisk server
 # This script depends on the server_ip being sent and also needs to have a valid user/pass from the vicidial_users table
@@ -157,18 +157,23 @@
 # 240420-2233 - ConfBridge code added
 # 240430-1046 - Allow for park/grab of xfer line through API
 # 240709-2010 - Changes to input variable filtering
+# 241122-1544 - Fix for DTMF issue #1525
+# 250831-0839 - Added MonitorStereo/StopMonitorStereo functions
+# 251005-0935 - Added code for recording_dtmf_muting
+# 260302-1132 - Code updates for PHP8 compatibility
 #
 
-$version = '2.14-104';
-$build = '240709-2010';
+$version = '2.14-108';
+$build = '260302-1132';
 $php_script = 'manager_send.php';
 $mel=1;					# Mysql Error Log enabled = 1
-$mysql_log_count=161;
+$mysql_log_count=177;
 $one_mysql_log=0;
 $SSagent_debug_logging=0;
 $startMS = microtime();
 $dial_override_limit=6;
 $ip = getenv("REMOTE_ADDR");
+$recording_dtmf_muting=0;
 
 require_once("dbconnect_mysqli.php");
 require_once("functions.php");
@@ -176,100 +181,146 @@ require_once("functions.php");
 ### These are variable assignments for PHP globals off
 if (isset($_GET["user"]))					{$user=$_GET["user"];}
 	elseif (isset($_POST["user"]))			{$user=$_POST["user"];}
+	else {$user="";}
 if (isset($_GET["pass"]))					{$pass=$_GET["pass"];}
 	elseif (isset($_POST["pass"]))			{$pass=$_POST["pass"];}
+	else {$pass="";}
 if (isset($_GET["server_ip"]))				{$server_ip=$_GET["server_ip"];}
 	elseif (isset($_POST["server_ip"]))		{$server_ip=$_POST["server_ip"];}
+	else {$server_ip="";}
 if (isset($_GET["session_name"]))			{$session_name=$_GET["session_name"];}
 	elseif (isset($_POST["session_name"]))	{$session_name=$_POST["session_name"];}
+	else {$session_name="";}
 if (isset($_GET["ACTION"]))					{$ACTION=$_GET["ACTION"];}
 	elseif (isset($_POST["ACTION"]))		{$ACTION=$_POST["ACTION"];}
 if (isset($_GET["queryCID"]))				{$queryCID=$_GET["queryCID"];}
 	elseif (isset($_POST["queryCID"]))		{$queryCID=$_POST["queryCID"];}
+	else {$queryCID="";}
 if (isset($_GET["format"]))					{$format=$_GET["format"];}
 	elseif (isset($_POST["format"]))		{$format=$_POST["format"];}
 if (isset($_GET["channel"]))				{$channel=$_GET["channel"];}
 	elseif (isset($_POST["channel"]))		{$channel=$_POST["channel"];}
+	else {$channel="";}
 if (isset($_GET["exten"]))					{$exten=$_GET["exten"];}
 	elseif (isset($_POST["exten"]))			{$exten=$_POST["exten"];}
+	else {$exten="";}
 if (isset($_GET["ext_context"]))			{$ext_context=$_GET["ext_context"];}
 	elseif (isset($_POST["ext_context"]))	{$ext_context=$_POST["ext_context"];}
+	else {$ext_context="";}
 if (isset($_GET["ext_priority"]))			{$ext_priority=$_GET["ext_priority"];}
 	elseif (isset($_POST["ext_priority"]))	{$ext_priority=$_POST["ext_priority"];}
+	else {$ext_priority="";}
 if (isset($_GET["filename"]))				{$filename=$_GET["filename"];}
 	elseif (isset($_POST["filename"]))		{$filename=$_POST["filename"];}
+	else {$filename="";}
 if (isset($_GET["extenName"]))				{$extenName=$_GET["extenName"];}
 	elseif (isset($_POST["extenName"]))		{$extenName=$_POST["extenName"];}
+	else {$extenName="";}
 if (isset($_GET["parkedby"]))				{$parkedby=$_GET["parkedby"];}
 	elseif (isset($_POST["parkedby"]))		{$parkedby=$_POST["parkedby"];}
+	else {$parkedby="";}
 if (isset($_GET["extrachannel"]))			{$extrachannel=$_GET["extrachannel"];}
 	elseif (isset($_POST["extrachannel"]))	{$extrachannel=$_POST["extrachannel"];}
+	else {$extrachannel="";}
 if (isset($_GET["auto_dial_level"]))			{$auto_dial_level=$_GET["auto_dial_level"];}
 	elseif (isset($_POST["auto_dial_level"]))	{$auto_dial_level=$_POST["auto_dial_level"];}
+	else {$auto_dial_level="";}
 if (isset($_GET["campaign"]))				{$campaign=$_GET["campaign"];}
 	elseif (isset($_POST["campaign"]))		{$campaign=$_POST["campaign"];}
+	else {$campaign="";}
 if (isset($_GET["uniqueid"]))				{$uniqueid=$_GET["uniqueid"];}
 	elseif (isset($_POST["uniqueid"]))		{$uniqueid=$_POST["uniqueid"];}
+	else {$uniqueid="";}
 if (isset($_GET["lead_id"]))				{$lead_id=$_GET["lead_id"];}
 	elseif (isset($_POST["lead_id"]))		{$lead_id=$_POST["lead_id"];}
+	else {$lead_id=0;}
 if (isset($_GET["secondS"]))				{$secondS=$_GET["secondS"];}
 	elseif (isset($_POST["secondS"]))		{$secondS=$_POST["secondS"];}
+	else {$secondS="";}
 if (isset($_GET["outbound_cid"]))			{$outbound_cid=$_GET["outbound_cid"];}
 	elseif (isset($_POST["outbound_cid"]))	{$outbound_cid=$_POST["outbound_cid"];}
+	else {$outbound_cid="";}
 if (isset($_GET["agent_log_id"]))			{$agent_log_id=$_GET["agent_log_id"];}
 	elseif (isset($_POST["agent_log_id"]))	{$agent_log_id=$_POST["agent_log_id"];}
+	else {$agent_log_id="";}
 if (isset($_GET["call_server_ip"]))				{$call_server_ip=$_GET["call_server_ip"];}
 	elseif (isset($_POST["call_server_ip"]))	{$call_server_ip=$_POST["call_server_ip"];}
+	else {$call_server_ip="";}
 if (isset($_GET["CalLCID"]))				{$CalLCID=$_GET["CalLCID"];}
 	elseif (isset($_POST["CalLCID"]))		{$CalLCID=$_POST["CalLCID"];}
+	else {$CalLCID="";}
 if (isset($_GET["phone_code"]))				{$phone_code=$_GET["phone_code"];}
 	elseif (isset($_POST["phone_code"]))	{$phone_code=$_POST["phone_code"];}
+	else {$phone_code="";}
 if (isset($_GET["phone_number"]))			{$phone_number=$_GET["phone_number"];}
 	elseif (isset($_POST["phone_number"]))	{$phone_number=$_POST["phone_number"];}
+	else {$phone_number="";}
 if (isset($_GET["stage"]))					{$stage=$_GET["stage"];}
 	elseif (isset($_POST["stage"]))			{$stage=$_POST["stage"];}
+	else {$stage="";}
 if (isset($_GET["extension"]))				{$extension=$_GET["extension"];}
 	elseif (isset($_POST["extension"]))		{$extension=$_POST["extension"];}
+	else {$extension="";}
 if (isset($_GET["protocol"]))				{$protocol=$_GET["protocol"];}
 	elseif (isset($_POST["protocol"]))		{$protocol=$_POST["protocol"];}
+	else {$protocol="";}
 if (isset($_GET["phone_ip"]))				{$phone_ip=$_GET["phone_ip"];}
 	elseif (isset($_POST["phone_ip"]))		{$phone_ip=$_POST["phone_ip"];}
+	else {$phone_ip="";}
 if (isset($_GET["enable_sipsak_messages"]))				{$enable_sipsak_messages=$_GET["enable_sipsak_messages"];}
 	elseif (isset($_POST["enable_sipsak_messages"]))	{$enable_sipsak_messages=$_POST["enable_sipsak_messages"];}
+	else {$enable_sipsak_messages="";}
 if (isset($_GET["allow_sipsak_messages"]))				{$allow_sipsak_messages=$_GET["allow_sipsak_messages"];}
 	elseif (isset($_POST["allow_sipsak_messages"]))		{$allow_sipsak_messages=$_POST["allow_sipsak_messages"];}
+	else {$allow_sipsak_messages=0;}
 if (isset($_GET["session_id"]))				{$session_id=$_GET["session_id"];}
 	elseif (isset($_POST["session_id"]))	{$session_id=$_POST["session_id"];}
+	else {$session_id="";}
 if (isset($_GET["FROMvdc"]))				{$FROMvdc=$_GET["FROMvdc"];}
 	elseif (isset($_POST["FROMvdc"]))		{$FROMvdc=$_POST["FROMvdc"];}
+	else {$FROMvdc="";}
 if (isset($_GET["agentchannel"]))			{$agentchannel=$_GET["agentchannel"];}
 	elseif (isset($_POST["agentchannel"]))	{$agentchannel=$_POST["agentchannel"];}
+	else {$agentchannel="";}
 if (isset($_GET["usegroupalias"]))			{$usegroupalias=$_GET["usegroupalias"];}
 	elseif (isset($_POST["usegroupalias"]))	{$usegroupalias=$_POST["usegroupalias"];}
+	else {$usegroupalias="";}
 if (isset($_GET["account"]))				{$account=$_GET["account"];}
 	elseif (isset($_POST["account"]))		{$account=$_POST["account"];}
+	else {$account="";}
 if (isset($_GET["agent_dialed_number"]))			{$agent_dialed_number=$_GET["agent_dialed_number"];}
 	elseif (isset($_POST["agent_dialed_number"]))	{$agent_dialed_number=$_POST["agent_dialed_number"];}
+	else {$agent_dialed_number="";}
 if (isset($_GET["agent_dialed_type"]))				{$agent_dialed_type=$_GET["agent_dialed_type"];}
 	elseif (isset($_POST["agent_dialed_type"]))		{$agent_dialed_type=$_POST["agent_dialed_type"];}
+	else {$agent_dialed_type="";}
 if (isset($_GET["nodeletevdac"]))				{$nodeletevdac=$_GET["nodeletevdac"];}
 	elseif (isset($_POST["nodeletevdac"]))		{$nodeletevdac=$_POST["nodeletevdac"];}
+	else {$nodeletevdac="";}
 if (isset($_GET["alertCID"]))				{$alertCID=$_GET["alertCID"];}
 	elseif (isset($_POST["alertCID"]))		{$alertCID=$_POST["alertCID"];}
+	else {$alertCID="";}
 if (isset($_GET["preset_name"]))			{$preset_name=$_GET["preset_name"];}
 	elseif (isset($_POST["preset_name"]))	{$preset_name=$_POST["preset_name"];}
+	else {$preset_name="";}
 if (isset($_GET["call_variables"]))				{$call_variables=$_GET["call_variables"];}
 	elseif (isset($_POST["call_variables"]))	{$call_variables=$_POST["call_variables"];}
+	else {$call_variables="";}
 if (isset($_GET["log_campaign"]))			{$log_campaign=$_GET["log_campaign"];}
 	elseif (isset($_POST["log_campaign"]))	{$log_campaign=$_POST["log_campaign"];}
+	else {$log_campaign="";}
 if (isset($_GET["qm_extension"]))			{$qm_extension=$_GET["qm_extension"];}
 	elseif (isset($_POST["qm_extension"]))	{$qm_extension=$_POST["qm_extension"];}
+	else {$qm_extension="";}
 if (isset($_GET["customerparked"]))				{$customerparked=$_GET["customerparked"];}
 	elseif (isset($_POST["customerparked"]))	{$customerparked=$_POST["customerparked"];}
+	else {$customerparked="";}
 if (isset($_GET["user_group"]))				{$user_group=$_GET["user_group"];}
 	elseif (isset($_POST["user_group"]))	{$user_group=$_POST["user_group"];}
+	else {$user_group="";}
 if (isset($_GET["group_id"]))			{$group_id=$_GET["group_id"];}
 	elseif (isset($_POST["group_id"]))	{$group_id=$_POST["group_id"];}
+	else {$group_id="";}
 
 # if options file exists, use the override values for the above variables
 #   see the options-example.php file for more information
@@ -278,13 +329,23 @@ if (file_exists('options.php'))
 	require('options.php');
 	}
 
-$DB=preg_replace("/[^0-9a-zA-Z]/","",$DB);
+$StarTtime = date("U");
+$NOW_DATE = date("Y-m-d");
+$NOW_TIME = date("Y-m-d H:i:s");
+$NOWnum = date("YmdHis");
+if (!isset($query_date)) {$query_date = $NOW_DATE;}
+
+# default optional vars if not set
+if (!isset($ACTION))   {$ACTION="Originate";}
+if (!isset($format))   {$format="alert";}
+if (!isset($ext_priority))   {$ext_priority="1";}
+
 $user=preg_replace("/\'|\"|\\\\|;| /","",$user);
 $pass=preg_replace("/\'|\"|\\\\|;| /","",$pass);
 
 #############################################
 ##### START SYSTEM_SETTINGS LOOKUP #####
-$stmt = "SELECT use_non_latin,allow_sipsak_messages,enable_languages,language_method,meetme_enter_login_filename,meetme_enter_leave3way_filename,agent_debug_logging,allow_web_debug FROM system_settings;";
+$stmt = "SELECT use_non_latin,allow_sipsak_messages,enable_languages,language_method,meetme_enter_login_filename,meetme_enter_leave3way_filename,agent_debug_logging,allow_web_debug,stereo_recording,stereo_parallel_recording,recording_dtmf_detection,recording_dtmf_muting FROM system_settings;";
 $rslt=mysql_to_mysqli($stmt, $link);
 	if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02001',$user,$server_ip,$session_name,$one_mysql_log);}
 #if ($DB) {echo "$stmt\n";}
@@ -300,8 +361,13 @@ if ($qm_conf_ct > 0)
 	$meetme_enter_leave3way_filename =	$row[5];
 	$SSagent_debug_logging =			$row[6];
 	$SSallow_web_debug =				$row[7];
+	$SSstereo_recording =				$row[8];
+	$SSstereo_parallel_recording =		$row[9];
+	$SSrecording_dtmf_detection = 		$row[10];
+	$SSrecording_dtmf_muting = 			$row[11];
 	}
-if ($SSallow_web_debug < 1) {$DB=0;}
+if ($SSallow_web_debug < 1 || !isset($DB)) {$DB=0;}
+$DB=preg_replace("/[^0-9]/","",$DB);
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
@@ -310,8 +376,8 @@ header ("Cache-Control: no-cache, must-revalidate");  // HTTP/1.1
 header ("Pragma: no-cache");                          // HTTP/1.0
 
 # filter variables
-$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
-$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
+# $session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
+# $server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
 $lead_id = preg_replace('/[^0-9]/','',$lead_id);
 $session_id = preg_replace('/[^0-9]/','',$session_id);
 $exten = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$exten);
@@ -319,21 +385,21 @@ $extension = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$extension);
 $protocol = preg_replace("/\||`|&|\'|\"|\\\\|;| /","",$protocol);
 $ACTION = preg_replace("/\'|\"|\\\\|;/","",$ACTION);
 $CalLCID = preg_replace("/\'|\"|\\\\|;/","",$CalLCID);
-$FROMvdc = preg_replace('/[^-_0-9a-zA-Z]/','',$FROMvdc);
-$agent_log_id = preg_replace('/[^-_0-9a-zA-Z]/','',$agent_log_id);
+# $FROMvdc = preg_replace('/[^-_0-9a-zA-Z]/','',$FROMvdc);
+# $agent_log_id = preg_replace('/[^-_0-9a-zA-Z]/','',$agent_log_id);
 $agentchannel = preg_replace("/\'|\"|\\\\/","",$agentchannel);
-$auto_dial_level = preg_replace('/[^-\._0-9a-zA-Z]/','',$auto_dial_level);
+# $auto_dial_level = preg_replace('/[^-\._0-9a-zA-Z]/','',$auto_dial_level);
 $call_server_ip = preg_replace("/\'|\"|\\\\|;/","",$call_server_ip);
 $call_variables = preg_replace("/\'|\"|\\\\|;/","",$call_variables);
 $channel = preg_replace("/\'|\"|\\\\/","",$channel);
 $customerparked = preg_replace('/[^0-9]/','',$customerparked);
 $enable_sipsak_messages = preg_replace('/[^0-9]/','',$enable_sipsak_messages);
-$ext_context = preg_replace('/[^-_0-9a-zA-Z]/','',$ext_context);
-$ext_priority = preg_replace('/[^-_0-9a-zA-Z]/','',$ext_priority);
+# $ext_context = preg_replace('/[^-_0-9a-zA-Z]/','',$ext_context);
+# $ext_priority = preg_replace('/[^-_0-9a-zA-Z]/','',$ext_priority);
 $exten = preg_replace("/\'|\"|\\\\|;/","",$exten);
 $extenName = preg_replace("/\'|\"|\\\\|;/","",$extenName);
 $extrachannel = preg_replace("/\'|\"|\\\\/","",$extrachannel);
-$format = preg_replace('/[^-_0-9a-zA-Z]/','',$format);
+# $format = preg_replace('/[^-_0-9a-zA-Z]/','',$format);
 $log_campaign = preg_replace("/\'|\"|\\\\|;/","",$log_campaign);
 $nodeletevdac = preg_replace('/[^0-9]/','',$nodeletevdac);
 $outbound_cid = preg_replace("/\'|\"|\\\\|;/","",$outbound_cid);
@@ -344,9 +410,9 @@ $qm_extension = preg_replace("/\'|\"|\\\\|;/","",$qm_extension);
 $secondS = preg_replace('/[^0-9]/','',$secondS);
 $stage = preg_replace("/\'|\"|\\\\|;/","",$stage);
 $usegroupalias = preg_replace('/[^0-9]/','',$usegroupalias);
-$phone_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$phone_ip);
-$allow_sipsak_messages = preg_replace('/[^-_0-9a-zA-Z]/','',$allow_sipsak_messages);
-$alertCID = preg_replace('/[^-_0-9a-zA-Z]/','',$alertCID);
+# $phone_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$phone_ip);
+$allow_sipsak_messages = preg_replace('/[^0-9]/','',$allow_sipsak_messages);
+# $alertCID = preg_replace('/[^-_0-9a-zA-Z]/','',$alertCID);
 
 if ($non_latin < 1)
 	{
@@ -361,7 +427,17 @@ if ($non_latin < 1)
 	$account = preg_replace('/[^-_0-9a-zA-Z]/','',$account);
 	$group_id = preg_replace('/[^-_0-9a-zA-Z]/','',$group_id);
 	$filename = preg_replace('/[^-\._0-9a-zA-Z]/','',$filename);
-	$queryCID = preg_replace('/[^-\._0-9a-zA-Z]/','',$queryCID);
+	$queryCID = preg_replace('/[^-\#\*\,\._0-9a-zA-Z]/','',$queryCID);
+	$session_name = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$session_name);
+	$server_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$server_ip);
+	$FROMvdc = preg_replace('/[^-_0-9a-zA-Z]/','',$FROMvdc);
+	$agent_log_id = preg_replace('/[^-_0-9a-zA-Z]/','',$agent_log_id);
+	$auto_dial_level = preg_replace('/[^-\._0-9a-zA-Z]/','',$auto_dial_level);
+	$ext_context = preg_replace('/[^-_0-9a-zA-Z]/','',$ext_context);
+	$ext_priority = preg_replace('/[^-_0-9a-zA-Z]/','',$ext_priority);
+	$format = preg_replace('/[^-_0-9a-zA-Z]/','',$format);
+	$phone_ip = preg_replace('/[^-\.\:\_0-9a-zA-Z]/','',$phone_ip);
+	$alertCID = preg_replace('/[^-_0-9a-zA-Z]/','',$alertCID);
 	}
 else
 	{
@@ -376,20 +452,18 @@ else
 	$account = preg_replace('/[^-_0-9\p{L}]/u','',$account);
 	$group_id = preg_replace('/[^-_0-9\p{L}]/u','',$group_id);
 	$filename = preg_replace('/[^-\._0-9\p{L}]/u','',$filename);
-	$queryCID = preg_replace('/[^-\._0-9\p{L}]/u','',$queryCID);
+	$queryCID = preg_replace('/[^-\#\*\,\._0-9\p{L}]/u','',$queryCID);
+	$session_name = preg_replace('/[^-\.\:\_0-9\p{L}]/u','',$session_name);
+	$server_ip = preg_replace('/[^-\.\:\_0-9\p{L}]/u','',$server_ip);
+	$FROMvdc = preg_replace('/[^-_0-9\p{L}]/u','',$FROMvdc);
+	$agent_log_id = preg_replace('/[^-_0-9\p{L}]/u','',$agent_log_id);
+	$auto_dial_level = preg_replace('/[^-\._0-9\p{L}]/u','',$auto_dial_level);
+	$ext_context = preg_replace('/[^-_0-9\p{L}]/u','',$ext_context);
+	$ext_priority = preg_replace('/[^-_0-9\p{L}]/u','',$ext_priority);
+	$format = preg_replace('/[^-_0-9\p{L}]/u','',$format);
+	$phone_ip = preg_replace('/[^-\.\:\_0-9\p{L}]/u','',$phone_ip);
+	$alertCID = preg_replace('/[^-_0-9\p{L}]/u','',$alertCID);
 	}
-
-# default optional vars if not set
-if (!isset($ACTION))   {$ACTION="Originate";}
-if (!isset($format))   {$format="alert";}
-if (!isset($ext_priority))   {$ext_priority="1";}
-
-$StarTtime = date("U");
-$NOW_DATE = date("Y-m-d");
-$NOW_TIME = date("Y-m-d H:i:s");
-$NOWnum = date("YmdHis");
-if (!isset($query_date)) {$query_date = $NOW_DATE;}
-
 
 #############################################
 ##### START SYSTEM_SETTINGS AND USER LANGUAGE LOOKUP #####
@@ -415,8 +489,12 @@ if (strlen($SSagent_debug_logging) > 1)
 
 $stmtA="SELECT conf_engine FROM servers WHERE server_ip='$server_ip';";
 $rslt=mysql_to_mysqli($stmtA, $link);
-$row=mysqli_fetch_row($rslt);
-$conf_engine =  $row[0]; 
+$conf_engine="";
+if (mysqli_num_rows($rslt)>0)
+	{
+	$row=mysqli_fetch_row($rslt);
+	$conf_engine =  $row[0]; 
+	}
 
 $threeway_context = $ext_context;
 if (strlen($meetme_enter_leave3way_filename) > 0)
@@ -705,6 +783,7 @@ if ($ACTION=="Originate")
 				}
 			}
 
+		$RAWaccount='';
 		if (strlen($outbound_cid)>1)
 			{$outCID = "\"$queryCID\" <$outbound_cid>";}
 		else
@@ -850,7 +929,7 @@ if ($ACTION=="HangupConfDial")
 		$rslt=mysql_to_mysqli($stmt, $link);
 			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02008',$user,$server_ip,$session_name,$one_mysql_log);}
 		$row=mysqli_fetch_row($rslt);
-		if ($row > 0)
+		if ($row[0] > 0)
 			{
 			$stmt="SELECT channel FROM live_sip_channels where server_ip = '$server_ip' and channel LIKE \"$hangup_channel_prefix%\";";
 				if ($format=='debug') {echo "\n<!-- $stmt -->";}
@@ -2494,7 +2573,6 @@ if ($ACTION=="Redirect")
 	}
 
 
-
 ######################
 # ACTION=Monitor or Stop Monitor  - insert Monitor/StopMonitor Manager statement to start recording on a channel
 ######################
@@ -2598,7 +2676,7 @@ if ( ($ACTION=="Monitor") || ($ACTION=="StopMonitor") )
 						$stmt = "UPDATE recording_log set end_time='$NOW_TIME',end_epoch='$StarTtime',length_in_sec=$length_in_sec,length_in_min='$length_in_min' where filename='$filename' order by start_epoch desc;";
 							if ($DB) {echo "$stmt\n";}
 						$rslt=mysql_to_mysqli($stmt, $link);
-					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02071',$user,$server_ip,$session_name,$one_mysql_log);}
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02071',$user,$server_ip,$session_name,$one_mysql_log);}
 						}
 					}
 				echo _QXZ("%1s command sent for Channel %2s on %3s",0,'',$ACTION,$channel,$server_ip)."\nFilename: $filename\nRecorDing_ID: $recording_id\n";
@@ -2606,10 +2684,6 @@ if ( ($ACTION=="Monitor") || ($ACTION=="StopMonitor") )
 			}
 		}
 	}
-
-
-
-
 
 
 ######################
@@ -2633,7 +2707,7 @@ if ( ($ACTION=="MonitorConf") || ($ACTION=="StopMonitorConf") )
 
 		if ($ACTION=="MonitorConf")
 			{
-			$stmt="SELECT recording_id,filename FROM routing_initiated_recordings where user='$user' and processed='0' order by launch_time desc limit 1;";
+			$stmt="SELECT recording_id,filename FROM routing_initiated_recordings where user='$user' and processed='0' and rir_type='' order by launch_time desc limit 1;";
 			$rslt=mysql_to_mysqli($stmt, $link);
 			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02139',$user,$server_ip,$session_name,$one_mysql_log);}
 			if ($DB) {echo "$stmt\n";}
@@ -2708,6 +2782,53 @@ if ( ($ACTION=="MonitorConf") || ($ACTION=="StopMonitorConf") )
 						$recording_id = mysqli_insert_id($link);
 						}
 					}
+
+				### check for recording_dtmf_muting
+				$stmt="SELECT callerid FROM vicidial_live_agents where user='$user' and lead_id='$lead_id' limit 1;";
+				$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+				if ($DB) {echo "$stmt\n";}
+				$rec_count = mysqli_num_rows($rslt);
+				if ($rec_count>0)
+					{
+					$row=mysqli_fetch_row($rslt);
+					$USERcallerid = $row[0];
+
+					$stmt="SELECT campaign_id FROM vicidial_auto_calls where callerid='$USERcallerid' and lead_id='$lead_id' order by auto_call_id limit 1;";
+					$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+					if ($DB) {echo "$stmt\n";}
+					$vac_count = mysqli_num_rows($rslt);
+					if ($vac_count>0)
+						{
+						$row=mysqli_fetch_row($rslt);
+						$USERcampaign_id = $row[0];
+
+						$stmt = "SELECT recording_dtmf_muting FROM vicidial_campaigns where campaign_id='$USERcampaign_id';";
+						if (preg_match("/^Y|^DC/",$USERcallerid))
+							{$stmt = "SELECT recording_dtmf_muting FROM vicidial_inbound_groups where group_id='$USERcampaign_id';";}
+						$rslt=mysql_to_mysqli($stmt, $link);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+						if ($DB) {echo "$stmt\n";}
+						$vic_count = mysqli_num_rows($rslt);
+						if ($vic_count>0)
+							{
+							$row=mysqli_fetch_row($rslt);
+							$recording_dtmf_muting =		$row[0];
+							if ( ($SSrecording_dtmf_detection < 1) or ($SSrecording_dtmf_muting < 1) )
+								{$recording_dtmf_muting=0;}
+							}
+						}
+					}
+
+				if ( ($SSrecording_dtmf_detection > 0) and ($SSrecording_dtmf_muting > 0) ) 
+					{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
+				### insert record into recording_live table ###
+				$stmt = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','MONO_LEGACY','$server_ip','$NOW_TIME','$channel','$filename','$lead_id','$user','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
+					if ($format=='debug') {echo "\n<!-- $stmt -->";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'00XXX',$user,$server_ip,$session_name,$one_mysql_log);}
+
 				if ($FROMvdc=='YES')
 					{
 					##### update vla record with recording_id
@@ -2818,6 +2939,11 @@ if ( ($ACTION=="MonitorConf") || ($ACTION=="StopMonitorConf") )
 					if ($DB) {echo "$stmt\n";}
 				$rslt=mysql_to_mysqli($stmt, $link);
 				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02079',$user,$server_ip,$session_name,$one_mysql_log);}
+
+				$stmt = "UPDATE recording_live set end_time='$NOW_TIME',recording_status='FINISHED' where recording_id='$recording_id' and recording_status='STARTED';";
+					if ($DB) {echo "$stmt\n";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02162',$user,$server_ip,$session_name,$one_mysql_log);}
 				}
 
 			# find and hang up all recordings going on in this conference # and extension = '$exten' 
@@ -2850,7 +2976,380 @@ if ( ($ACTION=="MonitorConf") || ($ACTION=="StopMonitorConf") )
 	}
 
 
+######################
+# ACTION=MonitorStereo or StopMonitorStereo  - insert Monitor/StopMonitor Manager statement to start recording on a customer channel
+######################
+if ( ($ACTION=="MonitorStereo") || ($ACTION=="StopMonitorStereo") )
+	{
+	$row='';   $rowx='';
+	$channel_live=1;
+	$uniqueidSQL='';
 
+	if ( (($ACTION=="MonitorStereo") && ((strlen($exten)<3) or (strlen($channel)<4) or (strlen($filename)<8))) || (($ACTION=="StopMonitorStereo") && ((strlen($exten)<3) or (strlen($channel)<4) or (strlen($filename)<4))) )
+		{
+		$channel_live=0;
+		echo _QXZ("Channel %1s is not valid or exten %2s is not valid or filename: %3s is not valid, %4s command not inserted",0,'',$channel,$exten,$filename,$ACTION)."\n";
+		$stage .= " REC-Invalid $exten $filename $channel";
+		}
+	else
+		{
+		$VDvicidial_id='';
+
+		if ($ACTION=="MonitorStereo")
+			{
+			$stmt="SELECT recording_id,filename FROM routing_initiated_recordings where user='$user' and processed='0' and rir_type='S' order by launch_time desc limit 1;";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02139',$user,$server_ip,$session_name,$one_mysql_log);}
+			if ($DB) {echo "$stmt\n";}
+			$rir_ct = mysqli_num_rows($rslt);
+			if ($rir_ct > 0)
+				{
+				$row=mysqli_fetch_row($rslt);
+				$recording_id =	$row[0];
+				$filename =		$row[1];
+
+				$stmt = "UPDATE routing_initiated_recordings SET processed='1' where recording_id='$recording_id';";
+					if ($format=='debug') {echo "\n<!-- $stmt -->";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02140',$user,$server_ip,$session_name,$one_mysql_log);}
+
+				$stage .= " RIR $recording_id";
+				}
+			else
+				{
+				if ($FROMvdc=='YES')
+					{
+					##### update vla recording record to blank
+					$stmt = "UPDATE vicidial_live_agents SET external_recording='' where user='$user';";
+						if ($format=='debug') {echo "\n<!-- $stmt -->";}
+					$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02163',$user,$server_ip,$session_name,$one_mysql_log);}
+
+					##### get call type from vicidial_live_agents table
+					$VLA_inOUT='NONE';
+					$stmt="SELECT comments FROM vicidial_live_agents where user='$user' order by last_update_time desc limit 1;";
+					$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02074',$user,$server_ip,$session_name,$one_mysql_log);}
+					if ($DB) {echo "$stmt\n";}
+					$VLA_inOUT_ct = mysqli_num_rows($rslt);
+					if ($VLA_inOUT_ct > 0)
+						{
+						$row=mysqli_fetch_row($rslt);
+						$VLA_inOUT =		$row[0];
+						}
+					if ($VLA_inOUT == 'INBOUND')
+						{
+						$four_hours_ago = date("Y-m-d H:i:s", mktime(date("H")-4,date("i"),date("s"),date("m"),date("d"),date("Y")));
+
+						##### look for the vicidial ID in the vicidial_closer_log table
+						$stmt="SELECT closecallid,campaign_id FROM vicidial_closer_log where lead_id='$lead_id' and user='$user' and call_date > \"$four_hours_ago\" order by closecallid desc limit 1;";
+						}
+					else
+						{
+						##### look for the vicidial ID in the vicidial_log table
+						$stmt="SELECT uniqueid,campaign_id FROM vicidial_log where uniqueid='$uniqueid' and lead_id='$lead_id';";
+						}
+					$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02075',$user,$server_ip,$session_name,$one_mysql_log);}
+					if ($DB) {echo "$stmt\n";}
+					$VM_mancall_ct = mysqli_num_rows($rslt);
+					if ($VM_mancall_ct > 0)
+						{
+						$row=mysqli_fetch_row($rslt);
+						$VDvicidial_id =	$row[0];
+						$VDcampaign_id =	$row[1];
+
+						$stmt = "UPDATE recording_log SET vicidial_id='$VDvicidial_id' where recording_id='$recording_id';";
+							if ($format=='debug') {echo "\n<!-- $stmt -->";}
+						$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02076',$user,$server_ip,$session_name,$one_mysql_log);}
+						}
+
+					##### gather stereo recording settings for this specific campaign/in-group
+					if ($VLA_inOUT == 'INBOUND')
+						{
+						$stmt="SELECT stereo_recording,stereo_parallel_recording,stereo_rec_filename,stereo_recording_agent,recording_dtmf_muting FROM vicidial_inbound_groups where group_id='$VDcampaign_id';";
+						}
+					else
+						{
+						$stmt="SELECT stereo_recording,stereo_parallel_recording,stereo_rec_filename,stereo_recording_agent,recording_dtmf_muting FROM vicidial_campaigns where campaign_id='$VDcampaign_id';";
+						}
+					$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02075',$user,$server_ip,$session_name,$one_mysql_log);}
+					if ($DB) {echo "$stmt\n";}
+					$VM_mancall_ct = mysqli_num_rows($rslt);
+					if ($VM_mancall_ct > 0)
+						{
+						$row=mysqli_fetch_row($rslt);
+						$stereo_recording =				$row[0];
+						$stereo_parallel_recording =	$row[1];
+						$stereo_rec_filename =			$row[2];
+						$stereo_recording_agent =		$row[3];
+						$recording_dtmf_muting =		$row[4];
+						if ( ($SSrecording_dtmf_detection < 1) or ($SSrecording_dtmf_muting < 1) )
+							{$recording_dtmf_muting=0;}
+						}
+					}
+
+				if (preg_match("/CUSTOMER|BOTH/",$stereo_recording) )
+					{
+					if ( ($SSstereo_parallel_recording > 0) and (!preg_match("/DISABLED/i",$stereo_parallel_recording)) )
+						{
+						$stereo_exten = 'SPAC';
+						if (preg_match("/BOTH_CHANNELS/",$stereo_recording) )
+							{$stereo_exten='SPACBC';}
+						if (preg_match("/CUSTOMER_ONLY/",$stereo_recording) )
+							{$stereo_exten='SPACCO';}
+						if (preg_match("/CUSTOMER_MUTE/",$stereo_recording) )
+							{$stereo_exten='SPACCM';}
+						$stereo_ac = $stereo_exten.'-'.$stereo_recording_agent."\n";
+						}
+					else
+						{
+						$stereo_exten = 'SAC';
+						if (preg_match("/BOTH_CHANNELS/",$stereo_recording) )
+							{$stereo_exten='SACBC';}
+						if (preg_match("/CUSTOMER_ONLY/",$stereo_recording) )
+							{$stereo_exten='SACCO';}
+						if (preg_match("/CUSTOMER_MUTE/",$stereo_recording) )
+							{$stereo_exten='SACCM';}
+						$stereo_ac = $stereo_exten.'-'.$stereo_recording_agent."\n";
+						}
+					# if VENDORLEADCODE is used in the stereo recording filenames, look it up for this lead
+					if (preg_match("/VENDORLEADCODE/",$stereo_rec_filename))
+						{
+						$stmt="SELECT vendor_lead_code FROM vicidial_list where lead_id='$lead_id';";
+						$rslt=mysql_to_mysqli($stmt, $link);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02164',$user,$server_ip,$session_name,$one_mysql_log);}
+						if ($DB) {echo "$stmt\n";}
+						$VM_mancall_ct = mysqli_num_rows($rslt);
+						if ($VM_mancall_ct > 0)
+							{
+							$row=mysqli_fetch_row($rslt);
+							$vendor_lead_code =				$row[0];
+							}
+						}
+					$recdate = date("Ymd-His");
+					$tinydate = date("ymdHis");
+
+					$stereo_rec_filename = preg_replace("/CAMPAIGN/",$campaign,$stereo_rec_filename);
+					$stereo_rec_filename = preg_replace("/INGROUP/",$VDcampaign_id,$stereo_rec_filename);
+					$stereo_rec_filename = preg_replace("/CUSTPHONE/",$phone_number,$stereo_rec_filename);
+					$stereo_rec_filename = preg_replace("/FULLDATE/",$recdate,$stereo_rec_filename);
+					$stereo_rec_filename = preg_replace("/TINYDATE/",$tinydate,$stereo_rec_filename);
+					$stereo_rec_filename = preg_replace("/EPOCH/",$StarTtime,$stereo_rec_filename);
+					$stereo_rec_filename = preg_replace("/AGENT/",$user,$stereo_rec_filename);
+					$stereo_rec_filename = preg_replace("/VENDORLEADCODE/",$vendor_lead_code,$stereo_rec_filename);
+					$stereo_rec_filename = preg_replace("/LEADID/",$lead_id,$stereo_rec_filename);
+					$stereo_rec_filename = preg_replace("/CALLID/",$CalLCID,$stereo_rec_filename);
+					$stereo_rec_filename = preg_replace("/\"|\'/",'',$stereo_rec_filename);		
+
+					if (preg_match("/RECID/",$filename) )
+						{
+						$stmt = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$call_server_ip','$stereo_exten','$NOW_TIME','$StarTtime','$stereo_rec_filename','$lead_id','$user','$VDvicidial_id')";
+							if ($format=='debug') {echo "\n<!-- $stmt -->";}
+						$rslt=mysql_to_mysqli($stmt, $link);
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02133',$user,$server_ip,$session_name,$one_mysql_log);}
+						$RLaffected_rows = mysqli_affected_rows($link);
+						if ($RLaffected_rows > 0)
+							{
+							$recording_id = mysqli_insert_id($link);
+							}
+
+						$stereo_rec_filename = preg_replace("/RECID/","$recording_id",$stereo_rec_filename);
+
+						$stmt = "UPDATE recording_log SET filename='$stereo_rec_filename' where recording_id='$recording_id';";
+							if ($format=='debug') {echo "\n<!-- $stmt -->";}
+						$rslt=mysql_to_mysqli($stmt, $link);
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02134',$user,$server_ip,$session_name,$one_mysql_log);}
+						}
+					else
+						{
+						$stmt = "INSERT INTO recording_log (channel,server_ip,extension,start_time,start_epoch,filename,lead_id,user,vicidial_id) values('$channel','$call_server_ip','$stereo_exten','$NOW_TIME','$StarTtime','$stereo_rec_filename','$lead_id','$user','$VDvicidial_id')";
+							if ($format=='debug') {echo "\n<!-- $stmt -->";}
+						$rslt=mysql_to_mysqli($stmt, $link);
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02073',$user,$server_ip,$session_name,$one_mysql_log);}
+						$RLaffected_rows = mysqli_affected_rows($link);
+						if ($RLaffected_rows > 0)
+							{
+							$recording_id = mysqli_insert_id($link);
+							}
+						}
+
+					if ( ($SSstereo_parallel_recording > 0) and (!preg_match("/DISABLED/i",$stereo_parallel_recording)) )
+						{
+						$four_hours_ago = date("Y-m-d H:i:s", mktime(date("H")-4,date("i"),date("s"),date("m"),date("d"),date("Y")));
+
+						$parallel_recording_id=0;
+						# gather parallel_recording_id from recording_log_parallel
+						$stmt="SELECT parallel_recording_id FROM recording_log_parallel where lead_id='$lead_id' and user='$user' and channel='$channel' and start_time > \"$four_hours_ago\" order by parallel_recording_id desc limit 1;";
+						$rslt=mysql_to_mysqli($stmt, $link);
+						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02165',$user,$server_ip,$session_name,$one_mysql_log);}
+						if ($DB) {echo "$stmt\n";}
+						$PR_ct = mysqli_num_rows($rslt);
+						if ($PR_ct > 0)
+							{
+							$row=mysqli_fetch_row($rslt);
+							$parallel_recording_id =				$row[0];
+							}
+
+						# stereo_parallel_recording is enabled, only insert DB records, don't initiate recording
+						$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,recording_status,parallel_recording_id) values('$recording_id','$call_server_ip','$NOW_TIME','0','$stereo_rec_filename','$lead_id','$VDcampaign_id STEREO_PARALLEL AGENT-CONTROLLED $stereo_recording $stereo_recording_agent','start: $now_date|vicidial_id: $VDvicidial_id|user: $user|channel: $channel|','STEREO START','$parallel_recording_id');";
+							if ($format=='debug') {echo "\n<!-- $stmtA -->";}
+						$rslt=mysql_to_mysqli($stmtA, $link);
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmtA,'02166',$user,$server_ip,$session_name,$one_mysql_log);}
+
+						if ( ($SSrecording_dtmf_detection > 0) and ($SSrecording_dtmf_muting > 0) ) 
+							{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
+						$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','STEREO_PARALLEL AGENT-CONTROLLED $stereo_exten','$call_server_ip','$NOW_TIME','$channel','$stereo_rec_filename','$lead_id','$user','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
+							if ($format=='debug') {echo "\n<!-- $stmtD -->";}
+						$rslt=mysql_to_mysqli($stmtD, $link);
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmtD,'02167',$user,$server_ip,$session_name,$one_mysql_log);}
+						}
+					else
+						{
+						### start the stereo recording
+						$PATHmonitorT =	'/var/spool/asterisk/monitorS';
+						$stereo_recording_options = "r($PATHmonitorT/$stereo_rec_filename-out.wav)t($PATHmonitorT/$stereo_rec_filename-in.wav)"; 
+						$vmgr_callerid = substr($stereo_rec_filename, 0, 17) . '...';
+						$stmt="INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$call_server_ip','','MixMonitor','$vmgr_callerid','ActionID: $vmgr_callerid','Channel: $channel','Options: $stereo_recording_options','','','','','','','');";
+							if ($format=='debug') {echo "\n<!-- $stmt -->";}
+						$rslt=mysql_to_mysqli($stmt, $link);
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02135',$user,$server_ip,$session_name,$one_mysql_log);}
+
+						$stmtA = "INSERT INTO recording_log_stereo (recording_id,server_ip,start_time,length_in_sec,filename,lead_id,options,processing_log,recording_status) values('$recording_id','$call_server_ip','$NOW_TIME','0','$stereo_rec_filename','$lead_id','$VDcampaign_id STEREO AGENT-CONTROLLED $stereo_recording $stereo_recording_agent','start: $now_date|vicidial_id: $VDvicidial_id|user: $user|channel: $channel|','STEREO START');";
+							if ($format=='debug') {echo "\n<!-- $stmtA -->";}
+						$rslt=mysql_to_mysqli($stmtA, $link);
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmtA,'02168',$user,$server_ip,$session_name,$one_mysql_log);}
+
+						if ( ($SSrecording_dtmf_detection > 0) and ($SSrecording_dtmf_muting > 0) ) 
+							{if ($SSrecording_dtmf_muting > 1) {$recording_dtmf_muting = $SSrecording_dtmf_muting;} }
+						$stmtD = "INSERT INTO recording_live (recording_id,recording_type,server_ip,start_time,channel,filename,lead_id,user,dtmf_muting_end_time,recording_status,dtmf_muting_seconds) values('$recording_id','STEREO AGENT-CONTROLLED $stereo_exten','$call_server_ip','$NOW_TIME','$channel','$stereo_rec_filename','$lead_id','$user','2020-12-31 23:59:59','STARTED','$recording_dtmf_muting');";
+							if ($format=='debug') {echo "\n<!-- $stmtD -->";}
+						$rslt=mysql_to_mysqli($stmtD, $link);
+							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmtD,'02169',$user,$server_ip,$session_name,$one_mysql_log);}
+								
+						if (preg_match("/CUSTOMER_ONLY/",$stereo_recording) )
+							{
+							$vmgr_callerid = substr($stereo_rec_filename, 0, 16) . 'M...';
+							$stmt="INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$call_server_ip','','MixMonitorMute','$vmgr_callerid','ActionID: $vmgr_callerid','Channel: $channel','Direction: write','State: 1','','','','','','');";
+								if ($format=='debug') {echo "\n<!-- $stmt -->";}
+							$rslt=mysql_to_mysqli($stmt, $link);
+								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02170',$user,$server_ip,$session_name,$one_mysql_log);}
+							}
+						if (preg_match("/CUSTOMER_MUTE/",$stereo_recording) )
+							{
+							$vmgr_callerid = substr($stereo_rec_filename, 0, 16) . 'M...';
+							$stmt="INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$call_server_ip','','MixMonitorMute','$vmgr_callerid','ActionID: $vmgr_callerid','Channel: $channel','Direction: read','State: 1','','','','','','');";
+								if ($format=='debug') {echo "\n<!-- $stmt -->";}
+							$rslt=mysql_to_mysqli($stmt, $link);
+								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02171',$user,$server_ip,$session_name,$one_mysql_log);}
+							}
+						}
+					$filename = $stereo_rec_filename;
+					}
+				$stage .= " AIR $recording_id $stereo_rec_filename";
+				}
+			}
+		##### BEGIN StopMonitorStereo steps #####
+		else
+			{
+			$recording_type='';
+			if ($FROMvdc=='YES')
+				{
+				##### update vla recording record to blank
+				$stmt = "UPDATE vicidial_live_agents SET external_recording='' where user='$user';";
+					if ($format=='debug') {echo "\n<!-- $stmt -->";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02172',$user,$server_ip,$session_name,$one_mysql_log);}
+				}
+			if ($uniqueid=='IN')
+				{
+				$four_hours_ago = date("Y-m-d H:i:s", mktime(date("H")-4,date("i"),date("s"),date("m"),date("d"),date("Y")));
+
+				### find the value to put in the vicidial_id field if this was an inbound call
+				$stmt="SELECT closecallid from vicidial_closer_log where lead_id='$lead_id' and call_date > \"$four_hours_ago\" order by closecallid desc limit 1;";
+				$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02077',$user,$server_ip,$session_name,$one_mysql_log);}
+				$VAC_qm_ct = mysqli_num_rows($rslt);
+				if ($VAC_qm_ct > 0)
+					{
+					$row=mysqli_fetch_row($rslt);
+					$uniqueidSQL	= ",vicidial_id='$row[0]'";
+					}
+				}
+			else
+				{
+				if (strlen($uniqueid) > 8)
+					{$uniqueidSQL	= ",vicidial_id='$uniqueid'";}
+				}
+
+			$rec_searchSQL = "filename='$filename'";
+			if (preg_match("/^ID:/",$filename))
+				{
+				$recording_id = $filename;
+				$recording_id = preg_replace("/^ID:/",'',$recording_id);
+				$rec_searchSQL = "recording_id='$recording_id'";
+				}
+
+			$stmt="SELECT recording_id,UNIX_TIMESTAMP(start_time),filename,recording_type FROM recording_live where channel='$channel' and user='$user' and recording_status='STARTED' and recording_type LIKE \"STEREO%\" and recording_type LIKE \"%AGENT-CONTROLLED%\" order by start_time desc;";
+			$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02173',$user,$server_ip,$session_name,$one_mysql_log);}
+			if ($DB) {echo "$stmt\n";}
+			$rec_count = mysqli_num_rows($rslt);
+			if ($rec_count>0)
+				{
+				$row=mysqli_fetch_row($rslt);
+				$recording_id =		$row[0];
+				$start_time =		$row[1];
+				$filename =			$row[2];
+				$recording_type =	$row[3];
+				$vmgr_callerid = substr($filename, 0, 17) . '...';
+				$length_in_sec = ($StarTtime - $start_time);
+				$length_in_min = ($length_in_sec / 60);
+				$length_in_min = sprintf("%8.2f", $length_in_min);
+
+				$stmt = "UPDATE recording_log set end_time='$NOW_TIME',end_epoch='$StarTtime',length_in_sec=$length_in_sec,length_in_min='$length_in_min' $uniqueidSQL where recording_id='$recording_id';";
+					if ($DB) {echo "$stmt\n";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02079',$user,$server_ip,$session_name,$one_mysql_log);}
+
+				$stmt = "UPDATE recording_log_stereo set end_time='$NOW_TIME',recording_status='FINISHED',length_in_sec=$length_in_sec where recording_id='$recording_id';";
+					if ($DB) {echo "$stmt\n";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02174',$user,$server_ip,$session_name,$one_mysql_log);}
+
+				$stmt = "UPDATE recording_live set end_time='$NOW_TIME',recording_status='FINISHED' where recording_id='$recording_id' and recording_status='STARTED';";
+					if ($DB) {echo "$stmt\n";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02175',$user,$server_ip,$session_name,$one_mysql_log);}
+
+				$stmt = "UPDATE routing_initiated_recordings set processed='1' where user='$user' and processed='0' and rir_type='S' order by launch_time desc limit 1;";
+					if ($DB) {echo "$stmt\n";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02176',$user,$server_ip,$session_name,$one_mysql_log);}
+				}
+
+		#	if ($WeBRooTWritablE > 0)
+		#		{
+		#		$fp = fopen ("./vicidial_debug.txt", "a");
+		#		fwrite ($fp, "$NOW_TIME|STEREO_START|$user|$channel|$rec_count|$stmt|\n");
+		#		fclose($fp);
+		#		}
+
+			if (!preg_match("/PARALLEL/",$recording_type))
+				{
+				# stop all stereo recordings on the customer channel
+				$stmt="INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$call_server_ip','','StopMixMonitor','$vmgr_callerid','ActionID: $vmgr_callerid','Channel: $channel','','','','','','','','');";
+					if ($format=='debug') {echo "\n<!-- $stmt -->";}
+				$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02177',$user,$server_ip,$session_name,$one_mysql_log);}
+				}
+			}
+		##### END StopMonitorStereo steps #####
+		echo _QXZ("%1s command sent for Channel %2s on %3s",0,'',$ACTION,$channel,$call_server_ip)."\nFilename: $filename\nRecorDing_ID: $recording_id\n RECORDING WILL LAST UP TO 60 MINUTES\n";
+		}
+	}
 
 
 ######################
@@ -2871,13 +3370,21 @@ if ($ACTION=="VolumeControl")
 		if (preg_match('/MUTING/i',$stage)) {$vol_prefix='1';}
 		$local_DEF = 'Local/';
 		$local_AMP = '@';
-		$volume_local_channel = "$local_DEF$participant_number$vol_prefix$exten$local_AMP$ext_context";
 
-		$stmt="INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$server_ip','','Originate','$queryCID','Channel: $volume_local_channel','Context: $ext_context','Exten: 8300','Priority: 1','Callerid: $queryCID','','','','$channel','$exten');";
+		if (isset($vol_prefix))
+			{
+			$volume_local_channel = "$local_DEF$participant_number$vol_prefix$exten$local_AMP$ext_context";
+
+			$stmt="INSERT INTO vicidial_manager values('','','$NOW_TIME','NEW','N','$server_ip','','Originate','$queryCID','Channel: $volume_local_channel','Context: $ext_context','Exten: 8300','Priority: 1','Callerid: $queryCID','','','','$channel','$exten');";
 			if ($format=='debug') {echo "\n<!-- $stmt -->";}
-		$rslt=mysql_to_mysqli($stmt, $link);
-				if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02082',$user,$server_ip,$session_name,$one_mysql_log);}
-		echo _QXZ("Volume command sent for Conference %1s, Stage %2s Channel %3s on %4s",0,'',$exten,$stage,$channel,$server_ip)."\n";
+			$rslt=mysql_to_mysqli($stmt, $link);
+			if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'02082',$user,$server_ip,$session_name,$one_mysql_log);}
+			echo _QXZ("Volume command sent for Conference %1s, Stage %2s Channel %3s on %4s",0,'',$exten,$stage,$channel,$server_ip)."\n";
+			}
+		else
+			{
+			echo _QXZ("Stage $stage/$ACTION does not generate a volume prefix")."\n";
+			}
 		}
 	}
 

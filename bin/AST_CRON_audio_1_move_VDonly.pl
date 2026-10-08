@@ -15,8 +15,8 @@
 # ### recording mixing/compressing/ftping scripts
 ##0,3,6,9,12,15,18,21,24,27,30,33,36,39,42,45,48,51,54,57 * * * * /usr/share/astguiclient/AST_CRON_audio_1_move_mix.pl
 # 0,3,6,9,12,15,18,21,24,27,30,33,36,39,42,45,48,51,54,57 * * * * /usr/share/astguiclient/AST_CRON_audio_1_move_VDonly.pl
-# 1,4,7,10,13,16,19,22,25,28,31,34,37,40,43,46,49,52,55,58 * * * * /usr/share/astguiclient/AST_CRON_audio_2_compress.pl --GSM
-# 2,5,8,11,14,17,20,23,26,29,32,35,38,41,44,47,50,53,56,59 * * * * /usr/share/astguiclient/AST_CRON_audio_3_ftp.pl --GSM
+# 1,4,7,10,13,16,19,22,25,28,31,34,37,40,43,46,49,52,55,58 * * * * /usr/share/astguiclient/AST_CRON_audio_2_compress.pl --MP3
+# 2,5,8,11,14,17,20,23,26,29,32,35,38,41,44,47,50,53,56,59 * * * * /usr/share/astguiclient/AST_CRON_audio_3_ftp.pl --MP3
 #
 # make sure that the following directories exist:
 # /var/spool/asterisk/monitor		# default Asterisk recording directory
@@ -25,7 +25,7 @@
 # This program assumes that recordings are saved by Asterisk as .wav
 # should be easy to change this code if you use .gsm instead
 # 
-# Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
+# Copyright (C) 2025  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # 
 # 80302-1958 - First Build
@@ -35,9 +35,14 @@
 # 160731-2103 - Added --POST options to change filename with variable lookups
 # 190311-0105 - Added code to check for agent-muted recordings
 # 231019-2202 - Changed sleep time between directory scans from 5 to 15 seconds
+# 250430-0850 - Added --POST options for skipping over recordings for leads with active calls, and using logs for statuss
+# 250909-0845 - Added trigger for stereo recording script, if enabled and raw audio files present
 #
 
 $HTTPS=0;
+$status_post_logs=0;
+$delay_post_live=0;
+$now_epoch = int(time());
 
 ### begin parsing run-time options ###
 if (length($ARGV[0])>1)
@@ -68,6 +73,8 @@ if (length($ARGV[0])>1)
 		print "                      If multiple campaigns or ingroups, use --- delimiting, i.e.: TESTCAMP---TEST_IN2\n";
 		print "                      For all calls, use ----ALL----\n";
 		print "  [--CLEAR-POST-NO-MATCH] = clear POST filename variables if no match is found\n";
+		print "  [--STATUS-POST-LOGS] = use the call logs for POST filename status variable, if found\n";
+		print "  [--DELAY-POST-LIVE-CALLS] = delay processing of recordings using POST filename variables if any live calls/agents for lead\n";
 		print "\n";
 		exit;
 		}
@@ -126,6 +133,16 @@ if (length($ARGV[0])>1)
 				{
 				$POST=0;
 				if ($q < 1) {print "\n----- POST disabled, no campaigns set -----\n\n";}
+				}
+			if ($args =~ /--STATUS-POST-LOGS/i)
+				{
+				$status_post_logs=1;
+				if ($q < 1) {print "\n----- STATUS POST LOGS SET: $status_post_logs -----\n\n";}
+				}
+			if ($args =~ /--DELAY-POST-LIVE-CALLS/i)
+				{
+				$delay_post_live=1;
+				if ($q < 1) {print "\n----- DELAY POST LIVE SET: $delay_post_live -----\n\n";}
 				}
 			}
 		if ($args =~ /--CLEAR-POST-NO-MATCH/i)
@@ -211,14 +228,30 @@ $dbhA = DBI->connect("DBI:mysql:$VARDB_database:$VARDB_server:$VARDB_port", "$VA
 
 ##### Get the settings from system_settings #####
 $SSmute_recordings=0;
-$stmtA = "SELECT mute_recordings FROM system_settings;";
+$stmtA = "SELECT mute_recordings,stereo_recording,stereo_parallel_recording FROM system_settings;";
 $sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 $sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 $sthArows=$sthA->rows;
 if ($sthArows > 0)
 	{
 	@aryA = $sthA->fetchrow_array;
-	$SSmute_recordings =	$aryA[0];
+	$SSmute_recordings =			$aryA[0];
+	$SSstereo_recording =			$aryA[1];
+	$SSstereo_parallel_recording =	$aryA[2];
+	}
+$sthA->finish();
+
+##### Get the settings from servers #####
+$vicidial_recording_limit=0;
+$stmtA = "SELECT vicidial_recording_limit FROM servers where server_ip='$server_ip';";
+$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+$sthArows=$sthA->rows;
+if ($sthArows > 0)
+	{
+	@aryA = $sthA->fetchrow_array;
+	$vicidial_recording_limit =	$aryA[0];
+	$start_epoch_test = ($now_epoch - ( ($vicidial_recording_limit * 2) * 60) );
 	}
 $sthA->finish();
 
@@ -237,6 +270,22 @@ else
 			}
 		}
 	}
+
+# time variable definitions
+($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+$year = ($year + 1900);
+$mon++;
+$wtoday = $wday;
+if ($mon < 10) {$mon = "0$mon";}
+if ($mday < 10) {$mday = "0$mday";}
+if ($hour < 10) {$hour = "0$hour";}
+if ($min < 10) {$min = "0$min";}
+if ($sec < 10) {$sec = "0$sec";}
+$now_date = "$year-$mon-$mday $hour:$min:$sec";
+$dateint = "$year$mon$mday$hour$min$sec";
+$today_start = "$year-$mon-$mday 00:00:00";
+$today_date = "$year-$mon-$mday";
+$hm = "$hour$min";
 
 ### directory where in/out recordings are saved to by Asterisk
 $dir1 = "$PATHmonitor";
@@ -264,13 +313,18 @@ sleep(15);
 
 ### Loop through files a second time to gather filesizes again 5 seconds later
 $i=0;
+$active_recordings=0;
+$delay_ct=0;
+$processed_ct=0;
+$post_status_change_ct=0;
 foreach(@FILES)
 	{
+	$lead_id=0;
+	$vicidial_id='';
 	$FILEsize2[$i] = 0;
 
 	if ( (length($FILES[$i]) > 4) && (!-d "$dir1/$FILES[$i]") )
 		{
-
 		$FILEsize2[$i] = (-s "$dir1/$FILES[$i]");
 		if ($DBX) {print "$FILES[$i] $FILEsize2[$i]\n\n";}
 
@@ -289,7 +343,8 @@ foreach(@FILES)
 
 			$length_in_sec=0;
 			$rec_ended=0;
-			$stmtA = "SELECT recording_id,length_in_sec,lead_id,vicidial_id,start_time,end_time,user from recording_log where filename='$SQLFILE' order by recording_id desc LIMIT 1;";
+			$start_epoch=0;
+			$stmtA = "SELECT recording_id,length_in_sec,lead_id,vicidial_id,start_time,end_time,user,UNIX_TIMESTAMP(start_time) from recording_log where filename='$SQLFILE' order by recording_id desc LIMIT 1;";
 			if($DBX){print STDERR "\n|$stmtA|\n";}
 			$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 			$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -304,11 +359,13 @@ foreach(@FILES)
 				$start_time =		$aryA[4];
 				$end_time =			$aryA[5];
 				$user =				$aryA[6];
+				$start_epoch =		$aryA[7];
 				if (length($end_time) > 15) {$rec_ended=1;}
 				}
 			$sthA->finish();
 
 			$process_recording=1;
+			### check for muted recordings, if found then delay processing
 			if ( ($SSmute_recordings > 0) && ($rec_ended < 1) )
 				{
 				### check for active muted recordings
@@ -353,6 +410,7 @@ foreach(@FILES)
 						{
 						if ($DBX > 0) {print "DEBUG2: recording muting recently for this call, do not process: ($rs_recent_on) |$SQLFILE|ended: $rec_ended|\n";}
 						$process_recording=0;
+						$delay_ct++;
 						}
 					else
 						{
@@ -361,6 +419,62 @@ foreach(@FILES)
 					}
 				}
 
+			### check for POST variables, and delay setting
+			if ( ($delay_post_live > 0) && ($POST > 0) && ($ALLfile =~ /POSTVLC|POSTSP|POSTADDR3|POSTSTATUS/) )
+				{
+				if ($lead_id > 0) 
+					{
+					$VLA_count=0;
+					$VAC_count=0;
+					if ( ($start_epoch > 0) && ($start_epoch < $start_epoch_test) ) 
+						{
+						if ($DBX > 0) {print "DEBUG6: delay processing past server limit, process now: ($start_epoch|$start_epoch_test) |$SQLFILE|ended: $rec_ended|\n";}
+						}
+					else
+						{
+						if ($DBX > 0) {print "DEBUG7: delay processing not past server limit yet: ($start_epoch|$start_epoch_test) |$SQLFILE|ended: $rec_ended|\n";}
+
+						### check if any live agents are connected to this lead_id right now
+						$stmtA = "SELECT count(*) from vicidial_live_agents where lead_id='$lead_id';";
+						if($DBX){print STDERR "\n|$stmtA|\n";}
+						$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+						$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+						$sthArows=$sthA->rows;
+						if ($sthArows > 0)
+							{
+							@aryA = $sthA->fetchrow_array;
+							$VLA_count = $aryA[0];
+							}
+						$sthA->finish();
+
+						### check if any live calls are tied to this lead_id right now
+						$stmtA = "SELECT count(*) from vicidial_auto_calls where lead_id='$lead_id';";
+						if($DBX){print STDERR "\n|$stmtA|\n";}
+						$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
+						$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
+						$sthArows=$sthA->rows;
+						if ($sthArows > 0)
+							{
+							@aryA = $sthA->fetchrow_array;
+							$VAC_count = $aryA[0];
+							}
+						$sthA->finish();
+						}
+
+					if ( ($VLA_count > 0) || ($VAC_count > 0) ) 
+						{
+						if ($DBX > 0) {print "DEBUG4: delay processing active, do not process: ($VLA_count|$VAC_count) |$SQLFILE|ended: $rec_ended|\n";}
+						$process_recording=0;
+						$delay_ct++;
+						}
+					else
+						{
+						if ($DBX > 0) {print "DEBUG5: delay processing - no calls or agents found, OK to process: ($VLA_count|$VAC_count) |$SQLFILE|ended: $rec_ended|\n";}
+						}
+					}
+				}
+
+			### process the recording files
 			if ($process_recording > 0) 
 				{
 				if ($DB) {print "|$recording_id|$length_in_sec|$INfile|     |$ALLfile|\n";}
@@ -492,6 +606,32 @@ foreach(@FILES)
 								{if ($DB) {print "    POST processing ERROR: lead not found: |$lead_id|$ALLfile|\n";} }
 							$sthA->finish();
 
+							if ( ($status_post_logs > 0) && ($ALLfile =~ /POSTSTATUS/) )
+								{
+								$log_status = $status;
+								if ($vicidial_id =~ /\./) 
+									{
+									$log_lookupSQL = "SELECT status from vicidial_log where uniqueid='$vicidial_id' and lead_id='$lead_id' and user='$user' order by call_date desc limit 1;";
+									}
+								else
+									{
+									$log_lookupSQL = "SELECT status from vicidial_closer_log where closecallid='$vicidial_id' and lead_id='$lead_id' and user='$user' order by call_date desc limit 1;";
+									}
+								if($DBX){print STDERR "\n|$log_lookupSQL|\n";}
+								$sthA = $dbhA->prepare($log_lookupSQL) or die "preparing: ",$dbhA->errstr;
+								$sthA->execute or die "executing: $log_lookupSQL ", $dbhA->errstr;
+								$sthArows=$sthA->rows;
+								if ($sthArows > 0)
+									{
+									@aryA = $sthA->fetchrow_array;
+									$log_status =		$aryA[0];
+									}
+								
+								if ($log_status ne $status) 
+									{$post_status_change_ct++;}
+								if ($DB) {print "    POST processing Log status override: lead: |$status| log: |$log_status|   $post_status_change_ct \n";}
+								$status = $log_status;
+								}
 							$ALLfile =~ s/POSTVLC/$vendor_lead_code/gi;
 							$ALLfile =~ s/POSTSP/$security_phrase/gi;
 							$ALLfile =~ s/POSTADDR3/$address3/gi;
@@ -539,16 +679,97 @@ foreach(@FILES)
 					if($DBX){print STDERR "\n|$stmtA|\n";}
 				$affected_rows = $dbhA->do($stmtA); #  or die  "Couldn't execute query:|$stmtA|\n";
 
+				$stmtA = "UPDATE recording_live set end_time=NOW(),recording_status='FINISHED FILE-MERGE' where recording_id='$recording_id' and recording_status='STARTED';";
+					if($DBX){print STDERR "\n|$stmtA|\n";}
+				$affected_rows = $dbhA->do($stmtA); #  or die  "Couldn't execute query:|$stmtA|\n";
+
 				### sleep for twenty hundredths of a second to not flood the server with disk activity
 				usleep(1*200*1000);
+
+				$processed_ct++;
 				}
 			}
+		else
+			{$active_recordings++;}
 		}
 	$i++;
 	}
 
+if($DBX)
+	{
+	$end_epoch = int(time());
+	$run_length = ($end_epoch - $now_epoch);
+
+	print "\nDebug output:\n";
+	print "Total files:               $i \n";
+	print "     Active recordings:    $active_recordings \n";
+	print "     Delayed processing:   $delay_ct \n";
+	print "     Processed files:      $processed_ct \n";
+	print "     POST log status diff: $post_status_change_ct \n";
+	print "\n";
+	print "Run time: $run_length seconds \n";
+	}
+
+if ($SSstereo_recording > 0) 
+	{
+	$PATHmonitorS =	$PATHmonitor.'S';
+	$PATHmonitorP =	$PATHmonitor.'P';
+
+	if($DBX)
+		{print "Checking for Stereo Call Recordings in $PATHmonitorS \n";}
+
+	opendir(sFILE, "$PATHmonitorS/");
+	@sFILES = readdir(sFILE);
+
+	### Loop through files first to gather filesizes
+	$trigger_stereo=0;
+	$i=0;
+	foreach(@sFILES)
+		{
+		if ( (length($sFILES[$i]) > 4) && (!-d "$dir1/$sFILES[$i]") && ($sFILES[$i] =~ /\.wav$/i) )
+			{
+			$trigger_stereo++;
+			if ($DBX) {print "Stereo file found!   $sFILES[$i] \n";}
+			last;
+			}
+		$i++;
+		}
+
+	if ( ($SSstereo_parallel_recording > 0) && ($trigger_stereo < 1) ) 
+		{
+		if($DBX)
+			{print "Checking for Stereo Parallel Call Recordings in $PATHmonitorP \n";}
+
+		opendir(pFILE, "$PATHmonitorP/");
+		@pFILES = readdir(pFILE);
+
+		### Loop through files first to gather filesizes
+		$trigger_stereo=0;
+		$i=0;
+		foreach(@pFILES)
+			{
+			if ( (length($pFILES[$i]) > 4) && (!-d "$dir1/$pFILES[$i]") && ($pFILES[$i] =~ /\.wav$/i) )
+				{
+				$trigger_stereo++;
+				if ($DBX) {print "Stereo Parallel file found!   $pFILES[$i] \n";}
+				last;
+				}
+			$i++;
+			}
+		}
+	
+	if ($trigger_stereo > 0) 
+		{
+		# command to trigger stereo call file processing, preserving flags from this script:
+		$stereo_command = "$PATHhome/AST_CRON_audio_1_stereo.pl $args ";
+		if ($DBX) {print "Triggering Stereo call file processing...   |$stereo_command| \n";}
+		`/usr/bin/screen -d -m -S SP$hm $stereo_command `;
+		}
+	}
+
 if ($DB) {print "DONE... EXITING\n\n";}
 
+$sthA->finish();
 $dbhA->disconnect();
 
 
