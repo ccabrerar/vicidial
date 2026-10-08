@@ -779,7 +779,7 @@ while ($scvl_ct > $s)
 ##### grab vicidial_list data for lead #####
 $lead_stmt="SELECT lead_id,entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,gmt_offset_now,called_since_last_reset,phone_code,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner,entry_list_id from vicidial_list where lead_id='" . mysqli_real_escape_string($link, $lead_id) . "'";
 $lead_rslt=mysql_to_mysqli($lead_stmt, $link);
-if ($DB) {echo "$stmt\n";}
+    if($DB) { echo "$stmt\n"; }
 $row=mysqli_fetch_array($lead_rslt);
 if (strlen($row[0]) > 0)
 	{$lead_id		= $row[0];}
@@ -1303,7 +1303,7 @@ if ($end_call > 0)
 	$rslt=mysql_to_mysqli($stmt, $link);
 	//STATUS just changed, re-capture all data for client!
 	//Added by Poundteam for QC. Gather record data to display on page and prepopulate title and hrefs, etc.
-	$stmt="SELECT * from vicidial_list A inner join vicidial_lists B on A.list_id=B.list_id inner join vicidial_campaigns C on B.campaign_id=C.campaign_id left outer join vicidial_statuses D on A.status=D.status left outer join vicidial_qc_codes E on A.status=E.code where A.lead_id='$lead_id'";
+	$stmt="SELECT * from vicidial_list A inner join vicidial_lists B on A.list_id=B.list_id inner join vicidial_campaigns C on B.campaign_id=C.campaign_id left outer join vicidial_statuses D on A.status=D.status left outer join vicidial_qc_codes E on A.status=E.code where A.lead_id=$lead_id";
 	if($DB) { echo "$stmt\n"; }
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$row=mysqli_fetch_assoc($rslt);
@@ -1333,7 +1333,7 @@ if ($end_call > 0)
 		$elapsed_seconds=$STARTtime-$view_epoch;
 
 		$stmt="UPDATE vicidial_qc_agent_log set save_datetime='$NOW_TIME',save_epoch='$STARTtime',elapsed_seconds='$elapsed_seconds',old_status='{$original_record['status']}',new_status='{$new_record['status']}',details='$qcchangelist'
-			where view_epoch='$view_epoch' and lead_id='$lead_id'";
+			where view_epoch='$view_epoch' and lead_id=$lead_id";
 		if ($DB) {echo "|$stmt|\n";}
 		$rslt=mysql_to_mysqli($stmt, $link);
         }
@@ -1351,7 +1351,7 @@ if ($end_call > 0)
 	$SQL_log = "$stmt|";
 	$SQL_log = preg_replace('/;/', '', $SQL_log);
 	$SQL_log = addslashes($SQL_log);
-	$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$PHP_AUTH_USER', ip_address='$ip', event_section='LEADS', event_type='MODIFY', record_id='$lead_id', event_code='ADMIN MODIFY LEAD', event_sql=\"$SQL_log\", event_notes='';";
+	$stmt="INSERT INTO vicidial_admin_log set event_date='$NOW_TIME', user='$PHP_AUTH_USER', ip_address='$ip', event_section='LEADS', event_type='MODIFY', record_id=$lead_id, event_code='ADMIN MODIFY LEAD', event_sql=\"$SQL_log\", event_notes='';";
 	if ($DB) {echo "|$stmt|\n";}
 	$rslt=mysql_to_mysqli($stmt, $link);
 	if($DB) 
@@ -1570,8 +1570,8 @@ else
 		}
 */
 
-	//QUALITY CONTROL LOGGING BEGIN - VIEW ONLY
-    //If no changes have been made, record "view" of this record.
+        //QUALITY CONTROL LOGGING BEGIN - VIEW ONLY
+        //If no changes have been made, record "view" of this record.
 	if ($qcchange != 'Y') 
 		{
 		if($DB) echo __LINE__."\n QCCHANGE != Y";
@@ -2031,7 +2031,7 @@ else
 	echo "<tr><td align=right>"._QXZ("Rank")." : </td><td align=left><input type=text id=rank name=rank size=7 maxlength=5 value=\"$rank\" onBlur=\"UpdateCustomerInfo($lead_id, this.name, this.value)\"></td></tr>\n";
 	echo "<tr><td align=right>"._QXZ("Owner")." : </td><td align=left><input type=text id=owner name=owner size=22 maxlength=$MAXowner value=\"$owner\" onBlur=\"UpdateCustomerInfo($lead_id, this.name, this.value)\"></td></tr>\n";
 	echo "<tr><td align=right>$label_comments : </td><td align=left><TEXTAREA id=comments name=comments ROWS=3 COLS=65 onBlur=\"UpdateCustomerInfo($lead_id, this.name, this.value)\">$comments</TEXTAREA></td></tr>\n";
-	$stmt="SELECT user_id, timestamp, list_id, campaign_id, comment from vicidial_comments where lead_id='$lead_id' order by timestamp";
+	$stmt="SELECT user_id, timestamp, list_id, campaign_id, comment from vicidial_comments where lead_id=$lead_id order by timestamp";
 	$rslt=mysql_to_mysqli($stmt, $link);
 	$row_count = mysqli_num_rows($rslt);
 	$o=0;
@@ -2043,8 +2043,8 @@ else
 			echo "<tr><td colspan='2' align=center><b>"._QXZ("Comment History")."</b></td></tr>\n";
 			$comments=true;
 			}
-			$rowx=mysqli_fetch_row($rslt);
-			echo "<tr><td align=right>$rowx[0] : </td><td align=left><hr>$rowx[1]<br><b>"._QXZ("List ID").":</b> $rowx[2]; <b>"._QXZ("Campaign ID").":</b> $rowx[3]<br>$rowx[4]</td></tr>\n";
+		$rowx=mysqli_fetch_row($rslt);
+             	echo "<tr><td align=right>$rowx[0] : </td><td align=left><hr>$rowx[1]<br><b>"._QXZ("List ID").":</b> $rowx[2]; <b>"._QXZ("Campaign ID").":</b> $rowx[3]<br>$rowx[4]</td></tr>\n";
 		$o++;
 		}
 
@@ -2142,10 +2142,10 @@ else
 
 	if ($c > 0)
 		{
-		if($DB) 
-			{
-			echo __LINE__."\n";
-			}
+	if($DB) 
+		{
+		echo __LINE__."\n";
+		}
 		echo "<BR><B>"._QXZ("EXTENDED ALTERNATE PHONE NUMBERS FOR THIS LEAD").":</B>\n";
 		echo "<TABLE width=550 cellspacing=0 cellpadding=1>\n";
 		echo "<tr><td><font size=1># </td><td><font size=2>"._QXZ("ALT PHONE")." </td><td align=left><font size=2>"._QXZ("ALT NOTE")."</td><td align=left><font size=2> "._QXZ("ALT COUNT")."</td><td align=left><font size=2> "._QXZ("ACTIVE")."</td></tr>\n";
@@ -2159,7 +2159,7 @@ else
 	### iframe for custom fields display/editing
 
 	if ($custom_fields_enabled > 0)
-		{
+			{
 		$CLlist_id = $list_id;
 		if (strlen($entry_list_id) > 2)
 			{$CLlist_id = $entry_list_id;}
@@ -2168,7 +2168,7 @@ else
 		$rslt=mysql_to_mysqli($stmt, $link);
 		$tablecount_to_print = mysqli_num_rows($rslt);
 		if ($tablecount_to_print > 0)
-			{
+				{
 			$stmt="SELECT count(*) from custom_$CLlist_id where lead_id='$lead_id';";
 			if ($DB>0) {echo "$stmt";}
 			$rslt=mysql_to_mysqli($stmt, $link);
@@ -2184,12 +2184,12 @@ else
 				echo "<iframe src=\"../agc/$vdc_form_display?lead_id=$lead_id&list_id=$CLlist_id&stage=DISPLAY$submit_buttonURL&user=$PHP_AUTH_USER&pass=$PHP_AUTH_PW&bcrypt=OFF&bgcolor=E6E6E6\" style=\"background-color:transparent;\" scrolling=\"auto\" frameborder=\"2\" allowtransparency=\"true\" id=\"vcFormIFrame\" name=\"vcFormIFrame\" width=\"740\" height=\"300\" STYLE=\"z-index:18\"> </iframe>\n";
 				echo "<BR><BR>";
 				}
-			}
+				}
 		}
 	echo "</center></span>";
 	# JCJ - END LEAD INFO span
-	
-	
+
+
 	# JCJ - CALL LOG span
 	echo "\n\n<span id='call_logs_span' style='display:".$call_logs_span_visibility."'><CENTER>";
 
@@ -2249,7 +2249,7 @@ else
 		if (mysqli_num_rows($checkpoint_rslt)==0)
 			{
 			echo _QXZ("ERROR - NO QUALITY CONTROL RECORD FOUND!");
-			}
+				}
 		else
 			{
 			$scorecard_stmt="select qc_scorecard_id, recording_id from quality_control_queue where qc_log_id='$qc_log_id'";
@@ -2261,7 +2261,7 @@ else
 			$stmt="select recording_id,channel,server_ip,extension,start_time,start_epoch,end_time,end_epoch,length_in_sec,length_in_min,filename,location,lead_id,user,vicidial_id from recording_log where recording_id='" . mysqli_real_escape_string($link, $qc_recording_id) . "' order by recording_id desc limit 500;";
 			$rslt=mysql_to_mysqli($stmt, $link);
 			$row=mysqli_fetch_row($rslt);
-				
+
 			$location = $row[11];
 
 			if (strlen($location)>2)
@@ -2283,30 +2283,30 @@ else
 					if (preg_match("/ALT_IP/i",$rowx[0]))
 						{
 						$location = preg_replace("/$URLserver_ip/i", "$rowx[1]", $location);
-						}
+			}
 					if (preg_match("/EXTERNAL_IP/i",$rowx[0]))
-						{
+			{
 						$location = preg_replace("/$URLserver_ip/i", "$rowx[2]", $location);
-						}
-					}
+			}
+		}
 				}
 
 			if (strlen($location)>30)
 				{$locat = substr($location,0,27);  $locat = "$locat...";}
-			else
+	else
 				{$locat = $location;}
 			$play_audio='';
 			if ( (preg_match('/ftp/i',$location)) or (preg_match('/http/i',$location)) )
-				{
+		{
 				$play_audio = "<audio id='main_QC_recording' controls preload=\"none\" onplay='LogAudioRecordingAccess($log_recording_access, $row[0], $row[12], this.id)'> <source src ='$location' type='audio/wav' > <source src ='$location' type='audio/mpeg' >"._QXZ("No browser audio playback support")."</audio>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n";
 				if ($log_recording_access<1) 
-					{
+			{
 					$location = "<a href=\"$location\">$locat</a>";
-					}
+			}
 				else
 					{
 					$location = "<a href=\"recording_log_redirect.php?recording_id=$row[0]&lead_id=$row[12]&search_archived_data=0\">$locat</a>";
-					}
+		}
 				}
 			else
 				{$location = $locat;}
@@ -2335,18 +2335,18 @@ else
 					{$bgcolor="bgcolor='#".$SSstd_row3_background."'";}
 				else
 					{$bgcolor="bgcolor='#".$SSstd_row2_background."'";}
-				
+
 				echo "<tr $bgcolor>";
 				echo "<td align='left'><font class='standard'>$i</font></td>";
 				echo "<td align='left' width='*'><font class='small_standard'>$checkpoint_row[checkpoint_text]</font></td>";
 				if ($instant_fail_active=="Y")
-					{
+		{
 					echo "<td><input type='checkbox' onClick=\"LogQCData('".$qccl_id."')\" id='instant_fail_value".$qccl_id."' name='instant_fail_value".$qccl_id."' value='Y' ".($instant_fail_value=="Y" ? "checked" : "")."></td>";
 					}
 				else
-					{
+			{
 					echo "<td>&nbsp;</td>";
-					}
+			}
 				echo "<td align='center' nowrap><font class='standard'><input type='text' onBlur=\"LogQCData('".$qccl_id."')\" size=2 maxlength=6 class='cust_form' name='checkpoint_points_earned".$qccl_id."' id='checkpoint_points_earned".$qccl_id."' value='$checkpoint_row[checkpoint_points_earned]'> / $checkpoint_row[checkpoint_points]</font></td>";
 				echo "<td align='center'>";
 				echo "<textarea onBlur=\"LogQCData('".$qccl_id."')\" class='cust_form' name='checkpoint_comment_agent".$qccl_id."' id='checkpoint_comment_agent".$qccl_id."' rows='4' cols='40'>$checkpoint_row[checkpoint_comment_agent]</textarea>";
@@ -2378,7 +2378,7 @@ else
 
 				echo "</tr>";
 				$i++;
-				}
+		}
 			echo "<tr bgcolor='#".$SSstd_row4_background."'>";
 			echo "<td align='right' colspan='3'>$play_audio &nbsp;</font></td>";
 			echo "<td align='left' colspan='3'><font class='standard_bold'>$location</font></td>";
@@ -2402,7 +2402,7 @@ else
 		//		}
 
 			$stmt="SELECT code,code_name,qc_result_type from vicidial_qc_codes order by code_name";
-			$rslt=mysql_to_mysqli($stmt, $link);
+		$rslt=mysql_to_mysqli($stmt, $link);
 			$statuses_to_print = mysqli_num_rows($rslt);
 			$statuses_list='';
 
@@ -2410,7 +2410,8 @@ else
 			$DS=0;
 			$statuses_list = "<option SELECTED value=\"$dispo\">$dispo</option>\n"; $DS++;
 			while ($statuses_to_print > $o)
-				{
+			{
+			$stmt="SELECT count(*) from custom_$CLlist_id where lead_id=$lead_id;";
 				$rowx=mysqli_fetch_row($rslt);
 				$statuses_list .= "<option value=\"$rowx[0]\">$rowx[0] - $rowx[1]</option>\n";
 				$o++;
@@ -2456,7 +2457,7 @@ else
 #			echo "<td colspan='2' align='center'><input type='button' class='red_btn' style='width:100px' value='FAIL' onClick=\"FinishQCRecord('$qc_log_id', 'FAIL')\"></td>";
 			echo "<td align='center'><input type='button' class='green_btn' style='width:100px' value='"._QXZ("FINISH")."' onClick=\"FinishQCRecord('$qc_log_id', 'FINISHED', this.form)\"></td><td align='center'><input type='button' class='red_btn' style='width:100px' value='"._QXZ("RELEASE")."' onClick=\"FinishQCRecord('$qc_log_id', 'RELEASE', this.form)\"></td>";
 			echo "</tr>\n";
-			echo "</TABLE>\n";
+	echo "</TABLE>\n";
 			}
 		echo "<BR><BR><BR>";
 		}

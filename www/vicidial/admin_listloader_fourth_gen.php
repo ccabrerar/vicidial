@@ -1676,7 +1676,7 @@ if ($OK_to_process)
 							{fwrite($stmt_file, $stmtZ."\r\n");}
 						$multistmt='';
 
-						$custom_SQL_query = "INSERT INTO custom_$list_id_override SET lead_id='$lead_id',$custom_SQL;";
+						$custom_SQL_query = "INSERT INTO custom_$list_id_override SET lead_id=$lead_id,$custom_SQL;";
 						$rslt=mysql_to_mysqli($custom_SQL_query, $link);
 						$affected_rows = mysqli_affected_rows($link);
 						if ($DB > 0) {echo "<!-- $affected_rows|$custom_SQL_query -->";}
@@ -2426,7 +2426,7 @@ if (($leadfile) && ($LF_path))
 								{fwrite($stmt_file, $stmtZ."\r\n");}
 							$multistmt='';
 
-							#$custom_SQL_query = "INSERT INTO custom_$list_id_override SET lead_id='$lead_id',$custom_SQL;";
+							#$custom_SQL_query = "INSERT INTO custom_$list_id_override SET lead_id=$lead_id,$custom_SQL;";
 							#$rslt=mysql_to_mysqli($custom_SQL_query, $link);
 							#$affected_rows = mysqli_affected_rows($link);
 
@@ -2434,58 +2434,58 @@ if (($leadfile) && ($LF_path))
 							$custom_tbl_rslt=mysql_to_mysqli($custom_tbl_stmt, $link);
 							if(mysqli_num_rows($custom_tbl_rslt)>0)
 								{
-								$custom_ins_stmt="INSERT INTO $custom_table(lead_id";
-								$custom_SQL_values="";
-								for ($q=0; $q<count($custom_fields_ary); $q++) 
+							$custom_ins_stmt="INSERT INTO $custom_table(lead_id";
+							$custom_SQL_values="";
+							for ($q=0; $q<count($custom_fields_ary); $q++) 
+								{
+								if (strlen($custom_fields_ary[$q])>0) 
 									{
-									if (strlen($custom_fields_ary[$q])>0) 
+									$fieldno_ary=explode(",", $custom_fields_ary[$q]);
+									$varname=$fieldno_ary[0]."_field";
+									$$varname=$fieldno_ary[1];
+									$custom_ins_stmt.=",$fieldno_ary[0]";
+
+									if ( (preg_match("/cf_encrypt/",$SSactive_modules)) and (strlen($custom_fields_row[$$varname]) > 0) )
 										{
-										$fieldno_ary=explode(",", $custom_fields_ary[$q]);
-										$varname=$fieldno_ary[0]."_field";
-										$$varname=$fieldno_ary[1];
-										$custom_ins_stmt.=",$fieldno_ary[0]";
-
-										if ( (preg_match("/cf_encrypt/",$SSactive_modules)) and (strlen($custom_fields_row[$$varname]) > 0) )
+										$field_encrypt='N';
+										$stmt = "SELECT field_encrypt from vicidial_lists_fields where list_id='$list_id' and field_label='$fieldno_ary[0]' limit 1;";
+										if ($DB>0) {echo "DEBUG: cf_encrypt query - $stmt\n";}
+										$rslt=mysql_to_mysqli($stmt, $link);
+										$sc_recs = mysqli_num_rows($rslt);
+										if ($sc_recs > 0)
 											{
-											$field_encrypt='N';
-											$stmt = "SELECT field_encrypt from vicidial_lists_fields where list_id='$list_id' and field_label='$fieldno_ary[0]' limit 1;";
-											if ($DB>0) {echo "DEBUG: cf_encrypt query - $stmt\n";}
-											$rslt=mysql_to_mysqli($stmt, $link);
-											$sc_recs = mysqli_num_rows($rslt);
-											if ($sc_recs > 0)
-												{
-												$row=mysqli_fetch_row($rslt);
-												$field_encrypt = $row[0];
-												}
-											if ($field_encrypt == 'Y')
-												{
-												$field_enc=$MT;
-												$field_value = $custom_fields_row[$$varname];
-												$field_value = base64_encode($field_value);
-												exec("../agc/aes.pl --encrypt --text=$field_value", $field_enc);
-												$field_enc_ct = count($field_enc);
-												$k=0;
-												$field_enc_all='';
-												while ($field_enc_ct > $k)
-													{
-													$field_enc_all .= $field_enc[$k];
-													$k++;
-													}
-												$custom_fields_row[$$varname] = preg_replace("/CRYPT: |\n|\r|\t/",'',$field_enc_all);
-												}
+											$row=mysqli_fetch_row($rslt);
+											$field_encrypt = $row[0];
 											}
+										if ($field_encrypt == 'Y')
+											{
+											$field_enc=$MT;
+											$field_value = $custom_fields_row[$$varname];
+											$field_value = base64_encode($field_value);
+											exec("../agc/aes.pl --encrypt --text=$field_value", $field_enc);
+											$field_enc_ct = count($field_enc);
+											$k=0;
+											$field_enc_all='';
+											while ($field_enc_ct > $k)
+												{
+												$field_enc_all .= $field_enc[$k];
+												$k++;
+												}
+											$custom_fields_row[$$varname] = preg_replace("/CRYPT: |\n|\r|\t/",'',$field_enc_all);
+											}
+										}
 
-										$custom_SQL_values.=",\"".$custom_fields_row[$$varname]."\"";
-										} 
-									}
-								$custom_ins_stmt.=") VALUES('$lead_id'$custom_SQL_values)";
-								$custom_rslt=mysql_to_mysqli($custom_ins_stmt, $link);
-								$affected_rows = mysqli_affected_rows($link);
-								echo "<!-- $custom_ins_stmt //-->\n";
-								if ( ($webroot_writable > 0) and ($DB>0) )
-									{fwrite($stmt_file, $custom_ins_stmt."\r\n");}
+									$custom_SQL_values.=",\"".$custom_fields_row[$$varname]."\"";
+									} 
 								}
-/*								
+							$custom_ins_stmt.=") VALUES($lead_id$custom_SQL_values)";
+							$custom_rslt=mysql_to_mysqli($custom_ins_stmt, $link);
+							$affected_rows = mysqli_affected_rows($link);
+							echo "<!-- $custom_ins_stmt //-->\n";
+							if ( ($webroot_writable > 0) and ($DB>0) )
+								{fwrite($stmt_file, $custom_ins_stmt."\r\n");}
+								}
+/*
 							} 
 						else 
 							{

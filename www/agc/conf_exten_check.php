@@ -1,11 +1,11 @@
 <?php
 # conf_exten_check.php    version 2.14
-# 
+#
 # Copyright (C) 2023  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # This script is designed purely to send whether the meetme conference has live channels connected and which they are
 # This script depends on the server_ip being sent and also needs to have a valid user/pass from the vicidial_users table
-# 
+#
 # required variables:
 #  - $server_ip
 #  - $session_name
@@ -19,7 +19,7 @@
 #  - $exten - ('123test',...)
 #  - $auto_dial_level - ('0','1','1.2',...)
 #  - $campagentstdisp - ('YES',...)
-# 
+#
 
 # changes
 # 50509-1054 - First build of script
@@ -252,7 +252,7 @@ if ($non_latin < 1)
 	$campaign = preg_replace("/[^-_0-9a-zA-Z]/","",$campaign);
 	$active_ingroup_dial = preg_replace("/[^-_0-9a-zA-Z]/","",$active_ingroup_dial);
 	}
-else
+	else
 	{
 	$user = preg_replace('/[^-_0-9\p{L}]/u','',$user);
 	$pass = preg_replace('/[^-\.\+\/\=_0-9\p{L}]/u','',$pass);
@@ -328,7 +328,7 @@ if ($format=='debug')
 	if ($DB > 0)
 		{
 		echo "|session_name: $session_name|server_ip: $server_ip|conf_exten: $conf_exten|exten: $exten|clicks: $clicks|customer_chat_id: $customer_chat_id|visibility: $visibility|MDnextCID: $MDnextCID|live_call_seconds: $live_call_seconds|bcrypt: $bcrypt|format: $format|ACTION: $ACTION|auto_dial_level: $auto_dial_level|check_for_answer: $check_for_answer|client: $client|campagentstdisp: $campagentstdisp|phone_number: $phone_number|xferchannel: $xferchannel\n";
-		}
+	}
 	}
 
 
@@ -758,13 +758,13 @@ if ($ACTION == 'refresh')
 
 			### see if chats/emails are enabled, and if so how many of each are waiting
 			# 03041 and 03042 are the error logs for this
-			
+
 			$chat_email_stmt="select allow_chats, allow_emails from system_settings;";
 			$chat_email_rslt=mysql_to_mysqli($chat_email_stmt, $link);
 			$chat_email_row=mysqli_fetch_row($chat_email_rslt);
 
 			# GET closer logs, in case they weren't grabbed above due to campagentstdisp!=YES
-			if ($chat_email_row[0]!=0 || $chat_email_row[1]!=0) 
+			if ($chat_email_row[0]!=0 || $chat_email_row[1]!=0)
 				{
 				$stmt="SELECT status,campaign_id,closer_campaigns,comments from vicidial_live_agents where user='$user' and server_ip='$server_ip';";
 				if ($DB) {echo "|$stmt|\n";}
@@ -783,11 +783,11 @@ if ($ACTION == 'refresh')
 					}
 				}
 
-			if ($chat_email_row[0]==0) 
+			if ($chat_email_row[0]==0)
 				{
 				$WaitinGChats="N";
-				} 
-			else 
+				}
+			else
 				{
 				$chat_stmt="select count(*) from vicidial_live_chats where status='WAITING' and ((group_id IN('$AccampSQL') and (transferring_agent is null or transferring_agent!='$user')) or (group_id='AGENTDIRECT_CHAT' and user_direct='$user')) and chat_creator!='$user'";
 				$chat_rslt=mysql_to_mysqli($chat_stmt, $link);
@@ -795,7 +795,7 @@ if ($ACTION == 'refresh')
 				$chat_row=mysqli_fetch_row($chat_rslt);
 				$WaitinGChats=$chat_row[0];
 				# Chat alert priority: waiting chats = blink, then in-chat = on, then = off
-				if ($WaitinGChats > 0) 
+				if ($WaitinGChats > 0)
 					{
 					$WaitinGChats = "Y"; # Make CHAT button blink
 					}
@@ -803,16 +803,16 @@ if ($ACTION == 'refresh')
 					{
 					$WaitinGChats = "C"; # in-chat, so make CHAT button display "ON";
 					}
-				else 
+				else
 					{
 					$WaitinGChats = "N"; # no chats waiting, not in chat, make CHAT display "OFF"
 					}
 				}
-			if ($chat_email_row[1]==0) 
+			if ($chat_email_row[1]==0)
 				{
 				$WaitinGEmails="N";
-				} 
-			else 
+				}
+			else
 				{
 #				$email_stmt="select count(*) from vicidial_email_list, vicidial_xfer_log where vicidial_email_list.status='QUEUE' and vicidial_email_list.user='$user' and vicidial_xfer_log.xfercallid=vicidial_email_list.xfercallid and direction='INBOUND' and vicidial_xfer_log.campaign_id in ('$AccampSQL') and closer='EMAIL_XFER'";
 				$email_stmt="select count(*) from vicidial_email_list, vicidial_xfer_log where vicidial_email_list.user!='$user' and NOT ISNULL(vicidial_email_list.xfercallid) and vicidial_xfer_log.xfercallid=vicidial_email_list.xfercallid and direction='INBOUND' and vicidial_xfer_log.campaign_id in ('$AccampSQL') and closer='EMAIL_XFER';";
@@ -898,40 +898,40 @@ if ($ACTION == 'refresh')
 						{
 						if ($dead_count > 0)
 							{
-							$DEADcustomer++;
-							$DEADlog = "|   DEAD:$Acallerid|$Alead_id|$AcalleridCOUNT";
-							### find whether the agent log record has already logged DEAD
-							$stmt="SELECT count(*) from vicidial_agent_log where agent_log_id='$Aagent_log_id' and ( (dead_epoch IS NOT NULL) or (dead_epoch > 10000) );";
-							if ($DB) {echo "|$stmt|\n";}
-							$rslt=mysql_to_mysqli($stmt, $link);
-						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03019',$user,$server_ip,$session_name,$one_mysql_log);}
-							$row=mysqli_fetch_row($rslt);
-							$Aagent_log_idCOUNT=$row[0];
-						
-							if ($Aagent_log_idCOUNT < 1)
-								{
-								$NEWdead_epoch = date("U");
-								$deadNOW_TIME = date("Y-m-d H:i:s");
-								$stmt="UPDATE vicidial_agent_log set dead_epoch='$NEWdead_epoch' where agent_log_id='$Aagent_log_id';";
-									if ($format=='debug') {echo "\n<!-- $stmt -->";}
-								$rslt=mysql_to_mysqli($stmt, $link);
-									if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03020',$user,$server_ip,$session_name,$one_mysql_log);}
+						$DEADcustomer++;
+						$DEADlog = "|   DEAD:$Acallerid|$Alead_id|$AcalleridCOUNT";
+						### find whether the agent log record has already logged DEAD
+						$stmt="SELECT count(*) from vicidial_agent_log where agent_log_id='$Aagent_log_id' and ( (dead_epoch IS NOT NULL) or (dead_epoch > 10000) );";
+						if ($DB) {echo "|$stmt|\n";}
+						$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03019',$user,$server_ip,$session_name,$one_mysql_log);}
+						$row=mysqli_fetch_row($rslt);
+						$Aagent_log_idCOUNT=$row[0];
 
-								$stmt="UPDATE vicidial_live_agents set last_state_change='$deadNOW_TIME' where agent_log_id='$Aagent_log_id';";
-									if ($format=='debug') {echo "\n<!-- $stmt -->";}
-								$rslt=mysql_to_mysqli($stmt, $link);
-									if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03021',$user,$server_ip,$session_name,$one_mysql_log);}
+						if ($Aagent_log_idCOUNT < 1)
+							{
+							$NEWdead_epoch = date("U");
+							$deadNOW_TIME = date("Y-m-d H:i:s");
+							$stmt="UPDATE vicidial_agent_log set dead_epoch='$NEWdead_epoch' where agent_log_id='$Aagent_log_id';";
+								if ($format=='debug') {echo "\n<!-- $stmt -->";}
+							$rslt=mysql_to_mysqli($stmt, $link);
+								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03020',$user,$server_ip,$session_name,$one_mysql_log);}
+
+							$stmt="UPDATE vicidial_live_agents set last_state_change='$deadNOW_TIME' where agent_log_id='$Aagent_log_id';";
+								if ($format=='debug') {echo "\n<!-- $stmt -->";}
+							$rslt=mysql_to_mysqli($stmt, $link);
+								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03021',$user,$server_ip,$session_name,$one_mysql_log);}
 								$tempACTION = 'dead_log';
 								$TEMPstage = "DEAD call logged A|$dead_count|";
 								vicidial_ajax_log($NOW_TIME,$startMS,$link,$tempACTION,$php_script,$user,$TEMPstage,$lead_id,$session_name,$stmt);
-								}
 							}
+						}
 						else
 							{
 							$tempACTION = 'dead_log';
 							$TEMPstage = "DEAD call first detect A|$dead_count|";
 							vicidial_ajax_log($NOW_TIME,$startMS,$link,$tempACTION,$php_script,$user,$TEMPstage,$lead_id,$session_name,$stmt);
-							}
+					}
 						$dead_count++;
 						}
 					else
@@ -1024,40 +1024,40 @@ if ($ACTION == 'refresh')
 						{
 						if ($dead_count > 0)
 							{
-							$DEADcustomer++;
-							$DEADlog = "|   DEAD:$Acallerid|$Alead_id|$AcalleridCOUNT";
-							### find whether the agent log record has already logged DEAD
-							$stmt="SELECT count(*) from vicidial_agent_log where agent_log_id='$Aagent_log_id' and ( (dead_epoch IS NOT NULL) or (dead_epoch > 10000) );";
-							if ($DB) {echo "|$stmt|\n";}
-							$rslt=mysql_to_mysqli($stmt, $link);
-						if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03030',$user,$server_ip,$session_name,$one_mysql_log);}
-							$row=mysqli_fetch_row($rslt);
-							$Aagent_log_idCOUNT=$row[0];
+						$DEADcustomer++;
+						$DEADlog = "|   DEAD:$Acallerid|$Alead_id|$AcalleridCOUNT";
+						### find whether the agent log record has already logged DEAD
+						$stmt="SELECT count(*) from vicidial_agent_log where agent_log_id='$Aagent_log_id' and ( (dead_epoch IS NOT NULL) or (dead_epoch > 10000) );";
+						if ($DB) {echo "|$stmt|\n";}
+						$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03030',$user,$server_ip,$session_name,$one_mysql_log);}
+						$row=mysqli_fetch_row($rslt);
+						$Aagent_log_idCOUNT=$row[0];
 							
-							if ($Aagent_log_idCOUNT < 1)
-								{
-								$NEWdead_epoch = date("U");
-								$deadNOW_TIME = date("Y-m-d H:i:s");
-								$stmt="UPDATE vicidial_agent_log set dead_epoch='$NEWdead_epoch' where agent_log_id='$Aagent_log_id';";
-									if ($format=='debug') {echo "\n<!-- $stmt -->";}
-								$rslt=mysql_to_mysqli($stmt, $link);
-									if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03031',$user,$server_ip,$session_name,$one_mysql_log);}
+						if ($Aagent_log_idCOUNT < 1)
+							{
+							$NEWdead_epoch = date("U");
+							$deadNOW_TIME = date("Y-m-d H:i:s");
+							$stmt="UPDATE vicidial_agent_log set dead_epoch='$NEWdead_epoch' where agent_log_id='$Aagent_log_id';";
+								if ($format=='debug') {echo "\n<!-- $stmt -->";}
+							$rslt=mysql_to_mysqli($stmt, $link);
+								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03031',$user,$server_ip,$session_name,$one_mysql_log);}
 
-								$stmt="UPDATE vicidial_live_agents set last_state_change='$deadNOW_TIME' where agent_log_id='$Aagent_log_id';";
-									if ($format=='debug') {echo "\n<!-- $stmt -->";}
-								$rslt=mysql_to_mysqli($stmt, $link);
-									if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03032',$user,$server_ip,$session_name,$one_mysql_log);}
+							$stmt="UPDATE vicidial_live_agents set last_state_change='$deadNOW_TIME' where agent_log_id='$Aagent_log_id';";
+								if ($format=='debug') {echo "\n<!-- $stmt -->";}
+							$rslt=mysql_to_mysqli($stmt, $link);
+								if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03032',$user,$server_ip,$session_name,$one_mysql_log);}
 								$tempACTION = 'dead_log';
 								$TEMPstage = "DEAD call logged B|$dead_count|";
 								vicidial_ajax_log($NOW_TIME,$startMS,$link,$tempACTION,$php_script,$user,$TEMPstage,$lead_id,$session_name,$stmt);
-								}
 							}
+						}
 						else
 							{
 							$tempACTION = 'dead_log';
 							$TEMPstage = "DEAD call first detect B|$dead_count|";
 							vicidial_ajax_log($NOW_TIME,$startMS,$link,$tempACTION,$php_script,$user,$TEMPstage,$lead_id,$session_name,$stmt);
-							}
+					}
 						$dead_count++;
 						}
 					else
@@ -1226,7 +1226,7 @@ if ($ACTION == 'refresh')
 							$row=mysqli_fetch_row($rslt);
 							$external_igb_set_name =		$row[0];
 							}
-						
+
 						$NEWoutbound_autodial='N';
 						if ( ($external_blended > 0) and ($dial_method != "INBOUND_MAN") and ($dial_method != "MANUAL") )
 							{$NEWoutbound_autodial='Y';}
@@ -1306,11 +1306,11 @@ if ($ACTION == 'refresh')
 								}
 							if ($HHshift_end_time > 23)
 								{$HHshift_end_time = ($HHshift_end_time - 24);}
-							$HHshift_end_time = sprintf("%02s", $HHshift_end_time);	
-							$MMshift_end_time = sprintf("%02s", $MMshift_end_time);	
+							$HHshift_end_time = sprintf("%02s", $HHshift_end_time);
+							$MMshift_end_time = sprintf("%02s", $MMshift_end_time);
 							$shift_end_time = "$HHshift_end_time$MMshift_end_time";
 
-							if ( 
+							if (
 								( ($HHMM >= $shift_start_time) and ($HHMM < $shift_end_time) ) or
 								( ($HHMM < $shift_start_time) and ($HHMM < $shift_end_time) and ($shift_end_time <= $shift_start_time) ) or
 								( ($HHMM >= $shift_start_time) and ($HHMM >= $shift_end_time) and ($shift_end_time <= $shift_start_time) )
@@ -1326,11 +1326,11 @@ if ($ACTION == 'refresh')
 				}
 
 
-			if ( ( ($time_diff > 8) or ($time_diff < -8) or ($web_diff > 8) or ($web_diff < -8) ) and (preg_match("/0\$/i",$StarTtime)) ) 
+			if ( ( ($time_diff > 8) or ($time_diff < -8) or ($web_diff > 8) or ($web_diff < -8) ) and (preg_match("/0\$/i",$StarTtime)) )
 				{$Alogin='TIME_SYNC';		$Alogin_notes="SERVER-DB-DIFF-- $time_diff = ($server_epoch - $db_epoch) DB-WEB-DIFF-- $web_diff = ($db_epoch - $web_epoch)";}
 			if ( ($Acount < 1) or ($Scount < 1) )
 				{$Alogin='DEAD_VLA';		$Alogin_notes="$Scount";}
-			if ($AexternalDEAD > 0) 
+			if ($AexternalDEAD > 0)
 				{$Alogin='DEAD_EXTERNAL';	$Alogin_notes="$AexternalDEAD";}
 			if ($Ashift_logout > 0)
 				{$Alogin='SHIFT_LOGOUT';	$Alogin_notes="$Ashift_logout";}
@@ -1381,23 +1381,23 @@ if ($ACTION == 'refresh')
 					$dial_time = 		$row[4];
 					$time_to_progress = $row[5];
 					$time_to_ring = 	$row[6];
-					if ( ($first_180_date > 0) and ($first_180_date != 'NULL') and ($first_183_date > 0) and ($first_183_date != 'NULL')) 
+					if ( ($first_180_date > 0) and ($first_180_date != 'NULL') and ($first_183_date > 0) and ($first_183_date != 'NULL'))
 						{if ($first_180_date > $first_183_date) {$time_to_progress=$time_to_ring;}}
 
 					if ( ($dial_time > 0) and ($dial_time != 'NULL') )
 						{
-						if ( ($time_to_progress > 0) and ($time_to_progress != 'NULL') ) 
+						if ( ($time_to_progress > 0) and ($time_to_progress != 'NULL') )
 							{
-							if ( ($dial_time <= 0) or ($dial_time == 'NULL') ) 
+							if ( ($dial_time <= 0) or ($dial_time == 'NULL') )
 								{$dial_time = $time_to_progress;}
 							$invite_to_ring = $time_to_progress;
 							$ring_to_final = ($dial_time - $invite_to_ring);
 							}
 						else
 							{
-							if ( ($time_to_ring > 0) and ($time_to_ring != 'NULL') ) 
+							if ( ($time_to_ring > 0) and ($time_to_ring != 'NULL') )
 								{
-								if ( ($dial_time <= 0) or ($dial_time == 'NULL') ) 
+								if ( ($dial_time <= 0) or ($dial_time == 'NULL') )
 									{$dial_time = $time_to_ring;}
 								$invite_to_ring = $time_to_ring;
 								$ring_to_final = ($dial_time - $invite_to_ring);
@@ -1427,7 +1427,7 @@ if ($ACTION == 'refresh')
 							if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03049',$user,$server_ip,$session_name,$one_mysql_log);}
 						$affected_rowsX = mysqli_affected_rows($link);
 
-						
+
 						### BEGIN check for SIP event log actions ###
 						$CAMPsip_event_logging='DISABLED';
 						$invite_to_final='';
@@ -1476,7 +1476,7 @@ if ($ACTION == 'refresh')
 											if (preg_match("/logtable/i",$itf_actions))
 												{
 												##### insert record into vicidial_sip_action_log
-												$stmt="INSERT INTO vicidial_sip_action_log set call_date='$invite_date',caller_code='$MDnextCID',lead_id='$lead_id',phone_number='$phone_number',user='$user',result='$itf_dispo';";
+												$stmt="INSERT INTO vicidial_sip_action_log set call_date='$invite_date',caller_code='$MDnextCID',lead_id=$lead_id,phone_number='$phone_number',user='$user',result='$itf_dispo';";
 												if ($DB) {echo "$stmt\n";}
 												$rslt=mysql_to_mysqli($stmt, $link);
 													if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'03052',$user,$server_ip,$session_name,$one_mysql_log);}
@@ -1484,7 +1484,7 @@ if ($ACTION == 'refresh')
 												}
 											if (preg_match("/hangup|dispo|message/i",$itf_actions))
 												{
-											#	$call_output = "$uniqueid\n$channel\nERROR\n" . $hangup_cause_msg . "\n<br>" . $sip_hangup_cause_msg; 
+											#	$call_output = "$uniqueid\n$channel\nERROR\n" . $hangup_cause_msg . "\n<br>" . $sip_hangup_cause_msg;
 												$sip_event_action_output = "SIP ACTION-----" . $itf_actions . "-----" . $itf_dispo . "-----" . $itf_message;
 												}
 											}
@@ -1666,7 +1666,7 @@ if ($ACTION == 'register')
 ################################################################################
 ### DEBUG OUTPUT AND LOGGING
 ################################################################################
-if ($format=='debug') 
+if ($format=='debug')
 	{
 	$ENDtime = date("U");
 	$RUNtime = ($ENDtime - $StarTtime);
@@ -1700,10 +1700,10 @@ if (strlen($visibility) > 1)
 		}
 	}
 
-if ($SSagent_debug_logging > 0) 
+if ($SSagent_debug_logging > 0)
 	{
 	vicidial_ajax_log($NOW_TIME,$startMS,$link,$ACTION,$php_script,$user,$stage,$lead_id,$session_name,$stmt);
-	
+
 	### log the clicks that are sent from the agent screen
 	if (strlen($clicks) > 1)
 		{
@@ -1719,7 +1719,7 @@ if ($SSagent_debug_logging > 0)
 			$click_function = $click_function_data[0];
 			$click_options = $click_function_data[1];
 
-			$stmtA="INSERT INTO vicidial_ajax_log set user='$user',start_time='$click_time',db_time=NOW(),run_time='0',php_script='vicidial.php',action='$click_function',lead_id='$lead_id',stage='$cd|$click_options',session_name='$session_name',last_sql='';";
+			$stmtA="INSERT INTO vicidial_ajax_log set user='$user',start_time='$click_time',db_time=NOW(),run_time='0',php_script='vicidial.php',action='$click_function',lead_id=$lead_id,stage='$cd|$click_options',session_name='$session_name',last_sql='';";
 			$rslt=mysql_to_mysqli($stmtA, $link);
 
 			$cd++;
@@ -1755,6 +1755,6 @@ if (strlen($clicks) > 1)
 		}
 	}
 
-exit; 
+exit;
 
 ?>

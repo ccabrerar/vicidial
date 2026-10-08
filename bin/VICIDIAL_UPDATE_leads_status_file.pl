@@ -389,7 +389,7 @@ foreach(@FILES)
 				$status =				$m[1];
 				$add_to_dnc =			$m[2];
 
-				$lookupSQL = "lead_id='$lead_id'";
+				$lookupSQL = "lead_id=$lead_id";
 
 				$format_set++;
 				}
@@ -489,7 +489,7 @@ foreach(@FILES)
 		#	index (event_date)
 		#	);
 
-			$stmtZ = "INSERT INTO vicidial_list_update_log SET event_date='$SQL_date',lead_id='$lead_id',vendor_id='$vendor_lead_code',phone_number='$phone_number',status='$status',old_status='$old_status',filename='$FILEname',result='$result',result_rows='$Uaffected_rows',list_id='$old_list_id';";
+			$stmtZ = "INSERT INTO vicidial_list_update_log SET event_date='$SQL_date',lead_id=$lead_id,vendor_id='$vendor_lead_code',phone_number='$phone_number',status='$status',old_status='$old_status',filename='$FILEname',result='$result',result_rows='$Uaffected_rows',list_id='$old_list_id';";
 				if (!$T) {$affected_rows = $dbhA->do($stmtZ); } #  or die  "Couldn't execute query: |$stmtZ|\n";
 			#	$alt_phone_id = $dbhA->{'mysql_insertid'};
 				if($DB){print STDERR "\n|$affected_rows|$stmtZ|\n";}

@@ -154,7 +154,7 @@ function find_file( $ServerID, $AsteriskID, $QMUserID, $QMUserName )
 			}
 		if ( ($QM_ql_ct > 0) or ($VICI_ql_ct > 0) )
 			{
-			$stmt = "SELECT start_epoch,length_in_sec,location from recording_log where start_epoch>=$time_id and start_epoch<=$time_id_end and lead_id='$lead_id' order by recording_id limit 1;";
+			$stmt = "SELECT start_epoch,length_in_sec,location from recording_log where start_epoch>=$time_id and start_epoch<=$time_id_end and lead_id=$lead_id order by recording_id limit 1;";
 			$rslt=mysql_to_mysqli($stmt, $link);
 			if ($DB) {echo "$stmt\n";}
 			$rl_ct = mysqli_num_rows($rslt);
@@ -178,7 +178,7 @@ function find_file( $ServerID, $AsteriskID, $QMUserID, $QMUserName )
 					$time_id =		$row[1];
 					$uniqueid =		$row[2];
 
-					$stmt = "SELECT start_epoch,length_in_sec,location from recording_log where start_epoch>=$time_id and start_epoch<=$time_id_end and lead_id='$lead_id' order by recording_id limit 1;";
+					$stmt = "SELECT start_epoch,length_in_sec,location from recording_log where start_epoch>=$time_id and start_epoch<=$time_id_end and lead_id=$lead_id order by recording_id limit 1;";
 					$rslt=mysql_to_mysqli($stmt, $link);
 					if ($DB) {echo "$stmt\n";}
 					$rl_ct = mysqli_num_rows($rslt);

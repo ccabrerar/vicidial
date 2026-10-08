@@ -716,8 +716,8 @@ while($one_day_interval > 0)
 
 									$lead_id = substr($callid, 10, 10);
 									$lead_id = ($lead_id + 0);
-								#	$stmtA = "INSERT INTO vicidial_cpd_log set channel='$channel', uniqueid='$uniqueid', callerid='$callid', server_ip='$server_ip', lead_id='$lead_id', event_date='$now_date', result='$result', hires_time='$HRnow_date';";
-									$stmtA = "INSERT INTO vicidial_cpd_log set channel='$channel', uniqueid='$uniqueid', callerid='$callid', server_ip='$server_ip', lead_id='$lead_id', event_date='$now_date', result='$result';";
+								#	$stmtA = "INSERT INTO vicidial_cpd_log set channel='$channel', uniqueid='$uniqueid', callerid='$callid', server_ip='$server_ip', lead_id=$lead_id, event_date='$now_date', result='$result', hires_time='$HRnow_date';";
+									$stmtA = "INSERT INTO vicidial_cpd_log set channel='$channel', uniqueid='$uniqueid', callerid='$callid', server_ip='$server_ip', lead_id=$lead_id, event_date='$now_date', result='$result';";
 									print STDERR "|$stmtA|\n";
 									my $affected_rows = $dbhA->do($stmtA);
 									if($DB){print "|$affected_rows CPD_log inserted|$HRnow_date|$s_hires|$usec|\n";}
@@ -754,7 +754,7 @@ while($one_day_interval > 0)
 									$lead_id = ($lead_id + 0);
 									$beginUNIQUEID = $uniqueid;
 									$beginUNIQUEID =~ s/\..*//gi;
-									$stmtA = "UPDATE vicidial_dial_log SET sip_hangup_cause='$result_details[0]',sip_hangup_reason='$result_details[1]',uniqueid='$uniqueid' where caller_code='$callid' and server_ip='$server_ip' and lead_id='$lead_id';";
+									$stmtA = "UPDATE vicidial_dial_log SET sip_hangup_cause='$result_details[0]',sip_hangup_reason='$result_details[1]',uniqueid='$uniqueid' where caller_code='$callid' and server_ip='$server_ip' and lead_id=$lead_id;";
 									print STDERR "|$stmtA|\n";
 									my $affected_rows = $dbhA->do($stmtA);
 									if($DB){print "|$affected_rows dial_log updated|$callid|$server_ip|$result|\n";}
@@ -782,7 +782,7 @@ while($one_day_interval > 0)
 									if ($postCsec < 10) {$postCsec = "0$postCsec";}
 									$postCSQLdate = "$postCyear-$postCmon-$postCmday $postChour:$postCmin:$postCsec";
 
-									$stmtA = "UPDATE vicidial_carrier_log SET sip_hangup_cause='$result_details[0]',sip_hangup_reason='$result_details[1]' where server_ip='$server_ip' and caller_code='$callid' and lead_id='$lead_id' and call_date > \"$preCSQLdate\" and call_date < \"$postCSQLdate\" order by call_date desc limit 1;";
+									$stmtA = "UPDATE vicidial_carrier_log SET sip_hangup_cause='$result_details[0]',sip_hangup_reason='$result_details[1]' where server_ip='$server_ip' and caller_code='$callid' and lead_id=$lead_id and call_date > \"$preCSQLdate\" and call_date < \"$postCSQLdate\" order by call_date desc limit 1;";
 									print STDERR "|$stmtA|\n";
 									my $affected_rows = $dbhA->do($stmtA);
 									if($DB){print "|$affected_rows carrier_log updated|$callid|$server_ip|$uniqueid|$result_details[0]|$result_details[1]|\n";}
@@ -1256,10 +1256,10 @@ while($one_day_interval > 0)
 
 									$lead_id = substr($callid, 10, 10);
 									$lead_id = ($lead_id + 0);
-								#	$stmtA = "INSERT INTO vicidial_cpd_log set channel='$channel', uniqueid='$uniqueid', callerid='$callid', server_ip='$server_ip', lead_id='$lead_id', event_date='$now_date', result='$cpd_result', hires_time='$HRnow_date';";
+								#	$stmtA = "INSERT INTO vicidial_cpd_log set channel='$channel', uniqueid='$uniqueid', callerid='$callid', server_ip='$server_ip', lead_id=$lead_id, event_date='$now_date', result='$cpd_result', hires_time='$HRnow_date';";
 
 									# TODO change the cpd log and this insert to include the new SIP Headers for 2.0 CPD
-									$stmtA = "INSERT INTO vicidial_cpd_log set channel='$channel', uniqueid='$uniqueid', callerid='$callid', server_ip='$server_ip', lead_id='$lead_id', event_date='$now_date', result='$cpd_result';";
+									$stmtA = "INSERT INTO vicidial_cpd_log set channel='$channel', uniqueid='$uniqueid', callerid='$callid', server_ip='$server_ip', lead_id=$lead_id, event_date='$now_date', result='$cpd_result';";
 									print STDERR "|$stmtA|\n";
 									my $affected_rows = $dbhA->do($stmtA);
 									if($DB){print "|$affected_rows CPD_log inserted|$HRnow_date|$s_hires|$usec|\n";}
@@ -1296,7 +1296,7 @@ while($one_day_interval > 0)
 									$lead_id = ($lead_id + 0);
 									$beginUNIQUEID = $uniqueid;
 									$beginUNIQUEID =~ s/\..*//gi;
-									$stmtA = "UPDATE vicidial_dial_log SET sip_hangup_cause='$result_details[0]',sip_hangup_reason='$result_details[1]',uniqueid='$uniqueid' where caller_code='$callid' and server_ip='$server_ip' and lead_id='$lead_id';";
+									$stmtA = "UPDATE vicidial_dial_log SET sip_hangup_cause='$result_details[0]',sip_hangup_reason='$result_details[1]',uniqueid='$uniqueid' where caller_code='$callid' and server_ip='$server_ip' and lead_id=$lead_id;";
 									print STDERR "|$stmtA|\n";
 									my $affected_rows = $dbhA->do($stmtA);
 									if($DB){print "|$affected_rows dial_log updated|$callid|$server_ip|$result|\n";}
@@ -1324,7 +1324,7 @@ while($one_day_interval > 0)
 									if ($postCsec < 10) {$postCsec = "0$postCsec";}
 									$postCSQLdate = "$postCyear-$postCmon-$postCmday $postChour:$postCmin:$postCsec";
 
-									$stmtA = "UPDATE vicidial_carrier_log SET sip_hangup_cause='$result_details[0]',sip_hangup_reason='$result_details[1]' where server_ip='$server_ip' and caller_code='$callid' and lead_id='$lead_id' and call_date > \"$preCSQLdate\" and call_date < \"$postCSQLdate\" order by call_date desc limit 1;";
+									$stmtA = "UPDATE vicidial_carrier_log SET sip_hangup_cause='$result_details[0]',sip_hangup_reason='$result_details[1]' where server_ip='$server_ip' and caller_code='$callid' and lead_id=$lead_id and call_date > \"$preCSQLdate\" and call_date < \"$postCSQLdate\" order by call_date desc limit 1;";
 									print STDERR "|$stmtA|\n";
 									my $affected_rows = $dbhA->do($stmtA);
 									if($DB){print "|$affected_rows carrier_log updated|$callid|$server_ip|$uniqueid|$result_details[0]|$result_details[1]|\n";}

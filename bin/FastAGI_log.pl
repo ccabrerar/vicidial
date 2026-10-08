@@ -215,18 +215,18 @@ $curlbin = '';
 $khomp_enabled = 1;
 if ( -e ('/bin/curl')) {$curlbin = '/bin/curl';}
 else
-	{
-	if ( -e ('/usr/bin/curl')) {$curlbin = '/usr/bin/curl';}
-	else
-		{
-		if ( -e ('/usr/local/bin/curl')) {$curlbin = '/usr/local/bin/curl';}
-		else
-			{
-			if ($AGILOG) {$agi_string = "ERROR: curl binary not found, KHOMP disabled";   &agi_output;}
-			$khomp_enabled = 0;
-			}
-		}
-	}
+        {
+        if ( -e ('/usr/bin/curl')) {$curlbin = '/usr/bin/curl';}
+        else
+                {
+                if ( -e ('/usr/local/bin/curl')) {$curlbin = '/usr/local/bin/curl';}
+                else
+                        {
+                        if ($AGILOG) {$agi_string = "ERROR: curl binary not found, KHOMP disabled";   &agi_output;}
+                        $khomp_enabled = 0;
+                        }
+                }
+        }
 
 
 sub process_request 
@@ -394,9 +394,9 @@ sub process_request
 			$dial_time =			$ARGV_vars[4];
 			$answered_time =		$ARGV_vars[5];
 			$tech_hangup_cause =	$ARGV_vars[6];
-	    if( $dial_time > $answered_time ) 
+            if( $dial_time > $answered_time ) 
 				{$ring_time = $dial_time - $answered_time;}
-	    else 
+            else 
 				{$ring_time = 0;}
 			$agi_string = "URL HVcauses: |$PRI|$DEBUG|$hangup_cause|$dialstatus|$dial_time|$ring_time|$tech_hangup_cause|";   
 			&agi_output;
@@ -605,7 +605,7 @@ sub process_request
 					$khomp_settings_container =	$aryA[4];
 					}
 				$sthA->finish();
-
+				
 				if (( $amd_type eq 'KHOMP' ) && ( $khomp_enabled ) )
 					{
 					### Grab KHOMP settings from the KHOMPSETTINGS settings container
@@ -975,7 +975,7 @@ sub process_request
 								$sip_hangup_cause=0;
 								$sip_hangup_reason='';
 
-								$stmtA = "SELECT sip_hangup_cause,sip_hangup_reason FROM vicidial_dial_log where lead_id='$CIDlead_id' and server_ip='$VARserver_ip' and caller_code='$callerid' order by call_date desc limit 1;";
+								$stmtA = "SELECT sip_hangup_cause,sip_hangup_reason FROM vicidial_dial_log where lead_id=$CIDlead_id and server_ip='$VARserver_ip' and caller_code='$callerid' order by call_date desc limit 1;";
 								$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 								$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 								$sthArows=$sthA->rows;
@@ -999,7 +999,7 @@ sub process_request
 									$sip_hangup_reason = join( ' ', @error );
 
 									# the vicidial_dial_log does not have the sip hangup data so populate it
-									$stmtA = "UPDATE vicidial_dial_log SET sip_hangup_cause='$sip_hangup_cause',sip_hangup_reason='$sip_hangup_reason',uniqueid='$uniqueid' where caller_code='$callerid' and server_ip='$VARserver_ip' and lead_id='$CIDlead_id';";
+									$stmtA = "UPDATE vicidial_dial_log SET sip_hangup_cause='$sip_hangup_cause',sip_hangup_reason='$sip_hangup_reason',uniqueid='$uniqueid' where caller_code='$callerid' and server_ip='$VARserver_ip' and lead_id=$CIDlead_id;";
 									$dbhA->do($stmtA);		
 									}
 								else
@@ -1008,7 +1008,7 @@ sub process_request
 									$sip_hangup_cause=0;
 									$sip_hangup_reason='';
 
-									$stmtA = "SELECT sip_hangup_cause,sip_hangup_reason FROM vicidial_dial_log where lead_id='$CIDlead_id' and server_ip='$VARserver_ip' and caller_code='$callerid' order by call_date desc limit 1;";
+									$stmtA = "SELECT sip_hangup_cause,sip_hangup_reason FROM vicidial_dial_log where lead_id=$CIDlead_id and server_ip='$VARserver_ip' and caller_code='$callerid' order by call_date desc limit 1;";
 									$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 									$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 									$sthArows=$sthA->rows;
@@ -1024,7 +1024,7 @@ sub process_request
 								if ($AGILOG) {$agi_string = "$sthArows|$stmtA|$sip_hangup_cause|$sip_hangup_reason|";   &agi_output;}
 								}
 
-							$stmtA = "INSERT IGNORE INTO vicidial_carrier_log set uniqueid='$uniqueid',call_date='$now_date',server_ip='$VARserver_ip',lead_id='$CIDlead_id',hangup_cause='$hangup_cause',dialstatus='$dialstatus',channel='$channel',dial_time='$dial_time',answered_time='$answered_time',sip_hangup_cause='$sip_hangup_cause',sip_hangup_reason='$sip_hangup_reason',caller_code='$callerid';";
+							$stmtA = "INSERT IGNORE INTO vicidial_carrier_log set uniqueid='$uniqueid',call_date='$now_date',server_ip='$VARserver_ip',lead_id=$CIDlead_id,hangup_cause='$hangup_cause',dialstatus='$dialstatus',channel='$channel',dial_time='$dial_time',answered_time='$answered_time',sip_hangup_cause='$sip_hangup_cause',sip_hangup_reason='$sip_hangup_reason',caller_code='$callerid';";
 								if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 							$VCARaffected_rows = $dbhA->do($stmtA);
 							if ($AGILOG) {$agi_string = "--    CARRIER LOG insert: |$VCARaffected_rows|$CIDlead_id|$hangup_cause|$sip_hangup_cause|$sip_hangup_reason|";   &agi_output;}
@@ -1605,11 +1605,12 @@ sub process_request
 
 						if (length($VDL_status) > 0) 
 							{
+							$stmtA = "UPDATE vicidial_list set status='$VDL_status' where lead_id = $CIDlead_id;";
 							if ($CIDlead_id < $highest_lead_id_test)
 								{
 								$stmtA = "UPDATE vicidial_list set status='$VDL_status' where lead_id = '$CIDlead_id';";
-									if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
-								$VDADaffected_rows = $dbhA->do($stmtA);
+								if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+							$VDADaffected_rows = $dbhA->do($stmtA);
 								if ($AGILOG) {$agi_string = "--    VDAD vicidial_list update 1: |$VDADaffected_rows|$CIDlead_id";   &agi_output;}
 								}
 							else
@@ -1623,7 +1624,7 @@ sub process_request
 
 								$Euniqueid=$uniqueid;
 								$Euniqueid =~ s/\.\d+$//gi;
-							$stmtA = "UPDATE vicidial_log FORCE INDEX(lead_id) set status='$VDL_status' where lead_id = '$CIDlead_id' and uniqueid LIKE \"$Euniqueid%\";";
+							$stmtA = "UPDATE vicidial_log FORCE INDEX(lead_id) set status='$VDL_status' where lead_id = $CIDlead_id and uniqueid LIKE \"$Euniqueid%\";";
 								if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 							$VDLaffected_rows = $dbhA->do($stmtA);
 							if ($AGILOG) {$agi_string = "--    VDAD vicidial_log update: |$VDLaffected_rows|$uniqueid|$VDACuniqueid|";   &agi_output;}
@@ -1658,7 +1659,7 @@ sub process_request
 								if ($sthArows > 0)
 									{
 									$called_count=0;
-									$stmtA = "SELECT list_id,called_count FROM vicidial_list where lead_id='$VD_lead_id' limit 1;";
+									$stmtA = "SELECT list_id,called_count FROM vicidial_list where lead_id=$VD_lead_id limit 1;";
 										if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 									$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 									$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -1674,12 +1675,12 @@ sub process_request
 									$vl_commentsSQL = '';
 									if ($callerid =~ /^M\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/)
 										{$vl_commentsSQL=",comments='MANUAL'";}
-									$stmtA = "INSERT INTO vicidial_log SET uniqueid='$uniqueid',lead_id='$VD_lead_id',list_id='$VD_list_id',status='$VDL_status',campaign_id='$VD_campaign_id',call_date='$VD_call_time',start_epoch='$VD_start_epoch',phone_code='$VD_phone_code',phone_number='$VD_phone_number',user='VDAD',processed='N',length_in_sec='0',end_epoch='$VD_start_epoch',alt_dial='$VD_alt_dial',called_count='$called_count' $vl_commentsSQL;";
+									$stmtA = "INSERT INTO vicidial_log SET uniqueid='$uniqueid',lead_id=$VD_lead_id,list_id='$VD_list_id',status='$VDL_status',campaign_id='$VD_campaign_id',call_date='$VD_call_time',start_epoch='$VD_start_epoch',phone_code='$VD_phone_code',phone_number='$VD_phone_number',user='VDAD',processed='N',length_in_sec='0',end_epoch='$VD_start_epoch',alt_dial='$VD_alt_dial',called_count='$called_count' $vl_commentsSQL;";
 										if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 									$VDLIaffected_rows = $dbhA->do($stmtA);
 									if ($AGILOG) {$agi_string = "--    VDAD vicidial_log insert: |$VDLIaffected_rows|$uniqueid|$CIDlead_id|$VDL_status|";   &agi_output;}
 
-									$stmtA="INSERT IGNORE INTO vicidial_log_extended SET uniqueid='$uniqueid',server_ip='$VARserver_ip',call_date='$VD_call_time',lead_id='$VD_lead_id',caller_code='$VD_callerid',custom_call_id='' ON DUPLICATE KEY UPDATE server_ip='$VARserver_ip',call_date='$VD_call_time',lead_id='$VD_lead_id',caller_code='$VD_callerid';";
+									$stmtA="INSERT IGNORE INTO vicidial_log_extended SET uniqueid='$uniqueid',server_ip='$VARserver_ip',call_date='$VD_call_time',lead_id=$VD_lead_id,caller_code='$VD_callerid',custom_call_id='' ON DUPLICATE KEY UPDATE server_ip='$VARserver_ip',call_date='$VD_call_time',lead_id=$VD_lead_id,caller_code='$VD_callerid';";
 										if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 									$VDLXaffected_rows = $dbhA->do($stmtA);
 									if ($AGILOG) {$agi_string = "--    VDAD vicidial_extended_log insert: |$VDLXaffected_rows|$uniqueid|$CIDlead_id|$VDL_status|";   &agi_output;}
@@ -1902,7 +1903,7 @@ sub process_request
 
 								### find original queue position of the call
 								$queue_position=1;
-								$stmtA = "SELECT queue_position,call_date FROM vicidial_closer_log where uniqueid='$unique_id' and lead_id='$CIDlead_id' and campaign_id='$VD_campaign_id' and call_date > \"$RSQLdate\" order by closecallid desc limit 1;";
+								$stmtA = "SELECT queue_position,call_date FROM vicidial_closer_log where uniqueid='$unique_id' and lead_id=$CIDlead_id and campaign_id='$VD_campaign_id' and call_date > \"$RSQLdate\" order by closecallid desc limit 1;";
 								$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 								$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 								$sthArows=$sthA->rows;
@@ -1957,7 +1958,7 @@ sub process_request
 										if ($queuemetrics_socket_url =~ /--A--/)
 											{
 											########## vicidial_list lead data ##########
-											$stmtA = "SELECT vendor_lead_code,list_id,phone_code,phone_number,title,first_name,middle_initial,last_name,postal_code FROM vicidial_list where lead_id='$VD_lead_id' LIMIT 1;";
+											$stmtA = "SELECT vendor_lead_code,list_id,phone_code,phone_number,title,first_name,middle_initial,last_name,postal_code FROM vicidial_list where lead_id=$VD_lead_id LIMIT 1;";
 												if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 											$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 											$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -2053,7 +2054,7 @@ sub process_request
 							if ($calleridname !~ /^Y\d\d\d\d/)
 								{
 								########## FIND AND UPDATE vicidial_log ##########
-								$stmtA = "SELECT start_epoch,status,user,term_reason,comments,alt_dial FROM vicidial_log FORCE INDEX(lead_id) where lead_id = '$VD_lead_id' and uniqueid LIKE \"$Euniqueid%\" limit 1;";
+								$stmtA = "SELECT start_epoch,status,user,term_reason,comments,alt_dial FROM vicidial_log FORCE INDEX(lead_id) where lead_id = $VD_lead_id and uniqueid LIKE \"$Euniqueid%\" limit 1;";
 									if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 								$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 								$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -2088,7 +2089,7 @@ sub process_request
 								if ($Rsec < 10) {$Rsec = "0$Rsec";}
 									$RSQLdate = "$Ryear-$Rmon-$Rmday $Rhour:$Rmin:$Rsec";
 
-								$stmtA = "SELECT start_epoch,status,closecallid,user,term_reason,length_in_sec,queue_seconds,comments FROM vicidial_closer_log where lead_id = '$VD_lead_id' and call_date > \"$RSQLdate\" order by closecallid desc limit 1;";
+								$stmtA = "SELECT start_epoch,status,closecallid,user,term_reason,length_in_sec,queue_seconds,comments FROM vicidial_closer_log where lead_id = $VD_lead_id and call_date > \"$RSQLdate\" order by closecallid desc limit 1;";
 									if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 								$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 								$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -2118,7 +2119,7 @@ sub process_request
 								if ( ($callerid =~ /^V\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d/) && ($VD_status =~ /SENT/) )
 									{
 									$called_count = 0;
-									$stmtA = "SELECT list_id,called_count FROM vicidial_list where lead_id='$VD_lead_id' limit 1;";
+									$stmtA = "SELECT list_id,called_count FROM vicidial_list where lead_id=$VD_lead_id limit 1;";
 										if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 									$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 									$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -2131,23 +2132,24 @@ sub process_request
 										}
 									$sthA->finish();
 
+									$stmtA = "UPDATE vicidial_list SET status='PDROP' where lead_id=$VD_lead_id;";
 									if (length($VDL_status) < 1) {$VDL_status='PDROP';}
 
-									$stmtA = "UPDATE vicidial_list SET status='PDROP' where lead_id='$VD_lead_id';";
+									$stmtA = "UPDATE vicidial_list SET status='PDROP' where lead_id=$VD_lead_id;";
 									$VLPDaffected_rows = $dbhA->do($stmtA);
 									if ($AGILOG) {$agi_string = "--    PDROP vicidial_list update: |$VLPDaffected_rows|$uniqueid|$CIDlead_id|$VDL_status|";   &agi_output;}
 
-									$stmtA = "INSERT INTO vicidial_log SET uniqueid='$uniqueid',lead_id='$VD_lead_id',list_id='$VD_list_id',status='PDROP',campaign_id='$VD_campaign_id',call_date='$VD_call_time',start_epoch='$VD_start_epoch',phone_code='$VD_phone_code',phone_number='$VD_phone_number',user='VDAD',processed='N',length_in_sec='0',end_epoch='$VD_start_epoch',alt_dial='$VD_alt_dial',called_count='$called_count';";
+									$stmtA = "INSERT INTO vicidial_log SET uniqueid='$uniqueid',lead_id=$VD_lead_id,list_id='$VD_list_id',status='PDROP',campaign_id='$VD_campaign_id',call_date='$VD_call_time',start_epoch='$VD_start_epoch',phone_code='$VD_phone_code',phone_number='$VD_phone_number',user='VDAD',processed='N',length_in_sec='0',end_epoch='$VD_start_epoch',alt_dial='$VD_alt_dial',called_count='$called_count';";
 									$VDLPDaffected_rows = $dbhA->do($stmtA);
 									if ($AGILOG) {$agi_string = "--    PDROP vicidial_log insert: |$VDLPDaffected_rows|$uniqueid|$CIDlead_id|$VDL_status|";   &agi_output;}
 
-									$stmtA="INSERT IGNORE INTO vicidial_log_extended SET uniqueid='$uniqueid',server_ip='$VARserver_ip',call_date='$VD_call_time',lead_id='$VD_lead_id',caller_code='$VD_callerid',custom_call_id='' ON DUPLICATE KEY UPDATE server_ip='$VARserver_ip',call_date='$VD_call_time',lead_id='$VD_lead_id',caller_code='$VD_callerid';";
+									$stmtA="INSERT IGNORE INTO vicidial_log_extended SET uniqueid='$uniqueid',server_ip='$VARserver_ip',call_date='$VD_call_time',lead_id=$VD_lead_id,caller_code='$VD_callerid',custom_call_id='' ON DUPLICATE KEY UPDATE server_ip='$VARserver_ip',call_date='$VD_call_time',lead_id=$VD_lead_id,caller_code='$VD_callerid';";
 									$VDLXPDaffected_rows = $dbhA->do($stmtA);
 									if ($AGILOG) {$agi_string = "--    PDROP vicidial_extended_log insert: |$VDLXPDaffected_rows|$uniqueid|$CIDlead_id|$VDL_status|";   &agi_output;}
 
 									if ($enable_drop_lists > 1) 
 										{
-										$stmtA="INSERT IGNORE INTO vicidial_drop_log SET uniqueid='$uniqueid',server_ip='$VARserver_ip',drop_date=NOW(),lead_id='$VD_lead_id',campaign_id='$VD_campaign_id',status='PDROP',phone_code='$VD_phone_code',phone_number='$VD_phone_number';";
+										$stmtA="INSERT IGNORE INTO vicidial_drop_log SET uniqueid='$uniqueid',server_ip='$VARserver_ip',drop_date=NOW(),lead_id=$VD_lead_id,campaign_id='$VD_campaign_id',status='PDROP',phone_code='$VD_phone_code',phone_number='$VD_phone_number';";
 										$VDDLaffected_rows = $dbhA->do($stmtA);
 										if ($AGILOG) {$agi_string = "--    PDROP vicidial_drop_log insert: |$VDDLaffected_rows|$uniqueid|$VD_lead_id|$VDL_status|";   &agi_output;}
 										}
@@ -2174,7 +2176,7 @@ sub process_request
 									if (length($VDL_status) < 1) {$VDL_status='DROP';}
 
 									########## FIND AND UPDATE vicidial_list ##########
-									$stmtA = "UPDATE vicidial_list set status='DROP' where lead_id = '$VD_lead_id';";
+									$stmtA = "UPDATE vicidial_list set status='DROP' where lead_id = $VD_lead_id;";
 										if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 									$affected_rows = $dbhA->do($stmtA);
 									if ($AGILOG) {$agi_string = "--    VDAD vicidial_list update 2: |$affected_rows|$VD_lead_id";   &agi_output;}
@@ -2187,7 +2189,7 @@ sub process_request
 								if ($calleridname !~ /^Y\d\d\d\d/)
 									{
 									$VDL_update=1;
-									$stmtA = "UPDATE vicidial_log FORCE INDEX(lead_id) set $SQL_status end_epoch='$now_date_epoch',length_in_sec='$VD_seconds' where lead_id = '$VD_lead_id' and uniqueid LIKE \"$Euniqueid%\";";
+									$stmtA = "UPDATE vicidial_log FORCE INDEX(lead_id) set $SQL_status end_epoch='$now_date_epoch',length_in_sec='$VD_seconds' where lead_id = $VD_lead_id and uniqueid LIKE \"$Euniqueid%\";";
 										if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 									$VLaffected_rows = $dbhA->do($stmtA);
 									if ($AGILOG) {$agi_string = "--    VDAD vicidial_log update: |$VLaffected_rows|$uniqueid|$VD_status|";   &agi_output;}
@@ -2262,7 +2264,7 @@ sub process_request
 
 										if ($drop_lead_reset =~ /Y/)
 											{
-											$stmtA = "UPDATE vicidial_list set called_since_last_reset='N' where lead_id = '$VD_lead_id';";
+											$stmtA = "UPDATE vicidial_list set called_since_last_reset='N' where lead_id = $VD_lead_id;";
 												if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 											$affected_rows = $dbhA->do($stmtA);
 											if ($AGILOG) {$agi_string = "--    VDAD vicidial_list update CSLR: |$affected_rows|$VD_lead_id";   &agi_output;}
@@ -2272,7 +2274,7 @@ sub process_request
 
 								if ( ( ( ($calleridname =~ /^Y\d\d\d\d/) && ($enable_drop_lists > 0) ) || ( ($calleridname !~ /^Y\d\d\d\d/) && ($enable_drop_lists > 1) ) ) && ( ($VD_user =~ /VDAD|VDCL/) || (length($VD_user) < 1) || ($VD_status =~ /QUEUE/) ) )
 									{
-									$stmtA="INSERT IGNORE INTO vicidial_drop_log SET uniqueid='$uniqueid',server_ip='$VARserver_ip',drop_date=NOW(),lead_id='$VD_lead_id',campaign_id='$VD_campaign_id',status='DROP',phone_code='$VD_phone_code',phone_number='$VD_phone_number';";
+									$stmtA="INSERT IGNORE INTO vicidial_drop_log SET uniqueid='$uniqueid',server_ip='$VARserver_ip',drop_date=NOW(),lead_id=$VD_lead_id,campaign_id='$VD_campaign_id',status='DROP',phone_code='$VD_phone_code',phone_number='$VD_phone_number';";
 									$VDDLaffected_rows = $dbhA->do($stmtA);
 									if ($AGILOG) {$agi_string = "--    DROP vicidial_drop_log insert: |$VDDLaffected_rows|$uniqueid|$VD_lead_id|$VD_campaign_id|";   &agi_output;}
 									}
@@ -2304,12 +2306,12 @@ sub process_request
 							while ($sthArows > $epc_countCAMPDATA)
 								{
 								@aryA = $sthA->fetchrow_array;
-								$VD_auto_alt_dial	=				$aryA[0];
-								$VD_auto_alt_dial_statuses	=		$aryA[1];
-								$VD_use_internal_dnc =				$aryA[2];
-								$VD_use_campaign_dnc =				$aryA[3];
-								$VD_use_other_campaign_dnc =		$aryA[4];
-								$VD_call_quota_lead_ranking =		$aryA[5];
+								$VD_auto_alt_dial	=			$aryA[0];
+								$VD_auto_alt_dial_statuses	=	$aryA[1];
+								$VD_use_internal_dnc =			$aryA[2];
+								$VD_use_campaign_dnc =			$aryA[3];
+								$VD_use_other_campaign_dnc =	$aryA[4];
+								$VD_call_quota_lead_ranking =	$aryA[5];
 								$VD_call_limit_24hour_method =		$aryA[6];
 								$VD_call_limit_24hour_scope =		$aryA[7];
 								$VD_call_limit_24hour =				$aryA[8];
@@ -2366,8 +2368,7 @@ sub process_request
 									{
 									$alt_dial_skip=0;
 									$VD_alt_phone='';
-									$stmtA="SELECT alt_phone,gmt_offset_now,state,list_id,phone_code,postal_code FROM vicidial_list where lead_id='$VD_lead_id';";
-										if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+									$stmtA="SELECT alt_phone,gmt_offset_now,state,list_id,phone_code,postal_code FROM vicidial_list where lead_id=$VD_lead_id;";										if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 									$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 									$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 									$sthArows=$sthA->rows;
@@ -2435,6 +2436,7 @@ sub process_request
 											}
 										if ($VD_alt_dnc_count < 1)
 											{
+											$stmtA = "INSERT INTO vicidial_hopper SET lead_id=$VD_lead_id,campaign_id='$VD_campaign_id',status='READY',list_id='$VD_list_id',gmt_offset_now='$VD_gmt_offset_now',state='$VD_state',alt_dial='ALT',user='',priority='25',source='A';";
 											$passed_24hour_call_count=1;
 											if ( ($SScall_limit_24hour > 0) && ($VD_call_limit_24hour_method =~ /PHONE_NUMBER|LEAD/) )
 												{
@@ -2450,14 +2452,14 @@ sub process_request
 												$hopper_status='READY';
 												if ($VD_hopper_hold_inserts =~ /ENABLED|AUTONEXT/) {$hopper_status='RHOLD';}
 												$stmtA = "INSERT INTO vicidial_hopper SET lead_id='$VD_lead_id',campaign_id='$VD_campaign_id',status='$hopper_status',list_id='$VD_list_id',gmt_offset_now='$VD_gmt_offset_now',state='$VD_state',alt_dial='ALT',user='',priority='25',source='A';";
-												$affected_rows = $dbhA->do($stmtA);
-												if ($AGILOG) {$agi_string = "--    VDH record inserted: |$affected_rows|   |$stmtA|";   &agi_output;}
+											$affected_rows = $dbhA->do($stmtA);
+											if ($AGILOG) {$agi_string = "--    VDH record inserted: |$affected_rows|   |$stmtA|";   &agi_output;}
 												if ($AGILOG) {$aad_string = "$VD_lead_id|$VD_alt_phone|$VD_campaign_id|ALT|25|hopper insert|";   &aad_output;}
-												}
-											else
-												{$alt_dial_skip=1;   $alt_skip_reason='24-hour call count limit failed';}
 											}
 										else
+												{$alt_dial_skip=1;   $alt_skip_reason='24-hour call count limit failed';}
+										}
+									else
 											{$alt_dial_skip=1;   $alt_skip_reason='DNC check failed';}
 										}
 									else
@@ -2467,15 +2469,14 @@ sub process_request
 										if ($ADB > 0) {$aad_string = "ALT-24: $VD_lead_id|$VD_alt_dial|ALT-SKIP: $alt_skip_reason|";   &aad_output;}
 										$VD_alt_dial='ALT';
 										if ($AGILOG) {$aad_string = "$VD_lead_id|$VD_alt_phone|$VD_campaign_id|ALT|0|hopper skip|$alt_skip_reason|";   &aad_output;}
-										}
+									}
 									}
 									if ($ADB > 0) {$aad_string = "ALT-25: $VD_lead_id|$VD_alt_dial|";   &aad_output;}
 								if ( ( ($VD_auto_alt_dial =~ /(ADDR3_ONLY)/) && ($VD_alt_dial =~ /NONE|MAIN/) ) || ( ($VD_auto_alt_dial =~ /(ALT_AND_ADDR3)/) && ($VD_alt_dial =~ /ALT/) ) )
 									{
 									$addr3_dial_skip=0;
 									$VD_address3='';
-									$stmtA="SELECT address3,gmt_offset_now,state,list_id,phone_code,postal_code FROM vicidial_list where lead_id='$VD_lead_id';";
-										if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+									$stmtA="SELECT address3,gmt_offset_now,state,list_id,phone_code,postal_code FROM vicidial_list where lead_id=$VD_lead_id;";										if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 									$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 									$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 									$sthArows=$sthA->rows;
@@ -2543,6 +2544,7 @@ sub process_request
 											}
 										if ($VD_alt_dnc_count < 1)
 											{
+											$stmtA = "INSERT INTO vicidial_hopper SET lead_id=$VD_lead_id,campaign_id='$VD_campaign_id',status='READY',list_id='$VD_list_id',gmt_offset_now='$VD_gmt_offset_now',state='$VD_state',alt_dial='ADDR3',user='',priority='20',source='A';";
 											$passed_24hour_call_count=1;
 											if ( ($SScall_limit_24hour > 0) && ($VD_call_limit_24hour_method =~ /PHONE_NUMBER|LEAD/) )
 												{
@@ -2558,14 +2560,14 @@ sub process_request
 												$hopper_status='READY';
 												if ($VD_hopper_hold_inserts =~ /ENABLED|AUTONEXT/) {$hopper_status='RHOLD';}
 												$stmtA = "INSERT INTO vicidial_hopper SET lead_id='$VD_lead_id',campaign_id='$VD_campaign_id',status='$hopper_status',list_id='$VD_list_id',gmt_offset_now='$VD_gmt_offset_now',state='$VD_state',alt_dial='ADDR3',user='',priority='20',source='A';";
-												$affected_rows = $dbhA->do($stmtA);
-												if ($AGILOG) {$agi_string = "--    VDH record inserted: |$affected_rows|   |$stmtA|";   &agi_output;}
+											$affected_rows = $dbhA->do($stmtA);
+											if ($AGILOG) {$agi_string = "--    VDH record inserted: |$affected_rows|   |$stmtA|";   &agi_output;}
 												if ($AGILOG) {$aad_string = "$VD_lead_id|$VD_address3|$VD_campaign_id|ADDR3|20|hopper insert|";   &aad_output;}
-												}
-											else
-												{$addr3_dial_skip=1;   $addr3_skip_reason='24-hour call count limit failed';}
 											}
 										else
+												{$addr3_dial_skip=1;   $addr3_skip_reason='24-hour call count limit failed';}
+										}
+									else
 											{$addr3_dial_skip=1;   $addr3_skip_reason='DNC check failed';}
 										}
 									else
@@ -2575,7 +2577,7 @@ sub process_request
 										if ($ADB > 0) {$aad_string = "ALT-27: $VD_lead_id|$VD_alt_dial|ADDR3-SKIP: $addr3_skip_reason|";   &aad_output;}
 										$VD_alt_dial='ADDR3';
 										if ($AGILOG) {$aad_string = "$VD_lead_id|$VD_address3|$VD_campaign_id|ADDR3|0|hopper skip|$addr3_skip_reason|";   &aad_output;}
-										}
+									}
 									}
 								if ($ADB > 0) {$aad_string = "ALT-28: $VD_lead_id|$VD_alt_dial|";   &aad_output;}
 								if ( ( ($VD_auto_alt_dial =~ /(EXTENDED_ONLY)/) && ($VD_alt_dial =~ /NONE|MAIN/) ) || ( ($VD_auto_alt_dial =~ /(ALT_AND_EXTENDED)/) && ($VD_alt_dial =~ /ALT/) ) || ( ($VD_auto_alt_dial =~ /ADDR3_AND_EXTENDED|ALT_AND_ADDR3_AND_EXTENDED/) && ($VD_alt_dial =~ /ADDR3/) ) || ( ($VD_auto_alt_dial =~ /(EXTENDED)/) && ($VD_alt_dial =~ /X/) && ($VD_alt_dial !~ /XLAST/) ) )
@@ -2587,8 +2589,7 @@ sub process_request
 									if (length($Xlast)<1)
 										{$Xlast=0;}
 									$VD_altdialx='';
-									$stmtA="SELECT gmt_offset_now,state,list_id,postal_code FROM vicidial_list where lead_id='$VD_lead_id';";
-										if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+									$stmtA="SELECT gmt_offset_now,state,list_id,postal_code FROM vicidial_list where lead_id=$VD_lead_id;";										if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 									$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 									$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 									$sthArows=$sthA->rows;
@@ -2604,7 +2605,7 @@ sub process_request
 										}
 									$sthA->finish();
 									$alt_dial_phones_count=0;
-									$stmtA="SELECT count(*) FROM vicidial_list_alt_phones where lead_id='$VD_lead_id';";
+									$stmtA="SELECT count(*) FROM vicidial_list_alt_phones where lead_id=$VD_lead_id;";
 										if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 									$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 									$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -2620,17 +2621,16 @@ sub process_request
 									while ( ($alt_dial_phones_count > 0) && ($alt_dial_phones_count > $Xlast) )
 										{
 										$Xlast++;
-										$stmtA="SELECT alt_phone_id,phone_number,active,phone_code FROM vicidial_list_alt_phones where lead_id='$VD_lead_id' and alt_phone_count='$Xlast';";
-											if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
+										$stmtA="SELECT alt_phone_id,phone_number,active,phone_code FROM vicidial_list_alt_phones where lead_id=$VD_lead_id and alt_phone_count='$Xlast';";											if ($AGILOG) {$agi_string = "|$stmtA|";   &agi_output;}
 										$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 										$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 										$sthArows=$sthA->rows;
 										if ($sthArows > 0)
 											{
 											@aryA = $sthA->fetchrow_array;
-											$VD_altdial_id =			$aryA[0];
-											$VD_altdial_phone = 		$aryA[1];
-											$VD_altdial_active = 		$aryA[2];
+											$VD_altdial_id =		$aryA[0];
+											$VD_altdial_phone = 	$aryA[1];
+											$VD_altdial_active = 	$aryA[2];
 											$VD_altdial_phone_code = 	$aryA[3];
 											}
 										else
@@ -2693,6 +2693,7 @@ sub process_request
 												{
 												if ($alt_dial_phones_count eq '$Xlast') 
 													{$Xlast = 'LAST';}
+												$stmtA = "INSERT INTO vicidial_hopper SET lead_id=$VD_lead_id,campaign_id='$VD_campaign_id',status='READY',list_id='$VD_list_id',gmt_offset_now='$VD_gmt_offset_now',state='$VD_state',alt_dial='X$Xlast',user='',priority='15',source='A';";
 												$passed_24hour_call_count=1;
 												if ( ($SScall_limit_24hour > 0) && ($VD_call_limit_24hour_method =~ /PHONE_NUMBER|LEAD/) )
 													{
@@ -2708,14 +2709,14 @@ sub process_request
 													$hopper_status='READY';
 													if ($VD_hopper_hold_inserts =~ /ENABLED|AUTONEXT/) {$hopper_status='RHOLD';}
 													$stmtA = "INSERT INTO vicidial_hopper SET lead_id='$VD_lead_id',campaign_id='$VD_campaign_id',status='$hopper_status',list_id='$VD_list_id',gmt_offset_now='$VD_gmt_offset_now',state='$VD_state',alt_dial='X$Xlast',user='',priority='15',source='A';";
-													$affected_rows = $dbhA->do($stmtA);
-													if ($AGILOG) {$agi_string = "--    VDH record inserted: |$affected_rows|   |$stmtA|X$Xlast|$VD_altdial_id|";   &agi_output;}
+												$affected_rows = $dbhA->do($stmtA);
+												if ($AGILOG) {$agi_string = "--    VDH record inserted: |$affected_rows|   |$stmtA|X$Xlast|$VD_altdial_id|";   &agi_output;}
 													if ($AGILOG) {$aad_string = "$VD_lead_id|$VD_altdial_phone|$VD_campaign_id|X$Xlast|15|hopper insert|";   &aad_output;}
 													if ($ADB > 0) {$aad_string = "ALT-31: $VD_lead_id|$VD_alt_dial|X$Xlast|";   &aad_output;}
 													$Xlast=99999;
 													$DNC_hopper_trigger=0;
-													}
-												else
+												}
+											else
 													{$DNC_hopper_trigger=1;}
 												}
 											else
@@ -2727,7 +2728,7 @@ sub process_request
 													if ($ADB > 0) {$aad_string = "ALT-32: $VD_lead_id|$VD_alt_dial|$Xlast|$alt_dial_phones_count|";   &aad_output;}
 													if ($alt_dial_phones_count eq '$Xlast') 
 														{$Xlast = 'LAST';}
-													$stmtA = "INSERT INTO vicidial_hopper SET lead_id='$VD_lead_id',campaign_id='$VD_campaign_id',status='DNC',list_id='$VD_list_id',gmt_offset_now='$VD_gmt_offset_now',state='$VD_state',alt_dial='X$Xlast',user='',priority='15',source='A';";
+													$stmtA = "INSERT INTO vicidial_hopper SET lead_id=$VD_lead_id,campaign_id='$VD_campaign_id',status='DNC',list_id='$VD_list_id',gmt_offset_now='$VD_gmt_offset_now',state='$VD_state',alt_dial='X$Xlast',user='',priority='15',source='A';";
 													$affected_rows = $dbhA->do($stmtA);
 													if ($AGILOG) {$agi_string = "--    VDH record DNC inserted: |$affected_rows|   |$stmtA|X$Xlast|$VD_altdial_id|";   &agi_output;}
 													$Xlast=99999;
@@ -3252,7 +3253,7 @@ sub check_24hour_call_count
 									if ($DBX) {print "     24-Hour Call Count State Override Match(postcode $TFH_OR_postcode_state): $TEMPcall_limit_24hour|$container_lines[$c]\n";}
 									if ($TEMP_state_ARY[2] < $TEMPcall_limit_24hour)
 										{
-										if ($DBX) {print "	  POSTCODE field override of override triggered: ($TEMP_state_ARY[2] < $TEMPcall_limit_24hour)\n";}
+										if ($DBX) {print "          POSTCODE field override of override triggered: ($TEMP_state_ARY[2] < $TEMPcall_limit_24hour)\n";}
 										$TEMPcall_limit_24hour = $TEMP_state_ARY[2];
 										}
 									}
@@ -3261,7 +3262,7 @@ sub check_24hour_call_count
 									if ($DBX) {print "     24-Hour Call Count State Override Match(state $temp_24hour_state): $TEMPcall_limit_24hour|$container_lines[$c]\n";}
 									if ($TEMP_state_ARY[2] < $TEMPcall_limit_24hour)
 										{
-										if ($DBX) {print "	  STATE field override of override triggered: ($TEMP_state_ARY[2] < $TEMPcall_limit_24hour)\n";}
+										if ($DBX) {print "          STATE field override of override triggered: ($TEMP_state_ARY[2] < $TEMPcall_limit_24hour)\n";}
 										$TEMPcall_limit_24hour = $TEMP_state_ARY[2];
 										}
 									}
@@ -3409,32 +3410,32 @@ sub process_khomp_analytics
 
 		if ( $new_khomp_api_token ne '0' )
 			{
-			# update the settings container
-			my $old_token_string = "khomp_api_token => $khomp_api_token";
-			my $new_token_string = "khomp_api_token => $new_khomp_api_token";
-			my $new_token_expire_time = time() + 3600;
-			my $old_token_expire_string = "khomp_api_token_expire => $khomp_api_token_expire";
-			my $new_token_expire_string = "khomp_api_token_expire => $new_token_expire_time";
+		# update the settings container
+		my $old_token_string = "khomp_api_token => $khomp_api_token";
+		my $new_token_string = "khomp_api_token => $new_khomp_api_token";
+		my $new_token_expire_time = time() + 3600;
+		my $old_token_expire_string = "khomp_api_token_expire => $khomp_api_token_expire";
+		my $new_token_expire_string = "khomp_api_token_expire => $new_token_expire_time";
 
-			# LOCK vicidial_settings_containers
-			$stmtA = "LOCK TABLES vicidial_settings_containers WRITE";
-			$dbhA->do($stmtA);
-			# UPDATE the Token
+		# LOCK vicidial_settings_containers
+		$stmtA = "LOCK TABLES vicidial_settings_containers WRITE";
+		$dbhA->do($stmtA);
+		# UPDATE the Token
 			$stmtToken = "UPDATE vicidial_settings_containers SET container_entry = REGEXP_REPLACE(container_entry, '$old_token_string', '$new_token_string') WHERE container_id = '$khomp_settings_container';";
-			$affected_rows = $dbhA->do($stmtToken);
-			# UPDATE the Expire time
+		$affected_rows = $dbhA->do($stmtToken);
+		# UPDATE the Expire time
 			$stmtExpire = "UPDATE vicidial_settings_containers SET container_entry = REGEXP_REPLACE(container_entry, '$old_token_expire_string', '$new_token_expire_string') WHERE container_id = '$khomp_settings_container';";
-			$affected_rows = $dbhA->do($stmtExpire);
-			# Unlock vicidial_settings_containers
-			$stmtA = "UNLOCK TABLES";
-			$dbhA->do($stmtA);
+		$affected_rows = $dbhA->do($stmtExpire);
+		# Unlock vicidial_settings_containers
+		$stmtA = "UNLOCK TABLES";
+		$dbhA->do($stmtA);
 
-			if ($AGILOG) {$agi_string = "--    KHOMP SC TOKEN UPDATE|$affected_rows|$stmtToken|";   &agi_output;}
-			if ($AGILOG) {$agi_string = "--    KHOMP SC TOKEN EXPIRE UPDATE|$affected_rows|$stmtExpire|";   &agi_output;}
+		if ($AGILOG) {$agi_string = "--    KHOMP SC TOKEN UPDATE|$affected_rows|$stmtToken|";   &agi_output;}
+		if ($AGILOG) {$agi_string = "--    KHOMP SC TOKEN EXPIRE UPDATE|$affected_rows|$stmtExpire|";   &agi_output;}
 
-			# over write the old with the new
-			$khomp_api_token = $new_khomp_api_token;
-			}
+		# over write the old with the new
+		$khomp_api_token = $new_khomp_api_token;
+		}
 		}
 	else
 		{

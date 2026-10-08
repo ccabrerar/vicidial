@@ -1,0 +1,25 @@
+AGENT LOAD BALANCING WEIGHT		Released: 2023-03-27
+
+This feature allows for agent load balancing according to a server's weight. Very handy when you have servers with different hardware specs.
+
+To enable it, you must create a new settings container with the ID AGENT_LOAD_BALANCING_WEIGHT. Inside the container, you must specify one or multiple lines with the following syntax:
+
+X.X.X.X,Y
+
+Where X.X.X.X is each server's IP address, and Y is the weight you want to assign to each server. Any lines which do not match this syntax are ignored.
+
+For example:
+
+10.10.10.1,10
+10.10.10.2,30
+10.10.10.3,20
+10.10.10.4,40
+
+According to the example, the total SUM(weight) for all 4 servers is 100, meaning that the first server will handle 10% (10/100) of all agents, while the second server will handle 30% (30/100), and so on.
+
+This allows us to set a higher weight for more powerful servers, and a lower one for less capable hardware.
+
+If a cluster is missing one or more server's IP, the default weight of 1000 is used for those missing servers.
+
+If no servers are defined within the container, or the container doesn't exist, the regular load balancing method is used (which would be the equivalent of all servers having the same weight).
+

@@ -798,7 +798,7 @@ if ($SUBMIT && $new_list_id && ($new_status || $revert_status) && (count($cb_use
 			$sort_by="desc";
 
 			# FIND THE STATUS THE CALLBACK WAS BEFORE THE CALL THAT THE AGENT DISPO'ED IT AS, IF IT EXISTS
-			$revert_stmt="select event_time, status, uniqueid from vicidial_agent_log where lead_id='$lead_id' and event_time<='$callback_entry_time' and status not in ('".implode("','", $cb_dispos)."') order by event_time desc limit 1";
+			$revert_stmt="select event_time, status, uniqueid from vicidial_agent_log where lead_id=$lead_id and event_time<='$callback_entry_time' and status not in ('".implode("','", $cb_dispos)."') order by event_time desc limit 1";
 			$revert_rslt=mysql_to_mysqli($revert_stmt, $link);
 			if (mysqli_num_rows($revert_rslt)>0) {
 				$revert_row=mysqli_fetch_row($revert_rslt);
@@ -810,7 +810,7 @@ if ($SUBMIT && $new_list_id && ($new_status || $revert_status) && (count($cb_use
 			} 
 
 			# FIND ANY OUTBOUND CALL MADE AFTER CALL WAS DISPO'ED BY AGENT AND NOT A CALLBACK
-			$revert_stmt2="select call_date, status, uniqueid from vicidial_log where lead_id='$lead_id' $callback_time_clause and status not in ('".implode("','", $cb_dispos)."') order by call_date desc limit 1";
+			$revert_stmt2="select call_date, status, uniqueid from vicidial_log where lead_id=$lead_id $callback_time_clause and status not in ('".implode("','", $cb_dispos)."') order by call_date desc limit 1";
 			$revert_rslt2=mysql_to_mysqli($revert_stmt2, $link);
 			if (mysqli_num_rows($revert_rslt2)>0) {
 				$revert_row2=mysqli_fetch_row($revert_rslt2);
@@ -822,7 +822,7 @@ if ($SUBMIT && $new_list_id && ($new_status || $revert_status) && (count($cb_use
 			}
 
 			# FIND ANY INBOUND CALL MADE AFTER CALL WAS DISPO'ED BY AGENT AND NOT A CALLBACK
-			$revert_stmt3="select call_date, status, closecallid from vicidial_closer_log where lead_id='$lead_id' $callback_time_clause and status not in ('".implode("','", $cb_dispos)."') order by call_date asc limit 1";
+			$revert_stmt3="select call_date, status, closecallid from vicidial_closer_log where lead_id=$lead_id $callback_time_clause and status not in ('".implode("','", $cb_dispos)."') order by call_date asc limit 1";
 			$revert_rslt3=mysql_to_mysqli($revert_stmt3, $link);
 			if (mysqli_num_rows($revert_rslt3)>0) {
 				$revert_row3=mysqli_fetch_row($revert_rslt3);
@@ -834,7 +834,7 @@ if ($SUBMIT && $new_list_id && ($new_status || $revert_status) && (count($cb_use
 			if ($DB) {echo "|$cb_row[0]<BR>$revert_stmt - $revert_row[2]<BR>$revert_stmt2 - $revert_row2[2]<BR>$revert_stmt3 - $revert_row3[2]|\n";}
 		}
 
-		$upd_stmt="update vicidial_list set $new_listSQL status='$new_status' where lead_id='$lead_id';";
+		$upd_stmt="update vicidial_list set $new_listSQL status='$new_status' where lead_id=$lead_id;";
 		$upd_rslt=mysql_to_mysqli($upd_stmt, $link);
 		$actual_callback_ct+=mysqli_affected_rows($link);
 		$upd_stmts .= " $upd_stmt";
@@ -854,7 +854,7 @@ if ($SUBMIT && $new_list_id && ($new_status || $revert_status) && (count($cb_use
 	$SQL_log = "$callback_stmt|$del_stmts|$upd_stmts|$arch_stmts|";
 	$SQL_log = preg_replace('/;/', '', $SQL_log);
 	$SQL_log = addslashes($SQL_log);
-	$stmt="INSERT INTO vicidial_admin_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$ip', event_section='LEADS', event_type='MODIFY', record_id='$lead_id', event_code='ADMIN CALLBACK BULK MOVE', event_sql=\"$SQL_log\", event_notes='callbacks deleted: $actual_purged_ct|leads moved: $actual_callback_ct|moved to: $new_list_id|archived cb: $actual_archived_ct';";
+	$stmt="INSERT INTO vicidial_admin_log set event_date=NOW(), user='$PHP_AUTH_USER', ip_address='$ip', event_section='LEADS', event_type='MODIFY', record_id=$lead_id, event_code='ADMIN CALLBACK BULK MOVE', event_sql=\"$SQL_log\", event_notes='callbacks deleted: $actual_purged_ct|leads moved: $actual_callback_ct|moved to: $new_list_id|archived cb: $actual_archived_ct';";
 	if ($DB) {echo "|$stmt|\n";}
 	$rslt=mysql_to_mysqli($stmt, $link);
 

@@ -1099,7 +1099,7 @@ sub select_format_loop
 		$ivr_filename = '';
 		$recording_found=0;
 
-		$stmtB = "SELECT recording_id,filename,location from recording_log where lead_id='$lead_id' and vicidial_id='$vicidial_id' and start_time >= '$shipdate 00:00:00' and start_time <= '$shipdate_end 23:59:59' order by start_time desc limit 100;";
+		$stmtB = "SELECT recording_id,filename,location from recording_log where lead_id=$lead_id and vicidial_id='$vicidial_id' and start_time >= '$shipdate 00:00:00' and start_time <= '$shipdate_end 23:59:59' order by start_time desc limit 100;";
 		$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
 		$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
 		$sthBrows=$sthB->rows;
@@ -1126,7 +1126,7 @@ sub select_format_loop
 
 		if ( ($archive_logs > 0) && ($recording_found < 1) )
 			{
-			$stmtB = "SELECT recording_id,filename,location from recording_log_archive where lead_id='$lead_id' and vicidial_id='$vicidial_id' and start_time >= '$shipdate 00:00:00' and start_time <= '$shipdate_end 23:59:59' order by start_time desc limit 100;";
+			$stmtB = "SELECT recording_id,filename,location from recording_log_archive where lead_id=$lead_id and vicidial_id='$vicidial_id' and start_time >= '$shipdate 00:00:00' and start_time <= '$shipdate_end 23:59:59' order by start_time desc limit 100;";
 			$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
 			$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
 			$sthBrows=$sthB->rows;
