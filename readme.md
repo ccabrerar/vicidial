@@ -1,5 +1,5 @@
 # Vicidial
-This repository is a clone made from the official Vicidial SVN trunk (revision 3329 as of 2021-08-21). It is meant to be a public GIT alternative to the common SVN code updated by the Vicidial group.
+This repository is a clone made from the official Vicidial SVN trunk (revision 4032 as of 2026-09-25). It is meant to be a public GIT alternative to the common SVN code updated by the Vicidial group.
 
 This version will (mostly) stick to the official source code. However, even though we try to submit official patches to Vicidial through the [Mantis bug tracker](http://www.vicidial.org/VICIDIALmantis), sometimes they get too long to get accepted or don't get accepted at all, so this code will include modifications to some key files which have not been yet accepted by Matt Florell, but which I find useful for our own company's use cases.
 
