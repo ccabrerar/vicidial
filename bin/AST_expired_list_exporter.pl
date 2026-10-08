@@ -416,7 +416,7 @@ if ($rslt->rows>0)
 				}
 			if ($pull_custom_info) 
 				{
-				$cdata_stmt="select * from custom_".$list_id." where lead_id=$lead_id";
+				$cdata_stmt="select * from custom_".$list_id." where lead_id='$lead_id'";
 				if ($DBX) {print "\n$cdata_stmt\n";}
 				$cdata_rslt=$dbhD->prepare($cdata_stmt);
 				$cdata_rslt->execute();

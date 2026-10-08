@@ -1,6 +1,6 @@
-<?php
+<?php 
 # AST_dial_log_report.php
-#
+# 
 # Copyright (C) 2024  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
 # CHANGES
@@ -38,8 +38,8 @@ if (isset($_GET["query_date_T"]))			{$query_date_T=$_GET["query_date_T"];}
 	elseif (isset($_POST["query_date_T"]))	{$query_date_T=$_POST["query_date_T"];}
 if (isset($_GET["server_ip"]))				{$server_ip=$_GET["server_ip"];}
 	elseif (isset($_POST["server_ip"]))		{$server_ip=$_POST["server_ip"];}
-if (isset($_GET["sip_hangup_cause"]))					{$sip_hangup_cause=$_GET["sip_hangup_cause"];}
-	elseif (isset($_POST["sip_hangup_cause"]))			{$sip_hangup_cause=$_POST["sip_hangup_cause"];}
+if (isset($_GET["sip_hangup_cause"]))			{$sip_hangup_cause=$_GET["sip_hangup_cause"];}
+	elseif (isset($_POST["sip_hangup_cause"]))	{$sip_hangup_cause=$_POST["sip_hangup_cause"];}
 if (isset($_GET["file_download"]))			{$file_download=$_GET["file_download"];}
 	elseif (isset($_POST["file_download"]))	{$file_download=$_POST["file_download"];}
 if (isset($_GET["lower_limit"]))			{$lower_limit=$_GET["lower_limit"];}
@@ -450,12 +450,12 @@ while($i < $sip_hangup_cause_ct)
 
 $sip_hangup_causes_string='|';
 
-$i=0;
+$i=0; 
 $sip_hangup_cause_SQL="";
 while($i < $sip_hangup_cause_ct)
 	{
 	$sip_hangup_cause[$i] = preg_replace("/\<|\>|\'|\"|\\\\|;/", '', $sip_hangup_cause[$i]);
-	if ( (strlen($sip_hangup_cause[$i]) > 0) and (preg_match("/\|$sip_hangup_cause[$i]\|/",$sip_hangup_cause_string)) )
+	if ( (strlen($sip_hangup_cause[$i]) > 0) and (preg_match("/\|$sip_hangup_cause[$i]\|/",$sip_hangup_cause_string)) ) 
 		{
 		$sip_hangup_causes_string .= "$sip_hangup_cause[$i]|";
 		$sip_hangup_causeQS .= "&sip_hangup_cause[]=$sip_hangup_cause[$i]";
@@ -467,7 +467,7 @@ while($i < $sip_hangup_cause_ct)
 if ( (preg_match('/\-\-ALL\-\-/',$sip_hangup_cause_string) ) or ($sip_hangup_cause_ct < 1) )
 	{
 	$HC_rpt_string="- "._QXZ("ALL SIP hangup causes")." ";
-	if (preg_match('/\-\-ALL\-\-/',$sip_hangup_cause_string))
+	if (preg_match('/\-\-ALL\-\-/',$sip_hangup_cause_string)) 
 		{
 		$sip_hangup_causeQS="&sip_hangup_cause[]=--ALL--";
 		$sip_hangup_cause_SQL="";
@@ -541,7 +541,7 @@ else
 $o=0;
 while ($servers_to_print > $o)
 	{
-	if (preg_match("/\|$LISTserverIPs[$o]\|/",$server_ip_string))
+	if (preg_match("/\|$LISTserverIPs[$o]\|/",$server_ip_string)) 
 		{$MAIN.="<option selected value=\"$LISTserverIPs[$o]\">$LISTserverIPs[$o] - $LISTserver_names[$o]</option>\n";}
 	else
 		{$MAIN.="<option value=\"$LISTserverIPs[$o]\">$LISTserverIPs[$o] - $LISTserver_names[$o]</option>\n";}
@@ -559,7 +559,7 @@ else
 $o=0;
 while ($sip_responses_to_print > $o)
 	{
-	if (preg_match("/\|$master_sip_response_directory[$o]\|/",$sip_hangup_causes_string))
+	if (preg_match("/\|$master_sip_response_directory[$o]\|/",$sip_hangup_causes_string)) 
 		{$MAIN.="<option selected value=\"$master_sip_response_directory[$o]\">$master_sip_response_directory[$o] - $master_sip_response_verbiage_directory[$o]</option>\n";}
 	else
 		{$MAIN.="<option value=\"$master_sip_response_directory[$o]\">$master_sip_response_directory[$o] - $master_sip_response_verbiage_directory[$o]</option>\n";}
@@ -716,7 +716,7 @@ if ($SUBMIT && $query_date) {
 	}
 	$dial_log_rpt_hf.="\n";
 	$TEXT.=$dial_log_rpt_hf.$dial_log_rpt.$dial_log_rpt_hf;
-
+	
 	$TEXT.="</PRE>\n";
 	$HTML.="</tr></table>";
 

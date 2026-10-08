@@ -674,7 +674,6 @@ while ($dispo_sale_row=mysqli_fetch_row($dispo_sale_rslt))
 if ( ($SUBMIT=="SUBMIT") or ($SUBMIT==_QXZ("SUBMIT")) )
 	{
 	# Sale counts per rep 
-
 	$stmt="select max(event_time), ".$vicidial_agent_log_table.".user, ".$vicidial_agent_log_table.".lead_id, ".$vicidial_list_table.".status as current_status, ".$vicidial_agent_log_table.".campaign_id, ".$vicidial_agent_log_table.".status from ".$vicidial_agent_log_table.", ".$vicidial_list_table." where event_time>='$query_date' and event_time<='$end_date' $group_SQL and ".$vicidial_agent_log_table.".status in (select status from vicidial_campaign_statuses where sale='Y' $group_SQL UNION select status from vicidial_statuses where sale='Y') and ".$vicidial_agent_log_table.".lead_id=".$vicidial_list_table.".lead_id group by ".$vicidial_agent_log_table.".user, ".$vicidial_agent_log_table.".lead_id";
 	if ($DB) {$ASCII_text.="$stmt\n";}
 	$rslt=mysql_to_mysqli($stmt, $link);
@@ -700,18 +699,18 @@ if ( ($SUBMIT=="SUBMIT") or ($SUBMIT==_QXZ("SUBMIT")) )
 			{
 			if (preg_match("/\|$agent_status\|/i", $report_sale_array["$campaign_id"]) || preg_match("/\|$agent_status\|/i", $report_sale_array["VICIDIAL_SALE"]))
 				{
-			$sale_array[$row["user"]]++;
+				$sale_array[$row["user"]]++;
 
-			# Get actual talk time for all calls made by the user for this particular lead. If cancelled and incomplete sales are to have their times 
-			# counted towards sales talk time, move the below lines OUTSIDE the curly bracket below, so the query runs regardless of what "type" of 
-			# sale it is.
-				$sale_time_stmt="select sum(talk_sec)-sum(dead_sec) from ".$vicidial_agent_log_table." where user='$user' and lead_id=$lead_id $group_SQL";
-			if ($DB) {$ASCII_text.="$sale_time_stmt\n";}
-			$sale_time_rslt=mysql_to_mysqli($sale_time_stmt, $link);
-			$sale_time_row=mysqli_fetch_row($sale_time_rslt);
-			$sales_talk_time_array[$row["user"]]+=$sale_time_row[0];
+				# Get actual talk time for all calls made by the user for this particular lead. If cancelled and incomplete sales are to have their times 
+				# counted towards sales talk time, move the below lines OUTSIDE the curly bracket below, so the query runs regardless of what "type" of 
+				# sale it is.
+				$sale_time_stmt="select sum(talk_sec)-sum(dead_sec) from ".$vicidial_agent_log_table." where user='$user' and lead_id='$lead_id' $group_SQL";
+				if ($DB) {$ASCII_text.="$sale_time_stmt\n";}
+				$sale_time_rslt=mysql_to_mysqli($sale_time_stmt, $link);
+				$sale_time_row=mysqli_fetch_row($sale_time_rslt);
+				$sales_talk_time_array[$row["user"]]+=$sale_time_row[0];
+				}
 			}
-		}
 		}
 
 	$HTML_text.="<PRE><FONT SIZE=2>";
@@ -889,7 +888,6 @@ if ( ($SUBMIT=="SUBMIT") or ($SUBMIT==_QXZ("SUBMIT")) )
 				if ($contacts>0) {$average_contact_time=sec_convert(round(MathZDC($contact_talk_time, $contacts)), 'H');} else {$average_contact_time="00:00";}
 
 				$ASCII_text.="| ".sprintf("%-40s", $user_row["full_name"]);
-
 				$ASCII_text.=" | <a href='user_stats.php?user=$user&begin_date=$query_date_D&end_date=$end_date_D'>".sprintf("%10s", substr("$user", 0, 10))."</a>";
 				$ASCII_text.=" | ".sprintf("%5s", $calls);	$group_calls+=$calls;
 				$ASCII_text.=" | ".sprintf("%5s", $leads);	$group_leads+=$leads;

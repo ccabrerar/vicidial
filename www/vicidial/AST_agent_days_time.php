@@ -540,7 +540,7 @@ else
 	$MAIN.="<tr><td><font size=2>"._QXZ("DATE")." </td><td align=left><font size=2>"._QXZ("PAUSE")."</td><td align=left><font size=2> "._QXZ("WAIT")."</td><td align=left><font size=2> "._QXZ("TALK")."</td><td align=right><font size=2> "._QXZ("DISPO")."</td><td align=right><font size=2> "._QXZ("DEAD")."</td><td align=right><font size=2> "._QXZ("CUSTOMER")."</td><td align=right><font size=2> "._QXZ("TOTAL")."</td></tr>\n";
 	$MAINprintALL .= $MAIN;
 	$MAIN='';
-
+	
 	$i=0;
 	while ($i < $rows_to_print)
 		{

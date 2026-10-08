@@ -3,9 +3,9 @@
 #
 # Copyright (C) 2023  Joe Johnson, Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
 #
-# This is the interface for agents to chat with customers and each other.  It's separate from the manager-to-agent
+# This is the interface for agents to chat with customers and each other.  It's separate from the manager-to-agent 
 # chat interface out of necessity and calls the chat_db_query.php page to send information and display it.  It will
-# display any open chat the agent has, and of those open chats the full conversation of the current active chat
+# display any open chat the agent has, and of those open chats the full conversation of the current active chat 
 # will be displayed.  It will also show when an agent has a new unread message in any of his conversations and
 # allow the agent to toggle between them.  They can also initiate chats with any agent currently logged into a
 # campaign through the agent interface.
@@ -98,19 +98,18 @@ if ($SSallow_web_debug < 1) {$DB=0;}
 ##### END SETTINGS LOOKUP #####
 ###########################################
 
-### Load hard coded variables and then load then from options.php
-$customer_chat_refresh_seconds = 1;
-
+# if options file exists, use the override values for the above variables
+#   see the options-example.php file for more information
 if (file_exists('options.php'))
-
-$customer_chat_refresh_miliseconds = $customer_chat_refresh_seconds * 1000;
-
+	{
+	require('options.php');
+	}
 
 header ("Content-type: text/html; charset=utf-8");
 header ("Cache-Control: no-cache, must-revalidate");  // HTTP/1.1
 header ("Pragma: no-cache");                          // HTTP/1.0
 
-if ($clickmute!="1") {$clickmute="0";} // Prevents annoying quirk of playing the audio cue every time you click the tab to view this
+if ($clickmute!="1") {$clickmute="0";} // Prevents annoying quirk of playing the audio cue every time you click the tab to view this 
 
 $lead_id = preg_replace("/[^0-9]/","",$lead_id);
 $chat_id = preg_replace('/[^- \_\.0-9a-zA-Z]/','',$chat_id);
@@ -202,7 +201,7 @@ if (mysqli_num_rows($user_rslt)>0) {
 		$chat_id=$chat_row[0];
 	}
 }
-$stmt="select * from vicidial_list where lead_id=$lead_id";
+$stmt="SELECT * from vicidial_list where lead_id='$lead_id';";
 $rslt=mysql_to_mysqli($stmt, $link);
 if (mysqli_num_rows($rslt)>0) {
 	$row=mysqli_fetch_array($rslt);
@@ -271,15 +270,15 @@ function UpdateChatWindow() {
 			{
 			xmlhttp = new XMLHttpRequest();
 			}
-		if (xmlhttp)
-			{
+		if (xmlhttp) 
+			{ 
 			chat_query = "&chat_creator="+chat_creator+"&chat_id="+chat_id+"&user="+user+"&pass="+pass+"&user_level="+user_level+"&current_message_count="+current_message_count+"&action=update_agent_chat_window";
-			xmlhttp.open('POST', 'chat_db_query.php');
+			xmlhttp.open('POST', 'chat_db_query.php'); 
 			xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
-			xmlhttp.send(chat_query);
-			xmlhttp.onreadystatechange = function()
-				{
-				if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
+			xmlhttp.send(chat_query); 
+			xmlhttp.onreadystatechange = function() 
+				{ 
+				if (xmlhttp.readyState == 4 && xmlhttp.status == 200) 
 					{
 					// var fullchatlog = xmlhttp.responseText;
 					var chatlogresponse	= xmlhttp.responseText;
@@ -295,22 +294,22 @@ function UpdateChatWindow() {
 
 
 					// document.getElementById('ChatDisplay').innerHTML=fullchatlog;
-
+					
 					var current_message_field_update = document.getElementById('current_message_count');
 					if (current_message_field_update != null) {var current_message_count_update=current_message_field_update.value;}
 
 					// document.getElementById('ChatDisplay').innerHTML+=current_message_count_update+" > "+current_message_count;
 
-					if (current_message_count_update>current_message_count)
+					if (current_message_count_update>current_message_count) 
 						{
 						var myDiv = document.getElementById('ChatDisplay');
 						document.getElementById('ChatDisplay').scrollTop = document.getElementById('ChatDisplay').scrollHeight;
 
-						if (clickMute==0 && !document.getElementById("MuteCustomerChatAlert").checked)
+						if (clickMute==0 && !document.getElementById("MuteCustomerChatAlert").checked) 
 							{
 							document.getElementById("CustomerChatAudioAlertFile").play();
 							}
-						else if (clickMute>0)
+						else if (clickMute>0) 
 							{
 							clickMute=0;
 							}
@@ -346,18 +345,18 @@ function SendMessage(chat_id, user, message, chat_member_name) {
 		{
 		xmlhttp = new XMLHttpRequest();
 		}
-	if (xmlhttp)
-		{
+	if (xmlhttp) 
+		{ 
 		chat_query = "&chat_message="+chat_message+"&chat_level="+chat_level+"&user_level="+user_level+"&chat_id="+chat_id+"&chat_member_name="+chat_member_name+"&user="+user+"&pass="+pass+"&action=agent_send_message";
-		xmlhttp.open('POST', 'chat_db_query.php');
+		xmlhttp.open('POST', 'chat_db_query.php'); 
 		xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
-		xmlhttp.send(chat_query);
-		xmlhttp.onreadystatechange = function()
-			{
-			if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
+		xmlhttp.send(chat_query); 
+		xmlhttp.onreadystatechange = function() 
+			{ 
+			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) 
 				{
 				var posting_response = xmlhttp.responseText;
-				if (posting_response)
+				if (posting_response) 
 					{
 					chat_alert_box(posting_response);
 					}
@@ -388,18 +387,18 @@ function JoinChat(chat_id) {
 		{
 		xmlhttp = new XMLHttpRequest();
 		}
-	if (xmlhttp)
-		{
+	if (xmlhttp) 
+		{ 
 		chat_query = "&chat_id="+chat_id+"&chat_member_name="+chat_member_name+"&user="+user+"&pass="+pass+"&action=join_chat";
-		xmlhttp.open('POST', 'chat_db_query.php');
+		xmlhttp.open('POST', 'chat_db_query.php'); 
 		xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
-		xmlhttp.send(chat_query);
-		xmlhttp.onreadystatechange = function()
-			{
-			if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
+		xmlhttp.send(chat_query); 
+		xmlhttp.onreadystatechange = function() 
+			{ 
+			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) 
 				{
 				var join_attempt_results = xmlhttp.responseText.split("|");
-				if (join_attempt_results[1])
+				if (join_attempt_results[1]) 
 					{
 					chat_alert_box(join_attempt_results[1]);
 					}
@@ -418,7 +417,7 @@ function JoinChat(chat_id) {
 						{
 						document.getElementById('chat_creator_console').innerHTML="<BR/><BR/><input class='blue_btn' type='button' style=\"width:150px\" value=\"<?php echo _QXZ("INVITE"); ?>\" onClick=\"javascript:document.getElementById('email_window').style.display='block'\">\n<BR/><BR/><input class='red_btn' type='button' style=\"width:150px\" value=\"<?php echo _QXZ("END CHAT"); ?>\" onClick=\"EndChat()\">";
 						}
-					else
+					else 
 						{
 						document.getElementById('chat_creator_console').innerHTML="<BR/><BR/><input class='red_btn' type='button' style=\"width:150px\" value=\"<?php echo _QXZ("END CHAT"); ?>\" onClick=\"EndChat()\">";
 						}
@@ -441,15 +440,15 @@ function RefreshLiveChatWindow() {
 		{
 		xmlhttp = new XMLHttpRequest();
 		}
-	if (xmlhttp)
-		{
+	if (xmlhttp) 
+		{ 
 		chat_query = "&chat_creator="+chat_creator+"&chat_id="+chat_id+"&user="+user+"&pass="+pass+"&user_level="+user_level+"&action=show_live_chats";
-		xmlhttp.open('POST', 'chat_db_query.php');
+		xmlhttp.open('POST', 'chat_db_query.php'); 
 		xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
-		xmlhttp.send(chat_query);
-		xmlhttp.onreadystatechange = function()
-			{
-			if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
+		xmlhttp.send(chat_query); 
+		xmlhttp.onreadystatechange = function() 
+			{ 
+			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) 
 				{
 				var live_chat_info = xmlhttp.responseText;
 				document.getElementById('ActiveChats').innerHTML=live_chat_info;
@@ -471,15 +470,15 @@ function StartChat() {
 		{
 		xmlhttp = new XMLHttpRequest();
 		}
-	if (xmlhttp)
-		{
+	if (xmlhttp) 
+		{ 
 		chat_query = "&action=start_chat&user="+user+"&pass="+pass+"&chat_group_id="+chat_group_id+"&server_ip="+server_ip;
-		xmlhttp.open('POST', 'chat_db_query.php');
+		xmlhttp.open('POST', 'chat_db_query.php'); 
 		xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
-		xmlhttp.send(chat_query);
-		xmlhttp.onreadystatechange = function()
-			{
-			if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
+		xmlhttp.send(chat_query); 
+		xmlhttp.onreadystatechange = function() 
+			{ 
+			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) 
 				{
 				var start_chat_attempt_result = xmlhttp.responseText;
 				if (!start_chat_attempt_result) {
@@ -528,24 +527,24 @@ function SendInvite() {
 		{
 		xmlhttp = new XMLHttpRequest();
 		}
-	if (xmlhttp)
-		{
+	if (xmlhttp) 
+		{ 
 		chat_query = "&action=send_invite&chat_id="+chat_id+"&chat_group_id="+chat_group_id+"&lead_id="+lead_id+"&user="+user+"&pass="+pass+"&email="+email;
-		xmlhttp.open('POST', 'chat_db_query.php');
+		xmlhttp.open('POST', 'chat_db_query.php'); 
 		xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
-		xmlhttp.send(chat_query);
-		xmlhttp.onreadystatechange = function()
-			{
-			if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
+		xmlhttp.send(chat_query); 
+		xmlhttp.onreadystatechange = function() 
+			{ 
+			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) 
 				{
 				var email_sent = xmlhttp.responseText;
-				if (email_sent)
+				if (email_sent) 
 					{
 					parent.check_for_incoming_other(email_sent);  // Force the agent interface to do it's thing for a live chat coming across, even though in this case the customer isn't in it yet.  Sends lead ID to parent function as a flag, so as not to show the INVITE button when this page reloads
 					document.getElementById('email_window').style.display='none';
 					document.getElementById('chat_creator_console').innerHTML="<BR/><BR/><input class='red_btn' type='button' style=\"width:150px\" value=\"<?php echo _QXZ("END CHAT"); ?>\" onClick=\"EndChat()\">";
 					}
-				else
+				else 
 					{
 					chat_alert_box("<?php echo _QXZ("There was a problem sending the email invite - please re-check your information and try again."); ?>"+email_sent);
 					}
@@ -569,16 +568,16 @@ function LeaveChat(extra_action) {
 			{
 			xmlhttp = new XMLHttpRequest();
 			}
-		if (xmlhttp)
-			{
+		if (xmlhttp) 
+			{ 
 			chat_query = "&action=agent_leave_chat&chat_id="+chat_id+"&user="+user+"&pass="+pass;
 			// chat_alert_box(chat_query);
-			xmlhttp.open('POST', 'chat_db_query.php');
+			xmlhttp.open('POST', 'chat_db_query.php'); 
 			xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
-			xmlhttp.send(chat_query);
-			xmlhttp.onreadystatechange = function()
-				{
-				if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
+			xmlhttp.send(chat_query); 
+			xmlhttp.onreadystatechange = function() 
+				{ 
+				if (xmlhttp.readyState == 4 && xmlhttp.status == 200) 
 					{
 					//if (chat_creator==user) {EndChat();}
 					if (extra_action=="close_window") {window.close();}
@@ -610,24 +609,24 @@ function EndChat(hangup_override) { // hangup_override comes from parent Iframe 
 		{
 		xmlhttp = new XMLHttpRequest();
 		}
-	if (xmlhttp)
-		{
+	if (xmlhttp) 
+		{ 
 		chat_query = "&action=end_chat&chat_id="+chat_id+"&chat_creator="+chat_creator+"&user="+user+"&pass="+pass+"&lead_id="+lead_id+"&server_ip="+server_ip;
-		xmlhttp.open('POST', 'chat_db_query.php');
+		xmlhttp.open('POST', 'chat_db_query.php'); 
 		xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
-		xmlhttp.send(chat_query);
-		xmlhttp.onreadystatechange = function()
-			{
-			if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
+		xmlhttp.send(chat_query); 
+		xmlhttp.onreadystatechange = function() 
+			{ 
+			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) 
 				{
 				var finished_chat = xmlhttp.responseText;
 				finished_chat_text=finished_chat.split("|");
 				if (!hangup_override) {chat_alert_box(finished_chat_text[0]);} // Don't bother to alert if chat ends as the result of the agent clicking HANGUP CUSTOMER from the parent window
-				if (finished_chat_text[0].match(/Chat ended/))
+				if (finished_chat_text[0].match(/Chat ended/)) 
 					{
 					document.getElementById('chat_creator_console').innerHTML=finished_chat_text[1];
 					document.getElementById('chat_group_id').value='';
-					// IF AGENT NEVER INVITED SOMEONE, THERE'S NO LEAD ATTACHED AND IT'S SAFE FOR THEM TO JUST GO BACK TO BEING PAUSED WITHOUT HAVING TO DO ANYTHING ELSE.
+					// IF AGENT NEVER INVITED SOMEONE, THERE'S NO LEAD ATTACHED AND IT'S SAFE FOR THEM TO JUST GO BACK TO BEING PAUSED WITHOUT HAVING TO DO ANYTHING ELSE.  
 					// HOWEVER, SINCE WE DEACTIVATED THE PAUSE BUTTON FROM THE StartChat() FUNCTION WE NEED TO REACTIVATE IT IN PAUSED MODE.
 					if (finished_chat_text[2]=="TOGGLE_DIAL_CONTROL")
 						{
@@ -653,7 +652,7 @@ function StartRefresh() {
 		{
 		alert("This page cannot run outside of the Vicidial agent interface");
 		}
-	else
+	else 
 		{
 		rInt=window.setInterval(function() {RefreshLiveChatWindow()}, <?php echo $customer_chat_refresh_milliseconds; ?>);
 		}
@@ -695,15 +694,15 @@ function LoadXferOptions() {
 		{
 		xmlhttp = new XMLHttpRequest();
 		}
-	if (xmlhttp)
-		{
+	if (xmlhttp) 
+		{ 
 		chat_query = "&action=load_xfer_options&user="+user+"&pass="+pass+"&lead_id="+lead_id+"&server_ip="+server_ip+"&chat_group_id="+chat_group_id;
-		xmlhttp.open('POST', 'chat_db_query.php');
+		xmlhttp.open('POST', 'chat_db_query.php'); 
 		xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
-		xmlhttp.send(chat_query);
-		xmlhttp.onreadystatechange = function()
-			{
-			if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
+		xmlhttp.send(chat_query); 
+		xmlhttp.onreadystatechange = function() 
+			{ 
+			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) 
 				{
 				var xfer_options = xmlhttp.responseText;
 				if (xfer_options!="")
@@ -718,12 +717,12 @@ function LoadXferOptions() {
 					opt.value = "";
 					opt.innerHTML = "<?php echo _QXZ("-- Select a group to transfer to --"); ?>";
 					GroupOptions.appendChild(opt);
-
+					
 					var opt = document.createElement('option');
 					opt.value = "";
 					opt.innerHTML = "<?php echo _QXZ("-- Select an agent to transfer to --"); ?>";
 					AgentOptions.appendChild(opt);
-*/
+*/					
 					for (var i = 0; i<groups_array.length; i++)
 						{
 						var opt = document.createElement('option');
@@ -739,7 +738,7 @@ function LoadXferOptions() {
 						opt.innerHTML = agent_names_array[i];
 						AgentOptions.appendChild(opt);
 						}
-					}
+					} 
 				}
 			}
 		}
@@ -763,7 +762,7 @@ function SendChatXferSpan(selGroup, selAgent) {
 			var chat_xfer_value=document.getElementById("ChatXferGroups").options[selGroup].value;
 			var chat_xfer_type="group";
 			}
-		else
+		else 
 			{
 			var chat_xfer_value=document.getElementById("ChatXferAgents").options[selAgent].value;
 			var chat_xfer_type="agent";
@@ -775,15 +774,15 @@ function SendChatXferSpan(selGroup, selAgent) {
 		{
 		xmlhttp = new XMLHttpRequest();
 		}
-	if (xmlhttp)
-		{
+	if (xmlhttp) 
+		{ 
 		chat_query = "&action=xfer_chat&chat_member_name="+chat_member_name+"&user="+user+"&pass="+pass+"&lead_id="+lead_id+"&chat_id="+chat_id+"&server_ip="+server_ip+"&chat_xfer_value="+chat_xfer_value+"&chat_xfer_type="+chat_xfer_type;
-		xmlhttp.open('POST', 'chat_db_query.php');
+		xmlhttp.open('POST', 'chat_db_query.php'); 
 		xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded; charset=UTF-8');
-		xmlhttp.send(chat_query);
-		xmlhttp.onreadystatechange = function()
-			{
-			if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
+		xmlhttp.send(chat_query); 
+		xmlhttp.onreadystatechange = function() 
+			{ 
+			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) 
 				{
 				var xfer_result_data = xmlhttp.responseText;
 				var xfer_result=xfer_result_data.split("|");
@@ -795,14 +794,14 @@ function SendChatXferSpan(selGroup, selAgent) {
 					{
 					alert("<?php echo _QXZ("System error - multiple chats found"); ?>");
 					}
-				else
+				else 
 					{
 					document.getElementById('chat_creator_console').innerHTML=''; // DO NOT MAKE ANY BUTTONS AVAILABLE AT THIS POINT FOR ENDING OR STARTING A CHAT!
 					document.getElementById('ChatConsoleSpan').style.display='none';
 					document.getElementById('XferConsoleSpan').style.display='none';
 					document.getElementById('chat_group_id').value='';
 					document.getElementById('chat_creator').value='XFER';
-					// IF AGENT NEVER INVITED SOMEONE, THERE'S NO LEAD ATTACHED AND IT'S SAFE FOR THEM TO JUST GO BACK TO BEING PAUSED WITHOUT HAVING TO DO ANYTHING ELSE.
+					// IF AGENT NEVER INVITED SOMEONE, THERE'S NO LEAD ATTACHED AND IT'S SAFE FOR THEM TO JUST GO BACK TO BEING PAUSED WITHOUT HAVING TO DO ANYTHING ELSE.  
 					// HOWEVER, SINCE WE DEACTIVATED THE PAUSE BUTTON FROM THE StartChat() FUNCTION WE NEED TO REACTIVATE IT IN PAUSED MODE.
 					if (xfer_result[2]=="TOGGLE_DIAL_CONTROL")
 						{
@@ -815,7 +814,7 @@ function SendChatXferSpan(selGroup, selAgent) {
 							window.parent.document.getElementById("DiaLControl").innerHTML = DiaLControl_auto_HTML;
 							}
 						}
-					UpdateChatWindow();
+					UpdateChatWindow();				
 					}
 				}
 			}
@@ -946,7 +945,7 @@ echo ($customer_chat_refresh_seconds!=1 ? "<center><font class='chat_timestamp b
 		if (!$chat_id) {
 			echo "<BR/><BR/><input class='green_btn' type='button' style=\"width:150px\" value=\""._QXZ("START CHAT")."\" onClick=\"StartChat()\">";
 
-			echo "<BR/><BR/><select name='startchat_group_id' id='startchat_group_id' class='chat_window' onChange=\"document.getElementById('chat_group_id').value=this.value\">\n";
+			echo "<BR/><BR/><select name='startchat_group_id' id='startchat_group_id' class='chat_window' onChange=\"document.getElementById('chat_group_id').value=this.value\">\n"; 
 			echo "<option value='' selected>--"._QXZ("SELECT A CHAT GROUP")."--</option>\n";
 			# CREATE LIST OF GroUP IDS to select
 			if (count($chat_group_ids)>0) {
@@ -985,7 +984,7 @@ echo ($customer_chat_refresh_seconds!=1 ? "<center><font class='chat_timestamp b
 		}
 		echo "</span>";
 	}
-
+	
 	?>
 	</td>
 </tr>

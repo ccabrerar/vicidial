@@ -826,7 +826,7 @@ if (length($with_inboundSQL)>3)
 		$user = '';
 		$agent_name='';
 
-		$stmtB = "select vicidial_xfer_log.user,full_name from vicidial_xfer_log,vicidial_users where lead_id=$lead_id and closer='$closer' and xfercallid='$xfercallid' and call_date >= '$shipdate 00:00:00' and call_date <= '$shipdate 23:59:59' and vicidial_users.user=vicidial_xfer_log.user order by call_date desc limit 1;";
+		$stmtB = "select vicidial_xfer_log.user,full_name from vicidial_xfer_log,vicidial_users where lead_id='$lead_id' and closer='$closer' and xfercallid='$xfercallid' and call_date >= '$shipdate 00:00:00' and call_date <= '$shipdate 23:59:59' and vicidial_users.user=vicidial_xfer_log.user order by call_date desc limit 1;";
 		$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
 		$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
 		$sthBrows=$sthB->rows;
@@ -1106,7 +1106,7 @@ sub select_format_loop
 			$ivr_id = '0';
 			$ivr_filename = '';
 
-			$stmtB = "select recording_id,filename,location from recording_log where lead_id=$lead_id and vicidial_id='$vicidial_id' and start_time >= '$shipdate 00:00:00' and start_time <= '$shipdate 23:59:59' order by start_time desc limit 1;";
+			$stmtB = "select recording_id,filename,location from recording_log where lead_id='$lead_id' and vicidial_id='$vicidial_id' and start_time >= '$shipdate 00:00:00' and start_time <= '$shipdate 23:59:59' order by start_time desc limit 1;";
 			$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
 			$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
 			$sthBrows=$sthB->rows;
@@ -1123,7 +1123,7 @@ sub select_format_loop
 
 			if ( ($sthBrows < 1) && ($skip_rec_extra < 1) )
 				{
-				$stmtB = "select recording_id,filename,location from recording_log where lead_id=$lead_id and start_time >= '$shipdate 00:00:00' and start_time <= '$shipdate 23:59:59' order by length_in_sec desc limit 1;";
+				$stmtB = "select recording_id,filename,location from recording_log where lead_id='$lead_id' and start_time >= '$shipdate 00:00:00' and start_time <= '$shipdate 23:59:59' order by length_in_sec desc limit 1;";
 				$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
 				$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
 				$sthBrows=$sthB->rows;
@@ -1141,7 +1141,7 @@ sub select_format_loop
 
 			if ( (length($ivr_id)<3) && ($skip_rec_extra < 1) )
 				{
-				$stmtB = "select recording_id,filename,location from recording_log where lead_id=$lead_id order by length_in_sec desc limit 1;";
+				$stmtB = "select recording_id,filename,location from recording_log where lead_id='$lead_id' order by length_in_sec desc limit 1;";
 				$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
 				$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
 				$sthBrows=$sthB->rows;
@@ -1242,7 +1242,7 @@ sub select_format_loop
 				{
 				### Look for other closer calls after this call
 				$more_calls[0]='';
-				$stmtB = "select closecallid,length_in_sec,queue_seconds,agent_alert_delay from vicidial_closer_log,vicidial_inbound_groups where lead_id=$lead_id and call_date >= '$call_date' and call_date <= '$shipdate 23:59:59' and campaign_id=group_id order by call_date limit 10;";
+				$stmtB = "select closecallid,length_in_sec,queue_seconds,agent_alert_delay from vicidial_closer_log,vicidial_inbound_groups where lead_id='$lead_id' and call_date >= '$call_date' and call_date <= '$shipdate 23:59:59' and campaign_id=group_id order by call_date limit 10;";
 				$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
 				$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
 				$sthBrows=$sthB->rows;
@@ -1328,7 +1328,7 @@ sub select_format_loop
 				}
 			else
 				{
-				$stmtB = "select vc.campaign_cid,vc.campaign_name,CONVERT_TZ(call_date,$convert_tz) from vicidial_campaigns vc,vicidial_log vl where lead_id=$lead_id and call_date >= '$shipdate 00:00:00' and call_date <= '$call_date' and vc.campaign_id=vl.campaign_id order by call_date desc limit 1;";
+				$stmtB = "select vc.campaign_cid,vc.campaign_name,CONVERT_TZ(call_date,$convert_tz) from vicidial_campaigns vc,vicidial_log vl where lead_id='$lead_id' and call_date >= '$shipdate 00:00:00' and call_date <= '$call_date' and vc.campaign_id=vl.campaign_id order by call_date desc limit 1;";
 				if ($DBX > 0) {print "$stmtB\n";}
 				$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
 				$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
@@ -1515,7 +1515,7 @@ sub select_format_loop
 			# 17-  Note Time Stamp: Time Stamp of Note
 			# 18-  Note Text: Actual Note taken by agent
 
-			$stmtB = "select CONVERT_TZ(call_date,$convert_tz),order_id,appointment_date,appointment_time,call_notes from vicidial_call_notes where lead_id=$lead_id and vicidial_id='$uniqueid' and call_date >= '$shipdate 00:00:00' and call_date <= '$shipdate 23:59:59' order by call_date desc limit 1;";
+			$stmtB = "select CONVERT_TZ(call_date,$convert_tz),order_id,appointment_date,appointment_time,call_notes from vicidial_call_notes where lead_id='$lead_id' and vicidial_id='$uniqueid' and call_date >= '$shipdate 00:00:00' and call_date <= '$shipdate 23:59:59' order by call_date desc limit 1;";
 			$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
 			$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
 			$sthBrows=$sthB->rows;
@@ -1567,7 +1567,7 @@ sub select_format_loop
 			else {$in_out = "Inbound";}
 
 			$dispo_time = 0;
-			$stmtB = "select dispo_sec from vicidial_agent_log where lead_id=$lead_id and user='$closer' and event_time >= '$shipdate 00:00:00' and event_time <= '$shipdate 23:59:59' order by event_time desc limit 1;";
+			$stmtB = "select dispo_sec from vicidial_agent_log where lead_id='$lead_id' and user='$closer' and event_time >= '$shipdate 00:00:00' and event_time <= '$shipdate 23:59:59' order by event_time desc limit 1;";
 			$sthB = $dbhB->prepare($stmtB) or die "preparing: ",$dbhB->errstr;
 			$sthB->execute or die "executing: $stmtB ", $dbhB->errstr;
 			$sthBrows=$sthB->rows;

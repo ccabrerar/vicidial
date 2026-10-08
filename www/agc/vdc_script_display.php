@@ -994,7 +994,7 @@ if (preg_match('/--A--TABLEper_call_notes--B--/i',$script_text))
 		$NOTESout .= "</TR>";
 
 
-		$stmt="SELECT start_epoch,call_date,campaign_id,length_in_sec,status,phone_code,phone_number,lead_id,term_reason,alt_dial,comments,uniqueid,user from vicidial_log where lead_id=$lead_id order by call_date desc limit 10000;";
+		$stmt="SELECT start_epoch,call_date,campaign_id,length_in_sec,status,phone_code,phone_number,lead_id,term_reason,alt_dial,comments,uniqueid,user from vicidial_log where lead_id='$lead_id' order by call_date desc limit 10000;";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		$out_logs_to_print = mysqli_num_rows($rslt);
 		if ($format=='debug') {$NOTESout .= "|$out_logs_to_print|$stmt|";}
@@ -1062,7 +1062,7 @@ if (preg_match('/--A--TABLEper_call_notes--B--/i',$script_text))
 			$u++;
 			}
 
-		$stmt="SELECT start_epoch,call_date,campaign_id,length_in_sec,status,phone_code,phone_number,lead_id,term_reason,queue_seconds,uniqueid,closecallid,user from vicidial_closer_log where lead_id=$lead_id order by closecallid desc limit 10000;";
+		$stmt="SELECT start_epoch,call_date,campaign_id,length_in_sec,status,phone_code,phone_number,lead_id,term_reason,queue_seconds,uniqueid,closecallid,user from vicidial_closer_log where lead_id='$lead_id' order by closecallid desc limit 10000;";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		$in_logs_to_print = mysqli_num_rows($rslt);
 		if ($format=='debug') {$NOTESout .= "|$in_logs_to_print|$stmt|";}

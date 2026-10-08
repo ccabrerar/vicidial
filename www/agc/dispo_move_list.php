@@ -463,7 +463,7 @@ if ($match_found > 0)
 	if ( (strlen($lead_id) > 0) and (strlen($new_list_id) > 2) )
 		{
 		$search_count=0;
-		$stmt = "SELECT count(*) FROM vicidial_list where lead_id=$lead_id and list_id!='$new_list_id';";
+		$stmt = "SELECT count(*) FROM vicidial_list where lead_id='$lead_id' and list_id!='$new_list_id';";
 		$rslt=mysql_to_mysqli($stmt, $link);
 		if ($DB) {echo "$stmt\n";}
 		$sc_ct = mysqli_num_rows($rslt);
@@ -479,7 +479,7 @@ if ($match_found > 0)
 			$reset_dialedSQL='';
 			if ( ($populate_sp_old_list=='Y') or ($populate_comm_old_date=='Y') )
 				{
-				$stmtA = "SELECT list_id,last_local_call_time,comments FROM vicidial_list where lead_id=$lead_id;";
+				$stmtA = "SELECT list_id,last_local_call_time,comments FROM vicidial_list where lead_id='$lead_id';";
 				$rslt=mysql_to_mysqli($stmtA, $link);
 				if ($DB) {echo "$stmtA\n";}
 				$vle_ct = mysqli_num_rows($rslt);
@@ -496,7 +496,7 @@ if ($match_found > 0)
 				}
 
 			if ($reset_dialed=='Y') {$reset_dialedSQL=", called_since_last_reset='N'";}
-			$stmt="UPDATE vicidial_list SET list_id='$new_list_id' $reset_dialedSQL $field_editSQL where lead_id=$lead_id limit 1;";
+			$stmt="UPDATE vicidial_list SET list_id='$new_list_id' $reset_dialedSQL $field_editSQL where lead_id='$lead_id' limit 1;";
 			if ($DB) {echo "$stmt\n";}
 			$rslt=mysql_to_mysqli($stmt, $link);
 			$affected_rows = mysqli_affected_rows($link);
@@ -512,7 +512,7 @@ if ($match_found > 0)
 				$campaign_idSQL = ",campaign_id='$row[0]'";
 				}
 
-			$stmtB="UPDATE vicidial_callbacks SET list_id='$new_list_id' $campaign_idSQL where lead_id=$lead_id limit 1;";
+			$stmtB="UPDATE vicidial_callbacks SET list_id='$new_list_id' $campaign_idSQL where lead_id='$lead_id' limit 1;";
 			if ($DB) {echo "$stmtB\n";}
 			$rslt=mysql_to_mysqli($stmtB, $link);
 			$CBaffected_rows = mysqli_affected_rows($link);

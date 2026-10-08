@@ -686,12 +686,12 @@ while($one_day_interval > 0)
 												}
 											else
 												{
-												$stmtA = "UPDATE vicidial_hopper set status='INCALL' where lead_id=$lead_id;";
+												$stmtA = "UPDATE vicidial_hopper set status='INCALL' where lead_id='$lead_id';";
 											#	print "|$stmtA|\n";
 												$UQaffected_rows = $dbhA->do($stmtA);
 											#	print "hopper row updated to INCALL: |$UQaffected_rows|$lead_id|\n";
 
-												$stmtA = "SELECT list_id,gmt_offset_now,called_since_last_reset,phone_code,phone_number,address3,alt_phone,called_count,security_phrase,state,vendor_lead_code,source_id,title,first_name,middle_initial,last_name,address1,address2,city,province,postal_code,country_code,date_of_birth,email,comments,rank,owner FROM vicidial_list where lead_id=$lead_id;";
+												$stmtA = "SELECT list_id,gmt_offset_now,called_since_last_reset,phone_code,phone_number,address3,alt_phone,called_count,security_phrase,state,vendor_lead_code,source_id,title,first_name,middle_initial,last_name,address1,address2,city,province,postal_code,country_code,date_of_birth,email,comments,rank,owner FROM vicidial_list where lead_id='$lead_id';";
 												$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 												$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 												$sthArows=$sthA->rows;
@@ -902,13 +902,13 @@ while($one_day_interval > 0)
 															{
 															if ($alt_dial =~ /LAST/) 
 																{
-																$stmtA = "SELECT phone_code,phone_number FROM vicidial_list_alt_phones where lead_id=$lead_id order by alt_phone_count desc limit 1;";
+																$stmtA = "SELECT phone_code,phone_number FROM vicidial_list_alt_phones where lead_id='$lead_id' order by alt_phone_count desc limit 1;";
 																}
 															else
 																{
 																$Talt_dial = $alt_dial;
 																$Talt_dial =~ s/\D//gi;
-																$stmtA = "SELECT phone_code,phone_number FROM vicidial_list_alt_phones where lead_id=$lead_id and alt_phone_count='$Talt_dial';";										
+																$stmtA = "SELECT phone_code,phone_number FROM vicidial_list_alt_phones where lead_id='$lead_id' and alt_phone_count='$Talt_dial';";										
 																}
 															$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 															$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
@@ -923,11 +923,11 @@ while($one_day_interval > 0)
 															$sthA->finish();
 															}
 
-														$stmtA = "UPDATE vicidial_list set called_since_last_reset='$CSLR', called_count='$called_count',user='VDAD',last_local_call_time='$LLCT_DATE' where lead_id=$lead_id;";
+														$stmtA = "UPDATE vicidial_list set called_since_last_reset='$CSLR', called_count='$called_count',user='VDAD',last_local_call_time='$LLCT_DATE' where lead_id='$lead_id';";
 														}
 													else
 														{
-														$stmtA = "UPDATE vicidial_list set called_since_last_reset='$CSLR', called_count='$called_count',user='VDAD',last_local_call_time='$LLCT_DATE' where lead_id=$lead_id;";
+														$stmtA = "UPDATE vicidial_list set called_since_last_reset='$CSLR', called_count='$called_count',user='VDAD',last_local_call_time='$LLCT_DATE' where lead_id='$lead_id';";
 														}
 													# update daily called counts for this lead
 													$stmtDC = "INSERT IGNORE INTO vicidial_lead_call_daily_counts SET lead_id='$lead_id',modify_date=NOW(),list_id='$PSCBlist_id',called_count_total='1',called_count_auto='1' ON DUPLICATE KEY UPDATE modify_date=NOW(),list_id='$PSCBlist_id',called_count_total=(called_count_total + 1),called_count_auto=(called_count_auto + 1);";
@@ -956,7 +956,7 @@ while($one_day_interval > 0)
 													if ( ( ($DBIPscheduled_callbacks_auto_reschedule[$camp_CIPct] !~ /DISABLED/) && (length($DBIPscheduled_callbacks_auto_reschedule[$camp_CIPct]) > 0) ) || ($hopper_source eq 'C') )
 														{
 														### gather vicidial_callbacks information for this lead, if any
-														$stmtA = "SELECT callback_id,callback_time,lead_status,list_id FROM vicidial_callbacks where lead_id=$lead_id and status='LIVE' and recipient='ANYONE' order by callback_id limit 1;";
+														$stmtA = "SELECT callback_id,callback_time,lead_status,list_id FROM vicidial_callbacks where lead_id='$lead_id' and status='LIVE' and recipient='ANYONE' order by callback_id limit 1;";
 														$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 														$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 														$sthArowsPSCB=$sthA->rows;
@@ -972,12 +972,12 @@ while($one_day_interval > 0)
 														### insert record in recent callbacks table
 														if ($sthArowsPSCB > 0)
 															{
-															$stmtA = "INSERT INTO vicidial_recent_ascb_calls SET call_date=NOW(),callback_date='$PSCBcallback_time',callback_id='$PSCBcallback_id',caller_code='$VqueryCID',lead_id=$lead_id,server_ip='$DB_camp_server_server_ip[$server_CIPct]',orig_status='$PSCBlead_status',reschedule='$DBIPscheduled_callbacks_auto_reschedule[$camp_CIPct]',list_id='$PSCBlist_id',rescheduled='U';";
+															$stmtA = "INSERT INTO vicidial_recent_ascb_calls SET call_date=NOW(),callback_date='$PSCBcallback_time',callback_id='$PSCBcallback_id',caller_code='$VqueryCID',lead_id='$lead_id',server_ip='$DB_camp_server_server_ip[$server_CIPct]',orig_status='$PSCBlead_status',reschedule='$DBIPscheduled_callbacks_auto_reschedule[$camp_CIPct]',list_id='$PSCBlist_id',rescheduled='U';";
 															$affected_rows = $dbhA->do($stmtA);
 															}
 														}
 
-													$stmtA = "DELETE FROM vicidial_hopper where lead_id=$lead_id;";
+													$stmtA = "DELETE FROM vicidial_hopper where lead_id='$lead_id';";
 													$affected_rows = $dbhA->do($stmtA);
 
 													$CCID_on=0;   $CCID='';   $CCIDtype='';
@@ -1294,12 +1294,12 @@ while($one_day_interval > 0)
 														 &event_logger;
 
 													### insert a SENT record to the vicidial_auto_calls table 
-														$stmtA = "INSERT INTO vicidial_auto_calls (server_ip,campaign_id,status,lead_id,callerid,phone_code,phone_number,call_time,call_type,alt_dial,queue_priority) values('$DB_camp_server_server_ip[$server_CIPct]','$DBfill_campaign[$camp_CIPct]','SENT',$lead_id,'$VqueryCID','$phone_code','$phone_number','$SQLdate','OUTBALANCE','$alt_dial','$DBIPqueue_priority[$camp_CIPct]')";
+														$stmtA = "INSERT INTO vicidial_auto_calls (server_ip,campaign_id,status,lead_id,callerid,phone_code,phone_number,call_time,call_type,alt_dial,queue_priority) values('$DB_camp_server_server_ip[$server_CIPct]','$DBfill_campaign[$camp_CIPct]','SENT','$lead_id','$VqueryCID','$phone_code','$phone_number','$SQLdate','OUTBALANCE','$alt_dial','$DBIPqueue_priority[$camp_CIPct]')";
 														$affected_rows = $dbhA->do($stmtA);
 														$calls_placed++;
 
 													### insert log record into vicidial_dial_log table 
-														$stmtA = "INSERT INTO vicidial_dial_log SET caller_code='$VqueryCID',lead_id=$lead_id,server_ip='$DB_camp_server_server_ip[$server_CIPct]',call_date='$SQLdate',extension='$VDAD_dial_exten',channel='$local_DEF$Ndialstring$local_AMP$ext_context',timeout='$Local_dial_timeout',outbound_cid='$CIDstring',context='$ext_context';";
+														$stmtA = "INSERT INTO vicidial_dial_log SET caller_code='$VqueryCID',lead_id='$lead_id',server_ip='$DB_camp_server_server_ip[$server_CIPct]',call_date='$SQLdate',extension='$VDAD_dial_exten',channel='$local_DEF$Ndialstring$local_AMP$ext_context',timeout='$Local_dial_timeout',outbound_cid='$CIDstring',context='$ext_context';";
 														$affected_rows = $dbhA->do($stmtA);
 
 													### insert log record into vicidial_lead_24hour_calls table 
@@ -1315,11 +1315,11 @@ while($one_day_interval > 0)
 														##### create dummy records to have their server_ip filled in at the stagger section
 														$vm_inserts[$staggered_ct] = "INSERT INTO vicidial_manager values('','','$SQLdate','NEW','N','XXXXXXXXXXXXXXX','','Originate','$VqueryCID','Exten: $VDAD_dial_exten','Context: $ext_context','Channel: $local_DEF$Ndialstring$local_AMP$ext_context','Priority: 1','Callerid: $CIDstring','Timeout: $Local_dial_timeout','','','','VDACnote: $DBfill_campaign[$camp_CIPct]|$lead_id|$phone_code|$phone_number|OUTBALANCE|$alt_dial|$DBIPqueue_priority[$camp_CIPct]|$server_ip|$CCIDtype')";
 
-														$vac_inserts[$staggered_ct] = "INSERT INTO vicidial_auto_calls (server_ip,campaign_id,status,lead_id,callerid,phone_code,phone_number,call_time,call_type,alt_dial,queue_priority) values('XXXXXXXXXXXXXXX','$DBfill_campaign[$camp_CIPct]','SENT',$lead_id,'$VqueryCID','$phone_code','$phone_number','$SQLdate','OUTBALANCE','$alt_dial','$DBIPqueue_priority[$camp_CIPct]')";
+														$vac_inserts[$staggered_ct] = "INSERT INTO vicidial_auto_calls (server_ip,campaign_id,status,lead_id,callerid,phone_code,phone_number,call_time,call_type,alt_dial,queue_priority) values('XXXXXXXXXXXXXXX','$DBfill_campaign[$camp_CIPct]','SENT','$lead_id','$VqueryCID','$phone_code','$phone_number','$SQLdate','OUTBALANCE','$alt_dial','$DBIPqueue_priority[$camp_CIPct]')";
 
 														$st_logged[$staggered_ct] = "$phone_number|$DBfill_campaign[$camp_CIPct]|$VqueryCID|$gmt_offset_now|$alt_dial|$CCIDtype|";
 
-														$vddl_inserts[$staggered_ct] = "INSERT INTO vicidial_dial_log SET caller_code='$VqueryCID',lead_id=$lead_id,server_ip='XXXXXXXXXXXXXXX',call_date='$SQLdate',extension='$VDAD_dial_exten',channel='$local_DEF$Ndialstring$local_AMP$ext_context',timeout='$Local_dial_timeout',outbound_cid='$CIDstring',context='$ext_context';";
+														$vddl_inserts[$staggered_ct] = "INSERT INTO vicidial_dial_log SET caller_code='$VqueryCID',lead_id='$lead_id',server_ip='XXXXXXXXXXXXXXX',call_date='$SQLdate',extension='$VDAD_dial_exten',channel='$local_DEF$Ndialstring$local_AMP$ext_context',timeout='$Local_dial_timeout',outbound_cid='$CIDstring',context='$ext_context';";
 
 														$vltfh_inserts[$staggered_ct] = "INSERT INTO vicidial_lead_24hour_calls SET lead_id='$lead_id',list_id='$list_id',call_date=NOW(),phone_number='$phone_number',phone_code='$phone_code',state='$TFhourSTATE',call_type='AUTO';";
 
@@ -1365,7 +1365,7 @@ while($one_day_interval > 0)
 					if ( ($staggered > 0) && ($staggered_ct > 0) )
 						{
 						$staggered_fill=0;
-						$stmtA = "SELECT count(*),vicidial_balance_rank FROM servers where vicidial_balance_active = 'Y' and active = 'Y' group by vicidial_balance_rank order by vicidial_balance_rank desc;";
+						$stmtA = "SELECT count(*),vicidial_balance_rank FROM servers where vicidial_balance_active = 'Y' group by vicidial_balance_rank order by vicidial_balance_rank desc;";
 						$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 						$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 						$sthArows=$sthA->rows;
@@ -1383,7 +1383,7 @@ while($one_day_interval > 0)
 						$staggered_rank_ct=0;
 						while ( ($st_ct > $staggered_rank_ct) && ($staggered_ct > $staggered_fill) )
 							{
-							$stmtA = "SELECT server_ip,asterisk_version,routing_prefix FROM servers where vicidial_balance_rank='$ST_rank[$staggered_rank_ct]' and vicidial_balance_active = 'Y' and active = 'Y' order by server_ip LIMIT $ST_count[$staggered_rank_ct];";
+							$stmtA = "SELECT server_ip,asterisk_version,routing_prefix FROM servers where vicidial_balance_rank='$ST_rank[$staggered_rank_ct]' and vicidial_balance_active = 'Y' order by server_ip LIMIT $ST_count[$staggered_rank_ct];";
 							$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 							$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 							$sthArowsSIPS=$sthA->rows;

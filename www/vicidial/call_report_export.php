@@ -1,8 +1,8 @@
 <?php
 # call_report_export.php
-#
-# displays options to select for downloading of leads and their vicidial_log
-# and/or vicidial_closer_log information by status, list_id and date range.
+# 
+# displays options to select for downloading of leads and their vicidial_log 
+# and/or vicidial_closer_log information by status, list_id and date range. 
 # downloads to a flat text file that is tab delimited
 #
 # Copyright (C) 2024  Matt Florell <vicidial@gmail.com>    LICENSE: AGPLv2
@@ -30,7 +30,7 @@
 # 110329-1330 - Added more fields to EXTENDED option
 # 110531-1945 - Changed first phone_number field to phone_number_dialed, issue #495
 # 110721-2027 - Added IVR export options
-# 110911-1445 - Added did fields to the EXTENDED format
+# 110911-1445 - Added did fields to the EXTENDED format 
 # 111010-1930 - Added ALTERNATE_1 format
 # 111104-1240 - Added user_group restrictions for selecting in-groups
 # 130414-0122 - Added report logging
@@ -228,14 +228,14 @@ switch ($sort_dir) {
 ### ARCHIVED DATA CHECK CONFIGURATION
 $archives_available="N";
 $log_tables_array=array("vicidial_log", "vicidial_closer_log", "vicidial_agent_log", "vicidial_log_extended", "recording_log", "vicidial_carrier_log", "vicidial_cpd_log", "vicidial_did_log", "vicidial_outbound_ivr_log");
-for ($t=0; $t<count($log_tables_array); $t++)
+for ($t=0; $t<count($log_tables_array); $t++) 
 	{
 	$table_name=$log_tables_array[$t];
 	$archive_table_name=use_archive_table($table_name);
 	if ($archive_table_name!=$table_name) {$archives_available="Y";}
 	}
 
-if ($search_archived_data)
+if ($search_archived_data) 
 	{
 	$vicidial_log_table=use_archive_table("vicidial_log");
 	$vicidial_closer_log_table=use_archive_table("vicidial_closer_log");
@@ -480,12 +480,12 @@ if ($run_export > 0)
 	$status_string='|';
 
 	# If LOCATION or ALL is seleced in recording fields, we need to get information from the vicidial_servers table
-	if (preg_match("/(ALL|LOCATION)/", $rec_fields))
+	if (preg_match("/(ALL|LOCATION)/", $rec_fields)) 
 		{
 		$server_recording_links = array();
 		$stmt="SELECT recording_web_link, server_ip, alt_server_ip, external_server_ip FROM servers";
 		$rslt=mysql_to_mysqli($stmt, $link);
-		while (($row = mysqli_fetch_row($rslt)))
+		while (($row = mysqli_fetch_row($rslt))) 
 			{
 			$server_recording_links[$row[1]] = $row[1];
 			if ($row[0] == 'ALT_IP')
@@ -751,7 +751,6 @@ if ($run_export > 0)
 		}
 
 	$outbound_calls=0;
-	$export_rows=array();
 	$export_status = array();
 	$export_list_id = array();
 	$export_lead_id = array();
@@ -892,9 +891,9 @@ if ($run_export > 0)
 						{$export_fieldsDATA = "$row[39]\t$row[40]\t$row[41]\t$row[42]\t$row[43]\t$row[44]\t";}
 					if ($export_fields == 'EXTENDED_4')
 						{$export_fieldsDATA = "$row[39]\t$row[40]\t";}
-					if ($export_fields == 'ALTERNATE_2')
+					if ($export_fields == 'ALTERNATE_2') 
 						{$export_rows[$k] = "$row[18]\t$row[13]\t$row[15]\t$row[11]\t$row[17]\t!STATUS_DESCRIPTION!\t$row[0]";}
-					else
+					else 
 						{
 						$export_rows[$k] = "$row[0]\t$row[1]\t$row[2]\t$row[3]\t$row[4]\t$row[5]\t$row[6]\t$row[7]\t$row[8]\t$row[9]\t$row[10]\t$row[11]\t$row[12]\t$row[13]\t$row[14]\t$row[15]\t$row[16]\t$row[17]\t$row[18]\t$row[19]\t$row[20]\t$row[21]\t$row[22]\t$row[23]\t$row[24]\t$row[25]\t$row[26]\t$row[27]\t$row[28]\t$row[29]\t$row[30]\t$row[31]\t$row[32]\t$row[33]\t$row[34]\t$row[35]\t$export_fieldsDATA";
 						}
@@ -1037,9 +1036,9 @@ if ($run_export > 0)
 						{$export_fieldsDATA = "$row[40]\t$row[41]\t$row[42]\t$row[43]\t$row[44]\t$row[45]\t";}
 					if ($export_fields == 'EXTENDED_4')
 						{$export_fieldsDATA = "$row[40]\t$row[41]\t";}
-					if ($export_fields == 'ALTERNATE_2')
-						{$export_rows[$k] = "$row[18]\t$row[13]\t$row[15]\t$row[11]\t$row[17]\t!STATUS_DESCRIPTION!\t$row[0]";}
-					else
+					if ($export_fields == 'ALTERNATE_2') 
+						{$export_rows[$k] = "$row[18]\t$row[13]\t$row[15]\t$row[11]\t$row[17]\t!STATUS_DESCRIPTION!\t$row[0]";}	
+					else 
 						{
 						$export_rows[$k] = "$row[0]\t$row[1]\t$row[2]\t$row[3]\t$row[4]\t$row[5]\t$row[6]\t$row[7]\t$row[8]\t$row[9]\t$row[10]\t$row[11]\t$row[12]\t$row[13]\t$row[14]\t$row[15]\t$row[16]\t$row[17]\t$row[18]\t$row[19]\t$row[20]\t$row[21]\t$row[22]\t$row[23]\t$row[24]\t$row[25]\t$row[26]\t$row[27]\t$row[28]\t$row[29]\t$row[30]\t$row[31]\t$row[32]\t$row[33]\t$row[34]\t$row[35]\t$export_fieldsDATA";
 						}
@@ -1214,7 +1213,7 @@ if ($run_export > 0)
 				$rec_id = preg_replace("/.$/",'',$rec_id);
 				$rec_filename = preg_replace("/.$/",'',$rec_filename);
 				$rec_location = preg_replace("/.$/",'',$rec_location);
-				if (isset($server_recording_links))
+				if (isset($server_recording_links)) 
 					{
 					foreach ($server_recording_links as $server_ip => $recording_ip)
 						{$rec_location = str_replace($server_ip,$recording_ip,$rec_location);}
@@ -1248,7 +1247,7 @@ if ($run_export > 0)
 					if ($vle_ct > 0)
 						{
 						$row=mysqli_fetch_row($rslt);
-
+						
 						### PARSE TAB CHARACTERS FROM THE DATA ITSELF
 						$row[0]=preg_replace('/\t/', ' -- ', $row[0]);
 
@@ -1514,7 +1513,7 @@ if ($run_export > 0)
 							{
 							$row=mysqli_fetch_row($rslt);
 							$t=0;
-							while ($columns_ct >= $t)
+							while ($columns_ct >= $t) 
 								{
 								if ($enc_fields > 0)
 									{
@@ -1843,7 +1842,7 @@ else
 	echo "<select size=1 name=export_fields><option selected value=\"STANDARD\">"._QXZ("STANDARD")."</option><option value=\"EXTENDED\">"._QXZ("EXTENDED")."</option><option value=\"EXTENDED_2\">"._QXZ("EXTENDED_2")."</option><option value=\"EXTENDED_3\">"._QXZ("EXTENDED_3")."</option><option value=\"EXTENDED_4\">"._QXZ("EXTENDED_4")."</option><option value=\"ALTERNATE_1\">ALTERNATE_1</option><option value=\"ALTERNATE_2\">ALTERNATE_2</option></select>\n";
 
 
-	if ($archives_available=="Y")
+	if ($archives_available=="Y") 
 	{
 	echo "<BR><BR><label><input type='checkbox' name='search_archived_data' value='checked' $search_archived_data><B>"._QXZ("Search archived data")."</B> $NWB#call_export_report-search_archived_data$NWE</label><BR>\n";
 	}
@@ -1856,9 +1855,9 @@ else
 		$o=0;
 		while ($campaigns_to_print > $o)
 		{
-			if (preg_match("/\|$LISTcampaigns[$o]\|/",$campaign_string))
+			if (preg_match("/\|$LISTcampaigns[$o]\|/",$campaign_string)) 
 				{echo "<option selected value=\"$LISTcampaigns[$o]\">"._QXZ("$LISTcampaigns[$o]")."</option>\n";}
-			else
+			else 
 				{echo "<option value=\"$LISTcampaigns[$o]\">"._QXZ("$LISTcampaigns[$o]")."</option>\n";}
 			$o++;
 		}
@@ -1872,7 +1871,7 @@ else
 			$o=0;
 			while ($groups_to_print > $o)
 			{
-				if (preg_match("/\|$LISTgroups[$o]\|/",$group_string))
+				if (preg_match("/\|$LISTgroups[$o]\|/",$group_string)) 
 					{echo "<option selected value=\"$LISTgroups[$o]\">"._QXZ("$LISTgroups[$o]")."</option>\n";}
 				else
 					{echo "<option value=\"$LISTgroups[$o]\">"._QXZ("$LISTgroups[$o]")."</option>\n";}
@@ -1886,9 +1885,9 @@ else
 		$o=0;
 		while ($lists_to_print > $o)
 		{
-			if (preg_match("/\|$LISTlists[$o]\|/",$list_string))
+			if (preg_match("/\|$LISTlists[$o]\|/",$list_string)) 
 				{echo "<option selected value=\"$LISTlists[$o]\">"._QXZ("$LISTlists[$o]")."</option>\n";}
-			else
+			else 
 				{echo "<option value=\"$LISTlists[$o]\">"._QXZ("$LISTlists[$o]")."</option>\n";}
 			$o++;
 		}
@@ -1901,7 +1900,7 @@ else
 		{
 			if (preg_match("/\|$LISTstatus[$o]\|/",$status_string)) 
 				{echo "<option selected value=\"$LISTstatus[$o]\">"._QXZ("$LISTstatus[$o]")."</option>\n";}
-			else
+			else 
 				{echo "<option value=\"$LISTstatus[$o]\">"._QXZ("$LISTstatus[$o]")."</option>\n";}
 			$o++;
 		}
@@ -1914,9 +1913,9 @@ else
 			$o=0;
 			while ($user_groups_to_print > $o)
 			{
-				if (preg_match("/\|$LISTuser_groups[$o]\|/",$user_group_string))
+				if (preg_match("/\|$LISTuser_groups[$o]\|/",$user_group_string)) 
 					{echo "<option selected value=\"$LISTuser_groups[$o]\">"._QXZ("$LISTuser_groups[$o]")."</option>\n";}
-				else
+				else 
 					{echo "<option value=\"$LISTuser_groups[$o]\">"._QXZ("$LISTuser_groups[$o]")."</option>\n";}
 				$o++;
 			}

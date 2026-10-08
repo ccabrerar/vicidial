@@ -387,7 +387,7 @@ if (length($lead_id) > 0)
 	elsif ($function =~ /INGROUP_ADD_LEAD_URL/)
 		{
 		##### BEGIN Add Lead URL function #####
-		$stmtA = "SELECT list_id,phone_code,vendor_lead_code FROM vicidial_list where lead_id=$lead_id;";
+		$stmtA = "SELECT list_id,phone_code,vendor_lead_code FROM vicidial_list where lead_id='$lead_id';";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		$sthArows=$sthA->rows;
@@ -483,7 +483,7 @@ if (length($lead_id) > 0)
 	elsif ($function =~ /ENTER_INGROUP_URL/)
 		{
 		##### BEGIN ENTER_INGROUP_URL function #####
-		$stmtA = "SELECT lead_id,entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner,phone_code FROM vicidial_list where lead_id=$lead_id;";
+		$stmtA = "SELECT lead_id,entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner,phone_code FROM vicidial_list where lead_id='$lead_id';";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		$sthArows=$sthA->rows;
@@ -672,7 +672,7 @@ if (length($lead_id) > 0)
 	elsif ($function =~ /NA_CALL_URL/)
 		{
 		##### BEGIN NA Call URL function #####
-		$stmtA = "SELECT lead_id,entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner,phone_code FROM vicidial_list where lead_id=$lead_id;";
+		$stmtA = "SELECT lead_id,entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner,phone_code FROM vicidial_list where lead_id='$lead_id';";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		$sthArows=$sthA->rows;
@@ -1003,7 +1003,7 @@ if (length($lead_id) > 0)
 		{
 		$talk_sec=0;   $dead_sec=0;   $dispo_epoch=time();   $now_epoch=time();
 		##### BEGIN Settings Container Call URL function #####
-		$stmtA = "SELECT user,status,talk_sec,dead_sec,dispo_epoch from vicidial_agent_log where lead_id=$lead_id order by agent_log_id desc limit 1;";
+		$stmtA = "SELECT user,status,talk_sec,dead_sec,dispo_epoch from vicidial_agent_log where lead_id='$lead_id' order by agent_log_id desc limit 1;";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		$sthArows=$sthA->rows;
@@ -1023,7 +1023,7 @@ if (length($lead_id) > 0)
 		else
 			{$talk_time_min = ($talk_time / 60);   $talk_time_min = sprintf("%.0f", $talk_time_min);}
 
-		$stmtA = "SELECT lead_id,entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner,phone_code FROM vicidial_list where lead_id=$lead_id;";
+		$stmtA = "SELECT lead_id,entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner,phone_code FROM vicidial_list where lead_id='$lead_id';";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		$sthArows=$sthA->rows;
@@ -1218,7 +1218,7 @@ if (length($lead_id) > 0)
 	else
 		{
 		##### BEGIN Start Call URL function #####
-		$stmtA = "SELECT lead_id,entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner,phone_code FROM vicidial_list where lead_id=$lead_id;";
+		$stmtA = "SELECT lead_id,entry_date,modify_date,status,user,vendor_lead_code,source_id,list_id,phone_number,title,first_name,middle_initial,last_name,address1,address2,address3,city,state,province,postal_code,country_code,gender,date_of_birth,alt_phone,email,security_phrase,comments,called_count,last_local_call_time,rank,owner,phone_code FROM vicidial_list where lead_id='$lead_id';";
 		$sthA = $dbhA->prepare($stmtA) or die "preparing: ",$dbhA->errstr;
 		$sthA->execute or die "executing: $stmtA ", $dbhA->errstr;
 		$sthArows=$sthA->rows;
